@@ -4,16 +4,15 @@
 # General Packages
 from __future__ import annotations
 import asyncio
-from dataclasses import dataclass, field
-import socket
+from dataclasses import dataclass, field, InitVar
 from typing import Callable
+import inspect
 
 # Custom Library
 import AthenaLib
 import AthenaColor
 
 # Custom Packages
-from AthenaTwitchBot.models.twitch_bot_protocol import TwitchBotProtocol
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -25,7 +24,15 @@ class TwitchBot:
     channel:str
     prefix:str
 
-    commands:dict[str: Callable]=field(default_factory=dict) # made part of init if someone wants to feel the pain of adding commands manually
+    # Twitch-specific capabilities : https://dev.twitch.tv/docs/irc/capabilities
+    twitch_capibility_commands:bool=False
+    twitch_capibility_membership:bool=False
+    twitch_capibility_tags:bool=True # only one that has the default set to true, as this is required to make reply's work
+
+    predefined_commands:InitVar[dict[str: Callable]]=None # made part of init if someone wants to feel the pain of adding commands manually
+
+    # noinspection PyDataclass
+    commands:dict[str: Callable]=field(init=False)
 
     # non init slots
 
@@ -33,30 +40,17 @@ class TwitchBot:
     # - Code -
     # ------------------------------------------------------------------------------------------------------------------
     def __new__(cls, *args, **kwargs):
-        # don't set self.commands to a new dictionary
-        #   as this might have been defined due to the field default factory
         # Loop over own functions to see if any is decorated with the command setup
+        cls.commands = {}
+        for k,v in cls.__dict__.items():
+            if inspect.isfunction(v) and getattr(v, "command_name", False):
+                cls.commands[v.command_name] = v
 
-        # surpressed because of pycharm being an ass
-        # noinspection PyTypeChecker
-        return type.__new__(cls, *args, **kwargs)
+        # create the actual instance
+        return super(TwitchBot, cls).__new__(cls,*args,**kwargs)
 
-    def launch(self):
-        loop = asyncio.get_event_loop()
-        coro = loop.create_connection(
-            protocol_factory = lambda: TwitchBotProtocol(
-                bot_nickname=self.nickname,
-                bot_oauth_token=self.oauth_token,
-                bot_channel=self.channel,
-                main_loop=loop,
-                command_prefix=self.prefix
-            ),
-            host='irc.chat.twitch.tv',
-            port=6667,
-        )
-        loop.run_until_complete(coro)
-        loop.run_forever()
-        loop.close()
-
+    def __post_init__(self, predefined_commands: dict[str: Callable]=None):
+        if predefined_commands is not None:
+            self.commands |= predefined_commands
 
 

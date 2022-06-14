@@ -13,9 +13,11 @@ from __future__ import annotations
 # ----------------------------------------------------------------------------------------------------------------------
 def commandmethod(name:str):
     def decorator(fnc):
-        fnc.is_command = True
-        fnc.command_name = name
         def wrapper(*args, **kwargs):
             return fnc(*args, **kwargs)
+
+        # store attributes for later use by the bot
+        wrapper.command_name = name
+
         return wrapper
     return decorator

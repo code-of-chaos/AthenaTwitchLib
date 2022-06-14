@@ -3,18 +3,43 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 
 # Custom Library
+from AthenaColor import HEX
 
 # Custom Packages
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(init=False, slots=True, eq=True, match_args=True)
+@dataclass(slots=True, eq=True, match_args=True)
 class TwitchMessage:
-    message:list[str]
+    message:str="" # complete message without the sufix: "\r\n"
+    message_type:str=""
+    channel:str=""
+    text:str=""
 
-    def __init__(self, message_bytes:bytearray):
-        self.message = message_bytes.decode("utf_8").replace("\r\n", "").split(" ")
+    # optional info if tags is enabled
+    badge_info:str=""
+    badges:list[str]=field(default_factory=list)
+    client_nonce:str=""
+    color:HEX=field(default_factory=HEX)
+    display_name:str=""
+    first_msg:bool=False
+    message_id:int=0
+    mod:bool=False
+    room_id:str=""
+    subscriber:bool=False
+    tmi_sent_ts:datetime=field(default_factory=datetime.now)
+    turbo:bool=False
+    user_id:int=0
+# ----------------------------------------------------------------------------------------------------------------------
+# - Special message types -
+# ----------------------------------------------------------------------------------------------------------------------
+class TwitchMessagePing(TwitchMessage):
+    pass
+
+class TwitchMessageOnlyForBot(TwitchMessage):
+    pass

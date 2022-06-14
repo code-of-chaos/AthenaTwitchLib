@@ -5,62 +5,69 @@
 from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
+from typing import Callable
 
 # Custom Library
 from AthenaColor import ForeNest
 
 # Custom Packages
 import AthenaTwitchBot.functions.twitch_irc_messages as messages
-from AthenaTwitchBot.models.twitch_message import TwitchMessage
+from AthenaTwitchBot.functions.twitch_message_constructors import twitch_message_constructor_tags
+
+from AthenaTwitchBot.models.twitch_message import TwitchMessage, TwitchMessagePing
+from AthenaTwitchBot.models.twitch_bot import TwitchBot
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(kw_only=True, slots=True, eq=False, order=False)
 class TwitchBotProtocol(asyncio.Protocol):
-    bot_nickname:str
-    bot_oauth_token:str
-    bot_channel:str
-    command_prefix:str
+    bot:TwitchBot
     main_loop:asyncio.AbstractEventLoop
 
     # non init slots
     transport:asyncio.transports.Transport = field(init=False)
+    message_constructor:Callable = field(init=False)
+
+    def __post_init__(self):
+        if self.bot.twitch_capibility_tags:
+            self.message_constructor = twitch_message_constructor_tags
+        else:
+            raise NotImplementedError("This needs to be created")
 
     def connection_made(self, transport: asyncio.transports.Transport) -> None:
         # todo make some sort of connector to make t
         self.transport = transport
         # first write the password then the nickname else the connection will fail
-        self.transport.write(messages.password(oauth_token=self.bot_oauth_token))
-        self.transport.write(messages.nick(nickname=self.bot_nickname))
-        self.transport.write(messages.join(channel=self.bot_channel))
+        self.transport.write(messages.password(oauth_token=self.bot.oauth_token))
+        self.transport.write(messages.nick(nickname=self.bot.nickname))
+        self.transport.write(messages.join(channel=self.bot.channel))
+        self.transport.write(messages.request_tags)
 
     def data_received(self, data: bytearray) -> None:
-        match (twitch_message := TwitchMessage(data)):
+        match (twitch_message := self.message_constructor(data, bot_name=self.bot.nickname)):
             # Keepalive messages : https://dev.twitch.tv/docs/irc#keepalive-messages
-            case TwitchMessage(message=["PING", *_]):
+            case TwitchMessagePing():
                 print(ForeNest.ForestGreen("PINGED BY TWITCH"))
-                self.transport.write(pong_message := messages.pong(
-                    message=twitch_message.message[1:-1]
-                ))
-                print(data, pong_message)
+                self.transport.write(pong_message := messages.pong(message=twitch_message.text))
+                print(pong_message)
 
             # catch a message which starts with a command:
-            case TwitchMessage(message=[_,_,_,str(user_message),*user_message_other]) if user_message.startswith(f":{self.command_prefix}"):
+            case TwitchMessage(message=[_,_,_,str(user_message),*user_message_other]) if user_message.startswith(f":{self.bot.prefix}"):
                 user_message:str
                 print(ForeNest.ForestGreen("COMMAND CAUGHT"))
-                print(user_message, user_message_other)
+                try:
+                    user_cmd = user_message.replace(f":{self.bot.prefix}", "")
+                    result = self.bot.commands[user_cmd](self=self.bot,transport=self.transport)
+                    print(result)
+                except KeyError:
+                    pass
 
             # catch a message which has a command within it:
             case TwitchMessage(message=[_,_,_,*messages_parts]):
-                print(messages_parts)
                 for message in messages_parts:
-                    if message.startswith(self.command_prefix):
+                    if message.startswith(self.bot.prefix):
                         print(ForeNest.ForestGreen("COMMAND CAUGHT"))
-                        print(messages_parts)
-                print(data)
-            case _:
-                print(data)
 
     def connection_lost(self, exc: Exception | None) -> None:
         self.main_loop.stop()
