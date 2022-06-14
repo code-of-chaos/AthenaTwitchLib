@@ -26,6 +26,10 @@ def _find_bot_only(content:list[str],message:str, bot_name:str) -> TwitchMessage
         return TwitchMessageOnlyForBot(text=message)
     elif content[0] == f":{bot_name}!{bot_name}@{bot_name}.tmi.twitch.tv":
         return TwitchMessageOnlyForBot(text=message)
+    elif content[0] == f":{bot_name}.tmi.twitch.tv":
+        return TwitchMessageOnlyForBot(text=message)
+    elif not message: # content is empty
+        return TwitchMessageOnlyForBot()
     return False
 
 TAG_MAPPING:dict[str:Callable] = {
@@ -45,7 +49,6 @@ TAG_MAPPING:dict[str:Callable] = {
     "turbo": lambda tm, tag_value: setattr(tm, "turbo", bool(tag_value)),
     "user-id": lambda tm, tag_value: setattr(tm, "user_id", int(tag_value)),
     "user-type": lambda tm, tag_value: setattr(tm, "user-type", tag_value),
-
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -53,7 +56,7 @@ TAG_MAPPING:dict[str:Callable] = {
 # ----------------------------------------------------------------------------------------------------------------------
 def twitch_message_constructor_tags(message_bytes:bytearray, bot_name:str) -> TwitchMessage:
     print(message_bytes)
-    message = message_bytes.decode("UTF_8").replace("\r\n", "")
+    message = message_bytes.decode("UTF_8")
     content = message.split(" ")
 
     # Certain twitch sent messages have a different consistency than a regular user sent message

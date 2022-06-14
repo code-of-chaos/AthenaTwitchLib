@@ -35,6 +35,8 @@ class TwitchMessage:
     tmi_sent_ts:datetime=field(default_factory=datetime.now)
     turbo:bool=False
     user_id:int=0
+    emotes:str=""
+    flags:str=""
 # ----------------------------------------------------------------------------------------------------------------------
 # - Special message types -
 # ----------------------------------------------------------------------------------------------------------------------

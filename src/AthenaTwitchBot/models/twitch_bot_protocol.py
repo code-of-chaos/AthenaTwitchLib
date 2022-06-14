@@ -45,29 +45,30 @@ class TwitchBotProtocol(asyncio.Protocol):
         self.transport.write(messages.request_tags)
 
     def data_received(self, data: bytearray) -> None:
-        match (twitch_message := self.message_constructor(data, bot_name=self.bot.nickname)):
-            # Keepalive messages : https://dev.twitch.tv/docs/irc#keepalive-messages
-            case TwitchMessagePing():
-                print(ForeNest.ForestGreen("PINGED BY TWITCH"))
-                self.transport.write(pong_message := messages.pong(message=twitch_message.text))
-                print(pong_message)
+        for message in data.split(b"\r\n"):
+            match (twitch_message := self.message_constructor(message, bot_name=self.bot.nickname)):
+                # Keepalive messages : https://dev.twitch.tv/docs/irc#keepalive-messages
+                case TwitchMessagePing():
+                    print(ForeNest.ForestGreen("PINGED BY TWITCH"))
+                    self.transport.write(pong_message := messages.pong(message=twitch_message.text))
+                    print(pong_message)
 
-            # catch a message which starts with a command:
-            case TwitchMessage(message=[_,_,_,str(user_message),*user_message_other]) if user_message.startswith(f":{self.bot.prefix}"):
-                user_message:str
-                print(ForeNest.ForestGreen("COMMAND CAUGHT"))
-                try:
-                    user_cmd = user_message.replace(f":{self.bot.prefix}", "")
-                    result = self.bot.commands[user_cmd](self=self.bot,transport=self.transport)
-                    print(result)
-                except KeyError:
-                    pass
+                # catch a message which starts with a command:
+                case TwitchMessage(message=[_,_,_,str(user_message),*user_message_other]) if user_message.startswith(f":{self.bot.prefix}"):
+                    user_message:str
+                    print(ForeNest.ForestGreen("COMMAND CAUGHT"))
+                    try:
+                        user_cmd = user_message.replace(f":{self.bot.prefix}", "")
+                        result = self.bot.commands[user_cmd](self=self.bot,transport=self.transport)
+                        print(result)
+                    except KeyError:
+                        pass
 
-            # catch a message which has a command within it:
-            case TwitchMessage(message=[_,_,_,*messages_parts]):
-                for message in messages_parts:
-                    if message.startswith(self.bot.prefix):
-                        print(ForeNest.ForestGreen("COMMAND CAUGHT"))
+                # catch a message which has a command within it:
+                case TwitchMessage(message=[_,_,_,*messages_parts]):
+                    for message in messages_parts:
+                        if message.startswith(self.bot.prefix):
+                            print(ForeNest.ForestGreen("COMMAND CAUGHT"))
 
     def connection_lost(self, exc: Exception | None) -> None:
         self.main_loop.stop()
