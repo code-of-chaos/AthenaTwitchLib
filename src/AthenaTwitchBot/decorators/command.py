@@ -11,7 +11,7 @@ from __future__ import annotations
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-def commandmethod(name:str):
+def command_method(name:str):
     def decorator(fnc):
         def wrapper(*args, **kwargs):
             return fnc(*args, **kwargs)

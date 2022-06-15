@@ -3,14 +3,11 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import asyncio
 from dataclasses import dataclass, field, InitVar
 from typing import Callable
 import inspect
 
 # Custom Library
-import AthenaLib
-import AthenaColor
 
 # Custom Packages
 
@@ -25,9 +22,9 @@ class TwitchBot:
     prefix:str
 
     # Twitch-specific capabilities : https://dev.twitch.tv/docs/irc/capabilities
-    twitch_capibility_commands:bool=False
-    twitch_capibility_membership:bool=False
-    twitch_capibility_tags:bool=True # only one that has the default set to true, as this is required to make reply's work
+    twitch_capability_commands:bool=False
+    twitch_capability_membership:bool=False
+    twitch_capability_tags:bool=True # only one that has the default set to true, as this is required to make reply's work
 
     predefined_commands:InitVar[dict[str: Callable]]=None # made part of init if someone wants to feel the pain of adding commands manually
 
@@ -49,12 +46,12 @@ class TwitchBot:
         #   Which is to be used in the commands tuple
         obj = super(TwitchBot, cls).__new__(cls,*args,**kwargs)
 
-        # loop over the bot's metods and parse the different methods
+        # loop over the bots methods and parse the different methods
         for k,v in cls.__dict__.items():
             if inspect.isfunction(v):
                 if "is_command" in (attributes := [attribute for attribute in dir(v) if not attribute.startswith("__")]):
                     cls.commands[v.command_name] = v
-                elif "is_frequent_ouput" in attributes:
+                elif "is_frequent_output" in attributes:
                     cls.frequent_outputs.append((v,v.delay))
 
         return obj
