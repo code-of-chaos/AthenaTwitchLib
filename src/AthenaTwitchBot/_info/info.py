@@ -9,7 +9,7 @@ from __future__ import annotations
 # Custom Packages
 # noinspection PyProtectedMember
 import AthenaLib._info.formatting as f
-from AthenaTwitchBot._info._v import _version
+from AthenaTwitchBot._info._v import VERSION
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -18,7 +18,7 @@ def info(*, to_str: bool = False) -> None | str:
     # todo needs a lot of work
     line = "-" * 128
     header = f.header(f"""{line}
-{f.title("AthenaTwitchBot", to_str)} v{_version()}
+{f.title("AthenaTwitchBot", to_str)} v{VERSION}
 is made by Andreas Sas.
 {line}
 """, to_str)
