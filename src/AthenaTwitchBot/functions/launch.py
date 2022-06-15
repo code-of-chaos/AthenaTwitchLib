@@ -61,8 +61,7 @@ def launch(
                 loop = asyncio.get_running_loop()
                 loop.stop()
                 continue
-            else:
-                break
+            break
 
         except : # make sure everything else is caught else the loop will continue indefinitely
             raise
