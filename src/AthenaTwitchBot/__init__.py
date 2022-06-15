@@ -8,5 +8,6 @@ from AthenaTwitchBot.models.twitch_bot import TwitchBot
 from AthenaTwitchBot.models.twitch_bot_protocol import TwitchBotProtocol
 from AthenaTwitchBot.models.twitch_message_context import TwitchMessageContext
 
-# keep this function to be the last to be imported
 from AthenaTwitchBot.functions.launch import launch
+
+from AthenaTwitchBot._info.info import info # a general info printer
