@@ -29,6 +29,7 @@ class TwitchMessageContext:
         """
         a "reply" method does reply to the user's message that invoked the command
         """
+        text = text.replace('\n', '')
         self.transport.write(
             f"@reply-parent-msg-id={self.message.message_id} PRIVMSG {self.message.channel} :{text}\r\n".encode("UTF_8")
         )
@@ -37,6 +38,7 @@ class TwitchMessageContext:
         """
         a "write" method does not reply to the message that invoked the command, but simply writes the text to the channel
         """
+        text = text.replace('\n', '')
         self.transport.write(
             f"PRIVMSG {self.message.channel} :{text}\r\n".encode("UTF_8")
         )

@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 # Custom Library
-from AthenaColor import ForeNest
 
 # Custom Packages
 import AthenaTwitchBot.functions.twitch_irc_messages as messages
@@ -17,6 +16,9 @@ from AthenaTwitchBot.functions.twitch_message_constructors import twitch_message
 from AthenaTwitchBot.models.twitch_message import TwitchMessage, TwitchMessagePing
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
 from AthenaTwitchBot.models.twitch_message_context import TwitchMessageContext
+from AthenaTwitchBot.models.wrapper_helpers.command import Command
+from AthenaTwitchBot.models.wrapper_helpers.scheduled_task import ScheduledTask
+from AthenaTwitchBot.models.outputs.output import Output
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -24,7 +26,7 @@ from AthenaTwitchBot.models.twitch_message_context import TwitchMessageContext
 @dataclass(kw_only=True, slots=True, eq=False, order=False)
 class TwitchBotProtocol(asyncio.Protocol):
     bot:TwitchBot
-    main_loop:asyncio.AbstractEventLoop
+    output:Output
 
     # non init slots
     transport:asyncio.transports.Transport = field(init=False)
@@ -49,37 +51,53 @@ class TwitchBotProtocol(asyncio.Protocol):
 
         # add frequent_output methods to the coroutine loop
         loop = asyncio.get_running_loop()
-        for callback, delay in self.bot.frequent_outputs:
-            coro = loop.create_task(self.frequent_output_call(callback,delay))
+        for tsk in self.bot.scheduled_tasks:
+            coro = loop.create_task(self.frequent_output_call(tsk))
             asyncio.ensure_future(coro, loop=loop)
 
-    async def frequent_output_call(self, callback,delay:int):
+    async def frequent_output_call(self, tsk:ScheduledTask):
         context = TwitchMessageContext(
             message=TwitchMessage(channel=f"#{self.bot.channel}"),
             transport=self.transport
         )
-        while True:
-            await asyncio.sleep(delay)
-            callback(
-                self=self.bot,
-                context=context)
+        if tsk.before: # the before attribute handles if we sleep before or after the task has been called
+            while True:
+                await asyncio.sleep(tsk.delay)
+                tsk.callback(
+                    self=self.bot,
+                    context=context)
+        else:
+            while True:
+                tsk.callback(
+                    self=self.bot,
+                    context=context)
+                await asyncio.sleep(tsk.delay)
+
 
     def data_received(self, data: bytearray) -> None:
         for message in data.split(b"\r\n"):
+            # if the bytearray is empty, just skip to the next one
+            if message == bytearray(b''):
+                continue
+
             match (twitch_message := self.message_constructor(message, bot_name=self.bot.nickname)):
                 # Keepalive messages : https://dev.twitch.tv/docs/irc#keepalive-messages
                 case TwitchMessagePing():
-                    print(ForeNest.ForestGreen("PINGED BY TWITCH"))
+                    self.output.message(twitch_message)
                     self.transport.write(messages.pong(message=twitch_message.text))
+                    continue
 
                 # catch a message which starts with a command:
                 case TwitchMessage(text=str(user_message)) if user_message.startswith(f"{self.bot.prefix}"):
-                    print(ForeNest.ForestGreen("COMMAND CAUGHT"))
+                    self.output.message(twitch_message)
+                    user_message:str
                     try:
-                        user_cmd = user_message.replace(f"{self.bot.prefix}", "")
-                        # tuple unpacking because we have a callback
-                        #   and the object instance where the command is placed in
-                        self.bot.commands[user_cmd](
+                        user_cmd_str = user_message.replace(self.bot.prefix, "")
+                        twitch_command:Command = self.bot.commands[user_cmd_str.lower()]
+                        if twitch_command.case_sensitive and user_cmd_str != twitch_command.name:
+                            raise KeyError # the check to make the force capitalization work
+
+                        twitch_command.callback(
                             self=self.bot,
                             # Assign a context so the user doesn't need to write the transport messages themselves
                             #   A user only has to write the text
@@ -90,7 +108,16 @@ class TwitchBotProtocol(asyncio.Protocol):
                         )
                     except KeyError:
                         pass
+                    continue
+
+            # if the message wasn't able to be handled by the parser above
+            #   it will just be outputted as undefined
+            self.output.undefined(message)
 
     def connection_lost(self, exc: Exception | None) -> None:
-        self.main_loop.stop()
+        loop = asyncio.get_running_loop()
+        loop.stop()
+
+        if exc is not None:
+            raise exc
 
