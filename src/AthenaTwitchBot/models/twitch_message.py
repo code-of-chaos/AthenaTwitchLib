@@ -41,6 +41,7 @@ class TwitchMessage:
     emotes:str=EMPTY_STR
     flags:str=EMPTY_STR
     user_type:str=EMPTY_STR
+    emote_only:bool=False
 
     def __post_init__(self):
         self.username = self.user.split("!")[0][1:]
