@@ -3,28 +3,25 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+from abc import ABC, abstractmethod
 
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.wrapper_helpers.command import Command
+from AthenaTwitchBot.models.twitch_message import TwitchMessage
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-def command_method(name:str, force_capitalization:bool=False):
-    def decorator(fnc):
-        def wrapper(*args_, **kwargs_):
-            return fnc(*args_, **kwargs_)
+class Output(ABC):
 
-        # store attributes for later use by the bot
-        wrapper.is_command = True
-        # store some information
-        wrapper.cmd = Command(
-            name=name,
-            force_capitalization=force_capitalization,
-            callback=wrapper,
-        )
+    @abstractmethod
+    def pre_launch(self):
+        """Output the state of the application before anything is run"""
+    @abstractmethod
+    def message(self, message:TwitchMessage):
+        """Output of a received message"""
 
-        return wrapper
-    return decorator
+    @abstractmethod
+    def undefined(self,message=None):
+        """Output anything that is supposed to be undefined (this should eventually not be present anymore)"""

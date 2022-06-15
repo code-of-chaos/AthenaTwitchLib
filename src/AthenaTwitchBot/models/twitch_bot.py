@@ -10,7 +10,8 @@ import inspect
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.twitch_command import TwitchCommand
+from AthenaTwitchBot.models.wrapper_helpers.command import Command
+from AthenaTwitchBot.models.wrapper_helpers.scheduled_task import ScheduledTask
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -30,8 +31,8 @@ class TwitchBot:
     predefined_commands:InitVar[dict[str: Callable]]=None # made part of init if someone wants to feel the pain of adding commands manually
 
     # noinspection PyDataclass
-    commands:dict[str: TwitchCommand]=field(init=False)
-    frequent_outputs:list[tuple[Callable, int]]=field(init=False)
+    commands:dict[str: Command]=field(init=False)
+    scheduled_tasks:list[ScheduledTask]=field(init=False)
 
     # non init slots
 
@@ -41,7 +42,7 @@ class TwitchBot:
     def __new__(cls, *args, **kwargs):
         # Loop over own functions to see if any is decorated with the command setup
         cls.commands = {}
-        cls.frequent_outputs = []
+        cls.scheduled_tasks = []
 
         # create the actual instance
         #   Which is to be used in the commands tuple
@@ -53,7 +54,7 @@ class TwitchBot:
                 if "is_command" in (attributes := [attribute for attribute in dir(v) if not attribute.startswith("__")]):
                     cls.commands[v.cmd.name.lower()] = v.cmd
                 elif "is_frequent_output" in attributes:
-                    cls.frequent_outputs.append((v,v.delay))
+                    cls.scheduled_tasks.append(v.tsk)
 
         return obj
 

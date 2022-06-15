@@ -42,6 +42,11 @@ class TwitchMessage:
     flags:str=EMPTY_STR
     user_type:str=EMPTY_STR
     emote_only:bool=False
+    reply_parent_display_name:str=""
+    reply_parent_msg_body:str=""
+    reply_parent_msg_id:int=0
+    reply_parent_user_id:int=0
+    reply_parent_user_login:str=""
 
     def __post_init__(self):
         self.username = self.user.split("!")[0][1:]
