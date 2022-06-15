@@ -13,7 +13,7 @@ import setuptools
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 def version_handler() -> str:
-    version = 0,1,1
+    version = 0,2,0
     version_str = ".".join(str(i) for i in version)
 
     with open("src/AthenaTwitchBot/_info/_v.py", "w") as file:
