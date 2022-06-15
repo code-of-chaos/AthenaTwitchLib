@@ -10,6 +10,7 @@ import inspect
 # Custom Library
 
 # Custom Packages
+from AthenaTwitchBot.models.twitch_command import TwitchCommand
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -29,7 +30,7 @@ class TwitchBot:
     predefined_commands:InitVar[dict[str: Callable]]=None # made part of init if someone wants to feel the pain of adding commands manually
 
     # noinspection PyDataclass
-    commands:dict[str: Callable]=field(init=False)
+    commands:dict[str: TwitchCommand]=field(init=False)
     frequent_outputs:list[tuple[Callable, int]]=field(init=False)
 
     # non init slots
@@ -50,7 +51,7 @@ class TwitchBot:
         for k,v in cls.__dict__.items():
             if inspect.isfunction(v):
                 if "is_command" in (attributes := [attribute for attribute in dir(v) if not attribute.startswith("__")]):
-                    cls.commands[v.command_name] = v
+                    cls.commands[v.cmd.name.lower()] = v.cmd
                 elif "is_frequent_output" in attributes:
                     cls.frequent_outputs.append((v,v.delay))
 

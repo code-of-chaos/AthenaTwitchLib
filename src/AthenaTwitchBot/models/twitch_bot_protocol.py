@@ -17,6 +17,7 @@ from AthenaTwitchBot.functions.twitch_message_constructors import twitch_message
 from AthenaTwitchBot.models.twitch_message import TwitchMessage, TwitchMessagePing
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
 from AthenaTwitchBot.models.twitch_message_context import TwitchMessageContext
+from AthenaTwitchBot.models.twitch_command import TwitchCommand
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -66,6 +67,8 @@ class TwitchBotProtocol(asyncio.Protocol):
 
     def data_received(self, data: bytearray) -> None:
         for message in data.split(b"\r\n"):
+            if message == bytearray(b''): # if the bytearray is empty, just skip to the next one
+                continue
             match (twitch_message := self.message_constructor(message, bot_name=self.bot.nickname)):
                 # Keepalive messages : https://dev.twitch.tv/docs/irc#keepalive-messages
                 case TwitchMessagePing():
@@ -74,12 +77,15 @@ class TwitchBotProtocol(asyncio.Protocol):
 
                 # catch a message which starts with a command:
                 case TwitchMessage(text=str(user_message)) if user_message.startswith(f"{self.bot.prefix}"):
-                    print(ForeNest.ForestGreen("COMMAND CAUGHT"))
+                    user_message:str
+                    print(ForeNest.ForestGreen("POSSIBLE COMMAND CAUGHT"))
                     try:
-                        user_cmd = user_message.replace(f"{self.bot.prefix}", "")
-                        # tuple unpacking because we have a callback
-                        #   and the object instance where the command is placed in
-                        self.bot.commands[user_cmd](
+                        user_cmd_str = user_message.replace(f"{self.bot.prefix}", "")
+                        twitch_command:TwitchCommand = self.bot.commands[user_cmd_str.lower()]
+                        if twitch_command.force_capitalization and user_cmd_str != twitch_command.name:
+                            raise KeyError # the check to make the force capitalization work
+
+                        twitch_command.callback(
                             self=self.bot,
                             # Assign a context so the user doesn't need to write the transport messages themselves
                             #   A user only has to write the text
@@ -88,7 +94,9 @@ class TwitchBotProtocol(asyncio.Protocol):
                                 transport=self.transport
                             )
                         )
+                        print(ForeNest.ForestGreen("COMMAND EXECUTED"))
                     except KeyError:
+                        print(ForeNest.Crimson("COMMAND COULD NOT BE PARSED"))
                         pass
 
     def connection_lost(self, exc: Exception | None) -> None:
