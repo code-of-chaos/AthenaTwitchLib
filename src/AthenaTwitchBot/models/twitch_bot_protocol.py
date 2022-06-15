@@ -94,7 +94,7 @@ class TwitchBotProtocol(asyncio.Protocol):
                     try:
                         user_cmd_str = user_message.replace(f"{self.bot.prefix}", "")
                         twitch_command:Command = self.bot.commands[user_cmd_str.lower()]
-                        if twitch_command.force_capitalization and user_cmd_str != twitch_command.name:
+                        if twitch_command.case_sensitive and user_cmd_str != twitch_command.name:
                             raise KeyError # the check to make the force capitalization work
 
                         twitch_command.callback(

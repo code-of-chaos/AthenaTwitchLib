@@ -53,7 +53,7 @@ class TwitchBot:
             if inspect.isfunction(v):
                 if "is_command" in (attributes := [attribute for attribute in dir(v) if not attribute.startswith("__")]):
                     cls.commands[v.cmd.name.lower()] = v.cmd
-                elif "is_frequent_output" in attributes:
+                elif "is_task" in attributes:
                     cls.scheduled_tasks.append(v.tsk)
 
         return obj

@@ -16,5 +16,5 @@ from typing import Callable
 @dataclass(kw_only=True, match_args=True, slots=True)
 class Command:
     name:str
-    force_capitalization:bool
+    case_sensitive:bool
     callback:Callable
