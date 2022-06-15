@@ -42,15 +42,17 @@ class TwitchBot:
     def __new__(cls, *args, **kwargs):
         # Loop over own functions to see if any is decorated with the command setup
         cls.commands = {}
-        for k,v in cls.__dict__.items():
-            if inspect.isfunction(v) and getattr(v, "command_name", False):
-                cls.commands[v.command_name] = v
 
         # create the actual instance
-        return super(TwitchBot, cls).__new__(cls,*args,**kwargs)
+        #   Which is to be used in the commands tuple
+        obj = super(TwitchBot, cls).__new__(cls,*args,**kwargs)
+        for k,v in cls.__dict__.items():
+            if inspect.isfunction(v) and getattr(v, "command_name", False):
+                cls.commands[v.command_name] = (v, obj)
+
+        return obj
 
     def __post_init__(self, predefined_commands: dict[str: Callable]=None):
         if predefined_commands is not None:
-            self.commands |= predefined_commands
-
-
+            # the self instance isn't assigned on the predefined_commands input
+            self.commands |= {k:(v,self) for k, v in predefined_commands.items()}

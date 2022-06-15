@@ -84,6 +84,7 @@ def twitch_message_constructor_tags(message_bytes:bytearray, bot_name:str) -> Tw
         message=message,
         message_type=irc_message,
         channel=channel,
+        user=user,
         text=" ".join(text).replace(":", "", 1) #only remove the first ":"
     )
 

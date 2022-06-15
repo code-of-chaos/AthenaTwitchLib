@@ -16,6 +16,7 @@ from AthenaTwitchBot.functions.twitch_message_constructors import twitch_message
 
 from AthenaTwitchBot.models.twitch_message import TwitchMessage, TwitchMessagePing
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
+from AthenaTwitchBot.models.twitch_message_context import TwitchMessageContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -36,7 +37,6 @@ class TwitchBotProtocol(asyncio.Protocol):
             raise NotImplementedError("This needs to be created")
 
     def connection_made(self, transport: asyncio.transports.Transport) -> None:
-        # todo make some sort of connector to make t
         self.transport = transport
         # first write the password then the nickname else the connection will fail
         self.transport.write(messages.password(oauth_token=self.bot.oauth_token))
@@ -59,7 +59,18 @@ class TwitchBotProtocol(asyncio.Protocol):
                     print(ForeNest.ForestGreen("COMMAND CAUGHT"))
                     try:
                         user_cmd = user_message.replace(f"{self.bot.prefix}", "")
-                        self.bot.commands[user_cmd](self=self.bot,message=twitch_message,transport=self.transport)
+                        # tuple unpacking because we have a callback
+                        #   and the object instance where the command is placed in
+                        callback, orign_obj = self.bot.commands[user_cmd]
+                        callback(
+                            self=orign_obj,
+                            # Assign a context so the user doesn't need to write the transport messages themselves
+                            #   A user opnly has to write the text
+                            context=TwitchMessageContext(
+                                message=twitch_message,
+                                transport=self.transport
+                            )
+                        )
                     except KeyError:
                         pass
 
