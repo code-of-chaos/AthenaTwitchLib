@@ -11,7 +11,7 @@ from __future__ import annotations
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-def frequent_output_method(delay:int=3600): # default is every hour
+def task_schedule_method(delay:int=3600): # default is every hour
     """
     Create a method that runs every couple of seconds.
     The delay parameter is defined in seconds
