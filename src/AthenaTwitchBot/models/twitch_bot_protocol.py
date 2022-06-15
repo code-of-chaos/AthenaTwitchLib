@@ -36,6 +36,9 @@ class TwitchBotProtocol(asyncio.Protocol):
         else:
             raise NotImplementedError("This needs to be created")
 
+    # ----------------------------------------------------------------------------------------------------------------------
+    # - Protocol neseccary  -
+    # ----------------------------------------------------------------------------------------------------------------------
     def connection_made(self, transport: asyncio.transports.Transport) -> None:
         self.transport = transport
         # first write the password then the nickname else the connection will fail
@@ -44,26 +47,40 @@ class TwitchBotProtocol(asyncio.Protocol):
         self.transport.write(messages.join(channel=self.bot.channel))
         self.transport.write(messages.request_tags)
 
+        # add frequent_ouput methods to the coroutine loop
+        loop = asyncio.get_running_loop()
+        for callback, delay in self.bot.frequent_outputs:
+            coro = loop.create_task(self.frequent_output_call(callback,delay))
+            asyncio.ensure_future(coro, loop=loop)
+
+    async def frequent_output_call(self, callback,delay:int):
+        context = TwitchMessageContext(
+            message=TwitchMessage(channel=f"#{self.bot.channel}"),
+            transport=self.transport
+        )
+        while True:
+            await asyncio.sleep(delay)
+            callback(
+                self=self.bot,
+                context=context)
+
     def data_received(self, data: bytearray) -> None:
         for message in data.split(b"\r\n"):
             match (twitch_message := self.message_constructor(message, bot_name=self.bot.nickname)):
                 # Keepalive messages : https://dev.twitch.tv/docs/irc#keepalive-messages
                 case TwitchMessagePing():
                     print(ForeNest.ForestGreen("PINGED BY TWITCH"))
-                    self.transport.write(pong_message := messages.pong(message=twitch_message.text))
-                    print(pong_message)
+                    self.transport.write(messages.pong(message=twitch_message.text))
 
                 # catch a message which starts with a command:
-                case TwitchMessage(text=user_message) if user_message.startswith(f"{self.bot.prefix}"):
-                    user_message:str
+                case TwitchMessage(text=str(user_message)) if user_message.startswith(f"{self.bot.prefix}"):
                     print(ForeNest.ForestGreen("COMMAND CAUGHT"))
                     try:
                         user_cmd = user_message.replace(f"{self.bot.prefix}", "")
                         # tuple unpacking because we have a callback
                         #   and the object instance where the command is placed in
-                        callback, orign_obj = self.bot.commands[user_cmd]
-                        callback(
-                            self=orign_obj,
+                        self.bot.commands[user_cmd](
+                            self=self.bot,
                             # Assign a context so the user doesn't need to write the transport messages themselves
                             #   A user opnly has to write the text
                             context=TwitchMessageContext(

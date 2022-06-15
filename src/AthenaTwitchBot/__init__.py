@@ -2,6 +2,7 @@
 # - Package Imports -
 # ----------------------------------------------------------------------------------------------------------------------
 from AthenaTwitchBot.decorators.command import commandmethod
+from AthenaTwitchBot.decorators.frequentoutput import frequentoutputmethod
 
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
 from AthenaTwitchBot.models.twitch_bot_protocol import TwitchBotProtocol
