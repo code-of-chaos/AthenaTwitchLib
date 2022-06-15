@@ -23,8 +23,6 @@ class TwitchBot:
     channel:str
     prefix:str
 
-    in_text_commands:bool=False # allows for commands to be placed within text
-
     # Twitch-specific capabilities : https://dev.twitch.tv/docs/irc/capabilities
     twitch_capability_commands:bool=False
     twitch_capability_membership:bool=False

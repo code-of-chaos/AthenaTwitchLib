@@ -88,7 +88,7 @@ class TwitchBotProtocol(asyncio.Protocol):
                     continue
 
                 # catch a message which starts with a command:
-                case TwitchMessage(text=str(user_message)) if user_message.startswith(f"{self.bot.prefix}") and not self.bot.in_text_commands:
+                case TwitchMessage(text=str(user_message)) if user_message.startswith(f"{self.bot.prefix}"):
                     self.output.message(twitch_message)
                     user_message:str
                     try:
@@ -109,31 +109,6 @@ class TwitchBotProtocol(asyncio.Protocol):
                     except KeyError:
                         pass
                     continue
-
-                # catch a message if a command is within the text: (if the bot has that setting enabled)
-                case TwitchMessage(text=str(user_message)) if self.bot.in_text_commands:
-                    self.output.message(twitch_message)
-                    for s in user_message.split(" "):
-                        try:
-                            if not s.startswith(self.bot.prefix):
-                                continue
-                            user_cmd_str = s.replace(f"{self.bot.prefix}", "")
-                            twitch_command: Command = self.bot.commands[user_cmd_str.lower()]
-                            if twitch_command.case_sensitive and user_cmd_str != twitch_command.name:
-                                raise KeyError  # the check to make the force capitalization work
-
-                            twitch_command.callback(
-                                self=self.bot,
-                                # Assign a context so the user doesn't need to write the transport messages themselves
-                                #   A user only has to write the text
-                                context=TwitchMessageContext(
-                                    message=twitch_message,
-                                    transport=self.transport
-                                )
-                            )
-                        except KeyError:
-                            pass
-                        continue
 
             # if the message wasn't able to be handled by the parser above
             #   it will just be outputted as undefined
