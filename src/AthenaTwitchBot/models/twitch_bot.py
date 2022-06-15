@@ -52,7 +52,9 @@ class TwitchBot:
         for k,v in cls.__dict__.items():
             if inspect.isfunction(v):
                 if "is_command" in (attributes := [attribute for attribute in dir(v) if not attribute.startswith("__")]):
-                    cls.commands[v.cmd.name.lower()] = v.cmd
+                    for cmd in v.cmd:
+                        cls.commands[cmd.name.lower()] = cmd
+
                 elif "is_task" in attributes:
                     cls.scheduled_tasks.append(v.tsk)
 
