@@ -4,7 +4,6 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass, field
-from datetime import datetime
 
 # Custom Library
 from AthenaColor import HEX
@@ -18,7 +17,7 @@ EMPTY_STR = ""
 
 @dataclass(slots=True, eq=True, match_args=True)
 class TwitchMessage:
-    message:str=EMPTY_STR # complete message without the sufix: "\r\n"
+    message:str=EMPTY_STR # complete message without the suffix: "\r\n"
     message_type:str=EMPTY_STR
     channel:str=EMPTY_STR
     text:str=EMPTY_STR

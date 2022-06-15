@@ -4,8 +4,6 @@
 # General Packages
 from __future__ import annotations
 from typing import Callable
-from datetime import datetime
-import time
 
 # Custom Library
 from AthenaColor import StyleNest, ForeNest, HEX
@@ -71,13 +69,13 @@ def twitch_message_constructor_tags(message_bytes:bytearray, bot_name:str) -> Tw
     # with tags enabled, we know that the first element of the list above contains all the user's tags
     #   This enables us to loop them and assign them to the message
     #   This is done to make them accessible to the command parsing
-    # The second part of the split message is the user definement. The user id is found in the tags
+    # The second part of the split message is the user definition. The user id is found in the tags
     # IRC message string is found next
-    # The channel from which it is sent is also recieved.
-    #   When the bot is only installed in one channel, this isn't usefull, but if a bot is used in multiple channels
-    #   this is part of the usefull known context
+    # The channel from which it is sent is also received.
+    #   When the bot is only installed in one channel, this isn't useful, but if a bot is used in multiple channels
+    #   this is part of the usefully known context
     # Finally all text should be clumped together again, to be searched though for a custom command
-    #   This is to be done by the protocol class, not the message constructir
+    #   This is to be done by the protocol class, not the message constructor
 
     tags, user, irc_message, channel, *text = content
     twitch_message:TwitchMessage = TwitchMessage(
@@ -95,7 +93,7 @@ def twitch_message_constructor_tags(message_bytes:bytearray, bot_name:str) -> Tw
         try:
             TAG_MAPPING[tag_name](tm=twitch_message,tag_value=tag_value)
         except KeyError:
-            print(StyleNest.Bold(ForeNest.Maroon(f"Unkown tag of '{tag_name}' found. Please create a bug report on the git repo")))
+            print(StyleNest.Bold(ForeNest.Maroon(f"Unknown tag of '{tag_name}' found. Please create a bug report on the git repo")))
             pass
 
     return twitch_message

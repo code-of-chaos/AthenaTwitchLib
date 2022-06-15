@@ -18,7 +18,7 @@ from AthenaTwitchBot.models.twitch_bot import TwitchBot
 @dataclass(slots=True,eq=False,order=False,kw_only=True)
 class Server:
     bot: TwitchBot
-    socket:socket.socket=None
+    socket:socket.socket=field(default_factory=socket.socket)
 
     # non init slots
     server:asyncio.AbstractServer = field(init=False)

@@ -31,13 +31,13 @@ class TwitchBotProtocol(asyncio.Protocol):
     message_constructor:Callable = field(init=False)
 
     def __post_init__(self):
-        if self.bot.twitch_capibility_tags:
+        if self.bot.twitch_capability_tags:
             self.message_constructor = twitch_message_constructor_tags
         else:
             raise NotImplementedError("This needs to be created")
 
     # ----------------------------------------------------------------------------------------------------------------------
-    # - Protocol neseccary  -
+    # - Protocol necessary  -
     # ----------------------------------------------------------------------------------------------------------------------
     def connection_made(self, transport: asyncio.transports.Transport) -> None:
         self.transport = transport
@@ -47,7 +47,7 @@ class TwitchBotProtocol(asyncio.Protocol):
         self.transport.write(messages.join(channel=self.bot.channel))
         self.transport.write(messages.request_tags)
 
-        # add frequent_ouput methods to the coroutine loop
+        # add frequent_output methods to the coroutine loop
         loop = asyncio.get_running_loop()
         for callback, delay in self.bot.frequent_outputs:
             coro = loop.create_task(self.frequent_output_call(callback,delay))
@@ -82,7 +82,7 @@ class TwitchBotProtocol(asyncio.Protocol):
                         self.bot.commands[user_cmd](
                             self=self.bot,
                             # Assign a context so the user doesn't need to write the transport messages themselves
-                            #   A user opnly has to write the text
+                            #   A user only has to write the text
                             context=TwitchMessageContext(
                                 message=twitch_message,
                                 transport=self.transport
