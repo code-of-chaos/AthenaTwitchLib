@@ -13,7 +13,7 @@ import setuptools
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 def version_handler() -> str:
-    version = 0,0,0
+    version = 0,1,0
     version_str = ".".join(str(i) for i in version)
 
     with open("src/AthenaTwitchBot/_info/_v.py", "w") as file:
@@ -36,7 +36,7 @@ setuptools.setup(
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.10",
     install_requires=[
-        "AthenaLib>=0.2.0",
-        "AthenaColor>=5.1.0"
+        "AthenaLib>=1.1.0",
+        "AthenaColor>=6.0.1"
     ]
 )
