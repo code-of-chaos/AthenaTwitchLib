@@ -10,4 +10,5 @@ from AthenaTwitchBot.models.twitch_message_context import TwitchMessageContext
 
 from AthenaTwitchBot.functions.launch import launch
 
+# noinspection PyProtectedMember
 from AthenaTwitchBot._info.info import info # a general info printer
