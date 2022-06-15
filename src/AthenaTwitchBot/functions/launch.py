@@ -23,9 +23,10 @@ def launch(
         protocol_factory:Callable=None,
         output:Output=None,
         host:str='irc.chat.twitch.tv',
-        port:int=6667, #todo make this into the ssl port
-
-        auto_restart:bool=False
+        port:int=6667,
+        port_ssl:int=6697,
+        auto_restart:bool=False,
+        ssl:bool=False
 ):
 
     if output is None:
@@ -48,7 +49,8 @@ def launch(
                 loop.create_connection(
                     protocol_factory=protocol_factory,
                     host=host,
-                    port=port,
+                    port=port if not ssl else port_ssl,
+                    ssl=ssl
                 )
             )
             loop.run_forever()
