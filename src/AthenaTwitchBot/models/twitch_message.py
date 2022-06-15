@@ -28,15 +28,16 @@ class TwitchMessage:
     color:HEX=field(default_factory=HEX)
     display_name:str=""
     first_msg:bool=False
-    message_id:int=0
+    message_id:str=""
     mod:bool=False
     room_id:str=""
     subscriber:bool=False
-    tmi_sent_ts:datetime=field(default_factory=datetime.now)
+    tmi_sent_ts:int=0
     turbo:bool=False
     user_id:int=0
     emotes:str=""
     flags:str=""
+    user_type:str=""
 # ----------------------------------------------------------------------------------------------------------------------
 # - Special message types -
 # ----------------------------------------------------------------------------------------------------------------------

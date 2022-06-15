@@ -54,21 +54,14 @@ class TwitchBotProtocol(asyncio.Protocol):
                     print(pong_message)
 
                 # catch a message which starts with a command:
-                case TwitchMessage(message=[_,_,_,str(user_message),*user_message_other]) if user_message.startswith(f":{self.bot.prefix}"):
+                case TwitchMessage(text=user_message) if user_message.startswith(f"{self.bot.prefix}"):
                     user_message:str
                     print(ForeNest.ForestGreen("COMMAND CAUGHT"))
                     try:
-                        user_cmd = user_message.replace(f":{self.bot.prefix}", "")
-                        result = self.bot.commands[user_cmd](self=self.bot,transport=self.transport)
-                        print(result)
+                        user_cmd = user_message.replace(f"{self.bot.prefix}", "")
+                        self.bot.commands[user_cmd](self=self.bot,message=twitch_message,transport=self.transport)
                     except KeyError:
                         pass
-
-                # catch a message which has a command within it:
-                case TwitchMessage(message=[_,_,_,*messages_parts]):
-                    for message in messages_parts:
-                        if message.startswith(self.bot.prefix):
-                            print(ForeNest.ForestGreen("COMMAND CAUGHT"))
 
     def connection_lost(self, exc: Exception | None) -> None:
         self.main_loop.stop()

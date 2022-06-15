@@ -5,6 +5,7 @@
 from __future__ import annotations
 from typing import Callable
 from datetime import datetime
+import time
 
 # Custom Library
 from AthenaColor import StyleNest, ForeNest, HEX
@@ -41,14 +42,14 @@ TAG_MAPPING:dict[str:Callable] = {
     "emotes": lambda tm, tag_value: setattr(tm, "emotes", tag_value),
     "first-msg": lambda tm, tag_value: setattr(tm, "first_msg", bool(tag_value)),
     "flags": lambda tm, tag_value: setattr(tm, "flags", tag_value),
-    "id": lambda tm, tag_value: setattr(tm, "message_id", int(tag_value)),
+    "id": lambda tm, tag_value: setattr(tm, "message_id", tag_value),
     "mod": lambda tm, tag_value: setattr(tm, "mod", bool(tag_value)),
     "room-id": lambda tm, tag_value: setattr(tm, "room_id", tag_value),
     "subscriber": lambda tm, tag_value: setattr(tm, "subscriber", bool(tag_value)),
-    "tmi-sent-ts": lambda tm, tag_value: setattr(tm, "tmi_sent_ts", datetime.fromtimestamp(int(tag_value))),
+    "tmi-sent-ts": lambda tm, tag_value: setattr(tm, "tmi_sent_ts", int(tag_value)),
     "turbo": lambda tm, tag_value: setattr(tm, "turbo", bool(tag_value)),
     "user-id": lambda tm, tag_value: setattr(tm, "user_id", int(tag_value)),
-    "user-type": lambda tm, tag_value: setattr(tm, "user-type", tag_value),
+    "user-type": lambda tm, tag_value: setattr(tm, "user_type", tag_value),
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -83,7 +84,7 @@ def twitch_message_constructor_tags(message_bytes:bytearray, bot_name:str) -> Tw
         message=message,
         message_type=irc_message,
         channel=channel,
-        text=" ".join(text)
+        text=" ".join(text).replace(":", "", 1) #only remove the first ":"
     )
 
 
