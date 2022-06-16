@@ -10,6 +10,7 @@ from typing import Callable
 from AthenaLib.models.time import Second, Minute, Hour
 
 # Custom Packages
+from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -19,3 +20,4 @@ class ScheduledTask:
     delay:int|Second|Minute|Hour
     wait_before:bool
     callback:Callable
+    channels:list[TwitchChannel]=None #always set to a channel in the end

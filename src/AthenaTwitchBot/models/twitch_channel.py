@@ -3,6 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+from dataclasses import dataclass
 
 # Custom Library
 
@@ -11,5 +12,13 @@ from __future__ import annotations
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-def format_message(message:str) -> bytes:
-    return f"{message}\r\n".encode("UTF_8")
+@dataclass(slots=True)
+class TwitchChannel:
+    name:str
+
+    def __post_init__(self):
+        # remove any "#" if they exists
+        self.name = self.name.replace("#", "")
+
+    def __str__(self) -> str:
+        return f"#{self.name}"

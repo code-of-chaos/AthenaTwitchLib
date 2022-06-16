@@ -5,29 +5,25 @@
 from __future__ import annotations
 
 # Custom Library
-from AthenaColor import ForeNest
 
 # Custom Packages
 from AthenaTwitchBot.models.outputs.output import Output
-from AthenaTwitchBot._info._v import VERSION
+
+# ----------------------------------------------------------------------------------------------------------------------
+# - All -
+# ----------------------------------------------------------------------------------------------------------------------
+__all__ = [
+    "output_connection_made", "output_connection_ping", "output_undefined"
+]
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class OutputConsole(Output):
-    async def connection_made(self,**kwargs):
-        print(
-            ForeNest.SlateGray(
-                f"- AthenaTwitchBot {ForeNest.HotPink('v', VERSION, sep='')} -",
-                f"   made by Andreas Sas",
-                "",
-                f"Connection established to {ForeNest.MediumPurple('Twitch')}",
-                sep="\n"
-            ),
-        )
+async def output_connection_made(output:Output, **kwargs):
+    await output.connection_made(**kwargs)
 
-    async def connection_ping(self,**kwargs):
-        print(ForeNest.ForestGreen("PING RECEIVED"))
+async def output_connection_ping(output:Output, **kwargs):
+    await output.connection_ping(**kwargs)
 
-    async def undefined(self,text:str,**kwargs):
-        print(ForeNest.SlateGray(text),)
+async def output_undefined(output:Output, **kwargs):
+    await output.undefined(**kwargs)

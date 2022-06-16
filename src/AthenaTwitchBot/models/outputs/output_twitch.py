@@ -3,27 +3,29 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from abc import ABC, abstractmethod
 import asyncio
 
 # Custom Library
 
 # Custom Packages
+from AthenaTwitchBot.models.outputs.output import Output
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
+
+from AthenaTwitchBot.functions.twitch_irc_messages import format_message
+from AthenaTwitchBot.data.twitch_irc_messages import *
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class Output(ABC):
-
-    @abstractmethod
+class OutputTwitch(Output):
     async def connection_made(self, bot:TwitchBot, transport: asyncio.transports.Transport,**kwargs):
-        """Output of data when the connection to the Twitch servers is established"""
+        transport.write(format_message(f"{PASS}{bot.oauth_token}"))
+        transport.write(format_message(f"{NICK} {bot.nickname}"))
+        transport.write(format_message(f"{JOIN} {','.join(bot.channels)}"))
+        transport.write(format_message(REQUEST_TAGS))
 
-    @abstractmethod
-    async def connection_ping(self, transport: asyncio.transports.Transport, ping_response:list[str],**kwargs):
-        """Output response to a ping sent by the Twitch servers"""
+    async def connection_ping(self, transport: asyncio.transports.Transport, ping_response:list[str], **kwargs):
+        transport.write(format_message(f"{PONG} {' '.join(ping_response)}"))
 
-    @abstractmethod
-    async def undefined(self,text:str, **kwargs):
-        """Output response to anything that wasn't caught correctly"""
+    async def undefined(self,**kwargs):
+        pass # don't answer to something that is undefined

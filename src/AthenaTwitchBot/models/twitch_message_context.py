@@ -31,7 +31,7 @@ class TwitchMessageContext:
         """
         text = text.replace('\n', '')
         self.transport.write(
-            f"@reply-parent-msg-id={self.message.message_id} PRIVMSG {self.message.channel} :{text}\r\n".encode("UTF_8")
+            f"@reply-parent-msg-id={self.message.tags.message_id} PRIVMSG {self.message.channel} :{text}\r\n".encode("UTF_8")
         )
 
     def write(self, text:str):

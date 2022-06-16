@@ -10,15 +10,20 @@ from typing import Callable
 # Custom Library
 
 # Custom Packages
-import AthenaTwitchBot.functions.twitch_irc_messages as messages
-from AthenaTwitchBot.functions.twitch_message_constructors import twitch_message_constructor_tags
-
-from AthenaTwitchBot.models.twitch_message import TwitchMessage, TwitchMessagePing
+from AthenaTwitchBot.models.twitch_message import TwitchMessage
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
 from AthenaTwitchBot.models.twitch_message_context import TwitchMessageContext
-from AthenaTwitchBot.models.wrapper_helpers.command import Command
 from AthenaTwitchBot.models.wrapper_helpers.scheduled_task import ScheduledTask
 from AthenaTwitchBot.models.outputs.output import Output
+from AthenaTwitchBot.models.outputs.output_twitch import OutputTwitch
+from AthenaTwitchBot.models.twitch_channel import TwitchChannel
+
+from AthenaTwitchBot.functions.output import *
+
+from AthenaTwitchBot.data.unions import OUTPUT_CALLBACKS
+from AthenaTwitchBot.data.twitch_irc_messages import (
+    PING, PRIVMSG, TMI_TWITCH_TV, JOIN, ACK, ASTERISK, CAP, TWITCH_TAGS, EQUALS
+)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -26,38 +31,22 @@ from AthenaTwitchBot.models.outputs.output import Output
 @dataclass(kw_only=True, slots=True, eq=False, order=False)
 class TwitchBotProtocol(asyncio.Protocol):
     bot:TwitchBot
-    output:Output
+    outputs:list[Output]
 
     # non init slots
     transport:asyncio.transports.Transport = field(init=False)
     message_constructor:Callable = field(init=False)
+    loop:asyncio.AbstractEventLoop = field(init=False)
 
     def __post_init__(self):
-        if self.bot.twitch_capability_tags:
-            self.message_constructor = twitch_message_constructor_tags
-        else:
-            raise NotImplementedError("This needs to be created")
+        self.loop = asyncio.get_running_loop()
 
-    # ----------------------------------------------------------------------------------------------------------------------
-    # - Protocol necessary  -
-    # ----------------------------------------------------------------------------------------------------------------------
-    def connection_made(self, transport: asyncio.transports.Transport) -> None:
-        self.transport = transport
-        # first write the password then the nickname else the connection will fail
-        self.transport.write(messages.password(oauth_token=self.bot.oauth_token))
-        self.transport.write(messages.nick(nickname=self.bot.nickname))
-        self.transport.write(messages.join(channel=self.bot.channel))
-        self.transport.write(messages.request_tags)
-
-        # add frequent_output methods to the coroutine loop
-        loop = asyncio.get_running_loop()
-        for tsk in self.bot.scheduled_tasks:
-            coro = loop.create_task(self.frequent_output_call(tsk))
-            asyncio.ensure_future(coro, loop=loop)
-
-    async def frequent_output_call(self, tsk:ScheduledTask):
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Support Methods  -
+    # ------------------------------------------------------------------------------------------------------------------
+    async def scheduled_task_coro(self, tsk:ScheduledTask, channel:TwitchChannel):
         context = TwitchMessageContext(
-            message=TwitchMessage(channel=f"#{self.bot.channel}"),
+            message=TwitchMessage(channel=channel),
             transport=self.transport
         )
         if tsk.wait_before: # the wait_before attribute handles if we sleep wait_before or after the task has been called
@@ -69,51 +58,140 @@ class TwitchBotProtocol(asyncio.Protocol):
                 tsk.callback(self=self.bot,context=context)
                 await asyncio.sleep(tsk.delay)
 
+    def output_handler(self,callback:OUTPUT_CALLBACKS, **kwargs):
+        # TODO test code below with asyncio.gather
+        for output in self.outputs:
+            # schedule the coro
+            asyncio.ensure_future(
+                # only the twitch bots need the transport object
+                self.loop.create_task(callback(output=output,transport=self.transport,**kwargs))
+                if isinstance(output, OutputTwitch) else
+                self.loop.create_task(callback(output=output, **kwargs))
+                ,
+                loop=self.loop)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Protocol necessary  -
+    # ------------------------------------------------------------------------------------------------------------------
+    def connection_made(self, transport: asyncio.transports.Transport) -> None:
+        self.transport = transport
+        # first write the password then the nickname else the connection will fail
+        self.output_handler(
+            callback=output_connection_made,
+            # below this point is all **kwargs
+            bot = self.bot
+        )
+
+        # add frequent_output methods to the coroutine loop
+        for tsk in self.bot.scheduled_tasks:
+            if tsk.channels: # the list is populated with channels
+                for channel in tsk.channels:
+                    coro = self.loop.create_task(self.scheduled_task_coro(tsk, channel=channel))
+                    asyncio.ensure_future(coro, loop=self.loop)
+            else: # a channel has not been defined, and the task will run on all the bot channels
+                for channel in self.bot.channels:
+                    coro = self.loop.create_task(self.scheduled_task_coro(tsk, channel=channel))
+                    asyncio.ensure_future(coro, loop=self.loop)
+
 
     def data_received(self, data: bytearray) -> None:
-        for message in data.split(b"\r\n"):
-            # if the bytearray is empty, just skip to the next one
-            if message == bytearray(b''):
-                continue
-
-            match (twitch_message := self.message_constructor(message, bot_name=self.bot.nickname)):
-                # Keepalive messages : https://dev.twitch.tv/docs/irc#keepalive-messages
-                case TwitchMessagePing():
-                    self.output.message(twitch_message)
-                    self.transport.write(messages.pong(message=twitch_message.text))
-                    continue
-
-                # catch a message which starts with a command:
-                case TwitchMessage(text=str(user_message)) if user_message.startswith(f"{self.bot.prefix}"):
-                    self.output.message(twitch_message)
-                    user_message:str
-                    try:
-                        user_cmd_str = user_message.replace(self.bot.prefix, "")
-                        twitch_command:Command = self.bot.commands[user_cmd_str.lower()]
-                        if twitch_command.case_sensitive and user_cmd_str != twitch_command.name:
-                            raise KeyError # the check to make the force capitalization work
-
-                        twitch_command.callback(
-                            self=self.bot,
-                            # Assign a context so the user doesn't need to write the transport messages themselves
-                            #   A user only has to write the text
-                            context=TwitchMessageContext(
-                                message=twitch_message,
-                                transport=self.transport
-                            )
-                        )
-                    except KeyError:
-                        pass
-                    continue
-
-            # if the message wasn't able to be handled by the parser above
-            #   it will just be outputted as undefined
-            self.output.undefined(message)
+        self.data_parser(data)
 
     def connection_lost(self, exc: Exception | None) -> None:
-        loop = asyncio.get_running_loop()
-        loop.stop()
+        self.loop.stop()
 
         if exc is not None:
             raise exc
+
+        # ------------------------------------------------------------------------------------------------------------------
+        # - MESSAGE PARSING  -
+        # ------------------------------------------------------------------------------------------------------------------
+
+    def data_parser(self, data: bytearray):
+        """Actual message parsing, which parses viewer's messages"""
+        # decode and split to handle every message by itself
+        for d in data.decode("utf_8").split("\r\n"):
+            # catch some patterns early to be either ignored or parsed
+            match d_split:= d.split(" "):
+                case PING(), *ping_response:
+                    # CATCHES the following pattern:
+                    # PING
+                    # :tmi.twitch.tv
+                    self.output_handler(
+                        callback=output_connection_ping,
+                        # below this point is all **kwargs
+                        ping_response=ping_response # same response has to be given back
+                    )
+                    continue # go to next piece of data
+
+                case TMI_TWITCH_TV(), str(int_id), self.bot.nickname, str(text):
+                    # CATCHES the following pattern:
+                    # :tmi.twitch.tv
+                    # 001
+                    # eva_athenabot
+                    # :Welcome, GLHF!
+                    pass # todo functionality
+                    self.output_handler(
+                        callback=output_undefined,
+                        # below this point is all **kwargs
+                        text=" ".join(d_split)
+                    )
+
+
+                case str(info), str(user_name), PRIVMSG(), str(channel), str(text):
+                    # CATCHES the following pattern:
+                    # @badge-info=;badges=;client-nonce=4ac36d90556713038f596be25cc698a2;color=#1E90FF;display-name=badcop_;emotes=;first-msg=0;flags=;id=8b506bf0-517d-4ae7-9dcb-bce5c2145412;mod=0;room-id=600187263;subscriber=0;tmi-sent-ts=1655367514927;turbo=0;user-id=56931496;user-type=
+                    # :badcop_!badcop_@badcop_.tmi.twitch.tv
+                    # PRIVMSG
+                    # #directiveathena
+                    # :that sentence was poggers
+                    pass # todo functionality
+                    self.output_handler(
+                        callback=output_undefined,
+                        # below this point is all **kwargs
+                        text=" ".join(d_split)
+                    )
+
+                case str(bot_name_long), JOIN(), str(channel) \
+                    if bot_name_long == f":{self.bot.nickname}!{self.bot.nickname}@{self.bot.nickname}.tmi.twitch.tv":
+                    # CATCHES the following pattern:
+                    # :eva_athenabot!eva_athenabot@eva_athenabot.tmi.twitch.tv
+                    # JOIN
+                    # #directiveathena
+                    pass # todo functionality
+                    self.output_handler(
+                        callback=output_undefined,
+                        # below this point is all **kwargs
+                        text=" ".join(d_split)
+                    )
+
+                case TMI_TWITCH_TV(), CAP(), ASTERISK(), ACK(), TWITCH_TAGS():
+                    # CATCHES the following pattern:
+                    # :tmi.twitch.tv
+                    # CAP
+                    # *
+                    # ACK
+                    # :twitch.tv/tags
+                    pass # todo functionality
+                    self.output_handler(
+                        callback=output_undefined,
+                        # below this point is all **kwargs
+                        text=" ".join(d_split)
+                    )
+
+                case str(bot_name_long), str(int_id), self.bot.nickname, EQUALS(), str(channel), str(bot_name_short) \
+                    if bot_name_long == f":{self.bot.nickname}.tmi.twitch.tv" and bot_name_short == f":{self.bot.nickname}":
+                    # CATCHES the following pattern:
+                    # :eva_athenabot.tmi.twitch.tv
+                    # 353
+                    # eva_athenabot
+                    # =
+                    # #directiveathena
+                    # :eva_athenabot
+                    pass # todo functionality
+                    self.output_handler(
+                        callback=output_undefined,
+                        # below this point is all **kwargs
+                        text=" ".join(d_split)
+                    )
 
