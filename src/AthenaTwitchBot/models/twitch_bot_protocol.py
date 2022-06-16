@@ -11,13 +11,15 @@ from typing import Callable
 from AthenaColor import ForeNest
 
 # Custom Packages
-from AthenaTwitchBot.models.twitch_message import TwitchMessage
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
-from AthenaTwitchBot.models.twitch_message_context import TwitchMessageContext
-from AthenaTwitchBot.models.wrapper_helpers.scheduled_task import ScheduledTask
-from AthenaTwitchBot.models.outputs.output import Output
+from AthenaTwitchBot.models.decorator_helpers.scheduled_task import ScheduledTask
+from AthenaTwitchBot.models.outputs.abstract_output import AbstractOutput
 from AthenaTwitchBot.models.outputs.output_twitch import OutputTwitch
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
+from AthenaTwitchBot.models.twitch_message_tags import TwitchMessageTags
+from AthenaTwitchBot.models.twitch_user import TwitchUser
+from AthenaTwitchBot.models.twitch_context import TwitchContext
+from AthenaTwitchBot.models.decorator_helpers.command import Command
 
 from AthenaTwitchBot.functions.output import *
 
@@ -32,7 +34,7 @@ from AthenaTwitchBot.data.twitch_irc_messages import (
 @dataclass(kw_only=True, slots=True, eq=False, order=False)
 class TwitchBotProtocol(asyncio.Protocol):
     bot:TwitchBot
-    outputs:list[Output]
+    outputs:list[AbstractOutput]
 
     # non init slots
     transport:asyncio.transports.Transport = field(init=False)
@@ -46,18 +48,24 @@ class TwitchBotProtocol(asyncio.Protocol):
     # - Support Methods  -
     # ------------------------------------------------------------------------------------------------------------------
     async def scheduled_task_coro(self, tsk:ScheduledTask, channel:TwitchChannel):
-        context = TwitchMessageContext(
-            message=TwitchMessage(channel=channel),
-            transport=self.transport
-        )
-        if tsk.wait_before: # the wait_before attribute handles if we sleep wait_before or after the task has been called
-            while True:
+        while True:
+            context = self.create_context(
+                tags=None,
+                user_name_str=self.bot.nickname,
+                channel_str=channel,
+                text=tuple()
+            )
+            if tsk.wait_before: # the wait_before attribute handles if we sleep wait_before or after the task has been called
                 await asyncio.sleep(tsk.delay)
                 tsk.callback(self=self.bot,context=context)
-        else:
-            while True:
+            else:
                 tsk.callback(self=self.bot,context=context)
                 await asyncio.sleep(tsk.delay)
+            self.output_handler(
+                callback=output_scheduled_task,
+                # below this point is all **kwargs
+                context=context
+            )
 
     def output_handler(self,callback:OUTPUT_CALLBACKS, **kwargs):
         # TODO test code below with asyncio.gather
@@ -70,6 +78,18 @@ class TwitchBotProtocol(asyncio.Protocol):
                 self.loop.create_task(callback(output=output, **kwargs))
                 ,
                 loop=self.loop)
+
+    def create_context(self, tags:str|None, user_name_str:str, channel_str:str|TwitchChannel, text:tuple[str]) -> TwitchContext:
+        return TwitchContext(
+            message_tags=TwitchMessageTags.new_from_tags_str(tags)
+                if self.bot.twitch_capability_tags and tags is not None else
+                TwitchMessageTags(),
+            user=TwitchUser(user_name_str),
+            channel=channel_str
+                if isinstance(channel_str, TwitchChannel) else
+            TwitchChannel(channel_str) ,
+            raw_text=text
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Protocol necessary  -
@@ -96,7 +116,7 @@ class TwitchBotProtocol(asyncio.Protocol):
 
 
     def data_received(self, data: bytearray) -> None:
-        self.data_parser(data)
+        self.parse_data(data)
 
     def connection_lost(self, exc: Exception | None) -> None:
         self.loop.stop()
@@ -104,11 +124,10 @@ class TwitchBotProtocol(asyncio.Protocol):
         if exc is not None:
             raise exc
 
-        # ------------------------------------------------------------------------------------------------------------------
-        # - MESSAGE PARSING  -
-        # ------------------------------------------------------------------------------------------------------------------
-
-    def data_parser(self, data: bytearray):
+    # ------------------------------------------------------------------------------------------------------------------
+    # - MESSAGE PARSING  -
+    # ------------------------------------------------------------------------------------------------------------------
+    def parse_data(self, data: bytearray):
         """Actual message parsing, which parses viewer's messages"""
         # decode and split to handle every message by itself
         for d in data.decode("utf_8").split("\r\n"):
@@ -140,16 +159,37 @@ class TwitchBotProtocol(asyncio.Protocol):
                         text=" ".join(d_split)
                     )
 
-
-                case str(info), str(user_name), _privmsg, str(channel), *text \
-                    if _privmsg == PRIVMSG:
+                case str(tags), str(user_name_str), _privmsg, str(channel_str), *text \
+                    if _privmsg == PRIVMSG \
+                       and self.bot.twitch_capability_tags:
                     # CATCHES the following pattern:
                     # @badge-info=;badges=;client-nonce=4ac36d90556713038f596be25cc698a2;color=#1E90FF;display-name=badcop_;emotes=;first-msg=0;flags=;id=8b506bf0-517d-4ae7-9dcb-bce5c2145412;mod=0;room-id=600187263;subscriber=0;tmi-sent-ts=1655367514927;turbo=0;user-id=56931496;user-type=
                     # :badcop_!badcop_@badcop_.tmi.twitch.tv
                     # PRIVMSG
                     # #directiveathena
                     # :that sentence was poggers
-                    pass # todo functionality
+                    if self.parse_user_message(tags, user_name_str, channel_str, text):
+                        # a command was caught:
+                        continue # because the output was handled by the parser above
+                    # else:
+                    self.output_handler(
+                        callback=output_undefined,
+                        # below this point is all **kwargs
+                        text=" ".join(d_split)
+                    )
+
+                case str(user_name_str), _privmsg, str(channel_str), *text \
+                    if _privmsg == PRIVMSG \
+                       and not self.bot.twitch_capability_tags:
+                    # CATCHES the following pattern:
+                    # :badcop_!badcop_@badcop_.tmi.twitch.tv
+                    # PRIVMSG
+                    # #directiveathena
+                    # :that sentence was poggers
+                    if self.parse_user_message(None, user_name_str, channel_str, text):
+                        # a command was caught:
+                        continue # because the output was handled by the parser above
+                    # else:
                     self.output_handler(
                         callback=output_undefined,
                         # below this point is all **kwargs
@@ -224,5 +264,40 @@ class TwitchBotProtocol(asyncio.Protocol):
                         # below this point is all **kwargs
                         text=ForeNest.Maroon("UNDEFINED : '",ForeNest.SlateGray(" ".join(d_split)), "'", sep="")
                     )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Message Parsing  -
+    # ------------------------------------------------------------------------------------------------------------------
+    def parse_user_message(self, tags:str|None, user_name_str:str, channel_str:str, text:tuple[str]) -> bool:
+        context:TwitchContext = self.create_context(tags,user_name_str,channel_str,text)
+
+        PREFIX_FULL = f":{self.bot.prefix}"
+
+        if (cmd_str := context.raw_text[0]).startswith(PREFIX_FULL) and context.raw_text[0] != PREFIX_FULL:
+            context.is_command = True
+            context.command_str = cmd_str.replace(PREFIX_FULL, "").lower()
+
+            command:Command= self.bot.commands[context.command_str.lower()]
+
+            #checvk if the command was case-sensitive and break if it is
+            if command.case_sensitive and context.command_str != context.command_str.lower():
+                return False
+
+            #check if the user message is a command
+            if context.command_str.lower() in self.bot.commands:
+                command:Command
+                command.callback(self=self.bot,context=context)
+
+                self.output_handler(
+                    callback=output_reply if context.is_reply else output_write,
+                    # below this point is all **kwargs
+                    context=context
+                )
+                return True
+        return False
+
+
+
+
 
 

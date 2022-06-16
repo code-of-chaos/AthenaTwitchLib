@@ -11,7 +11,7 @@ from typing import Callable
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
 from AthenaTwitchBot.models.twitch_bot_protocol import TwitchBotProtocol
-from AthenaTwitchBot.models.outputs.output import Output
+from AthenaTwitchBot.models.outputs.abstract_output import AbstractOutput
 from AthenaTwitchBot.models.outputs.output_twitch import OutputTwitch
 from AthenaTwitchBot.models.outputs.output_console import OutputConsole
 
@@ -22,7 +22,7 @@ def launch(
         *, # after this, keywords only
         bot:TwitchBot=None,
         protocol_factory:Callable=None,
-        outputs:list[Output]=None,
+        outputs:list[AbstractOutput]=None,
         console_enabled:bool=True,
         irc_connection:bool=True,
         irc_host:str='irc.chat.twitch.tv',

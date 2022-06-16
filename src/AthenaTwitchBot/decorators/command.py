@@ -7,7 +7,7 @@ from __future__ import annotations
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.wrapper_helpers.command import Command
+from AthenaTwitchBot.models.decorator_helpers.command import Command
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

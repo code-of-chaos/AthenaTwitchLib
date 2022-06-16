@@ -10,11 +10,12 @@ import asyncio
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
+from AthenaTwitchBot.models.twitch_context import TwitchContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class Output(ABC):
+class AbstractOutput(ABC):
 
     @abstractmethod
     async def connection_made(self, bot:TwitchBot, transport: asyncio.transports.Transport,**kwargs):
@@ -29,5 +30,13 @@ class Output(ABC):
         """Output response to anything that wasn't caught correctly"""
 
     @abstractmethod
-    async def command(self,context, **kwargs):
-        """Output response to a command that was given to the bot by a viewer"""
+    async def write(self,transport: asyncio.transports.Transport,context:TwitchContext, **kwargs):
+        """Output which context is not a reply, but simply write out to the chat"""
+
+    @abstractmethod
+    async def reply(self,transport: asyncio.transports.Transport,context:TwitchContext, **kwargs):
+        """Output which context is a reply to a user"""
+
+    @abstractmethod
+    async def scheduled_task(self, transport: asyncio.transports.Transport, context:TwitchContext, **kwargs):
+        """Automated output after a task has been run"""

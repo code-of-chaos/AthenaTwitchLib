@@ -10,8 +10,8 @@ import inspect
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.wrapper_helpers.command import Command
-from AthenaTwitchBot.models.wrapper_helpers.scheduled_task import ScheduledTask
+from AthenaTwitchBot.models.decorator_helpers.command import Command
+from AthenaTwitchBot.models.decorator_helpers.scheduled_task import ScheduledTask
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -27,7 +27,7 @@ class TwitchBot:
     # Twitch-specific capabilities : https://dev.twitch.tv/docs/irc/capabilities
     twitch_capability_commands:bool=False
     twitch_capability_membership:bool=False
-    # twitch_capability_tags:bool=True # only one that has the default set to true, as this is required to make reply's work
+    twitch_capability_tags:bool=True # only one that has the default set to true, as this is required to make reply's work
 
     predefined_commands:InitVar[dict[str: Callable]]=None # made part of init if someone wants to feel the pain of adding commands manually
 

@@ -9,7 +9,7 @@ from AthenaLib.models.time import Second, Minute, Hour
 from AthenaLib.functions.time import convert_time_to_seconds
 
 # Custom Packages
-from AthenaTwitchBot.models.wrapper_helpers.scheduled_task import ScheduledTask
+from AthenaTwitchBot.models.decorator_helpers.scheduled_task import ScheduledTask
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 
 from AthenaTwitchBot.data.unions import CHANNEL, CHANNELS

@@ -8,13 +8,15 @@ from __future__ import annotations
 from AthenaColor import ForeNest
 
 # Custom Packages
-from AthenaTwitchBot.models.outputs.output import Output
+from AthenaTwitchBot.models.outputs.abstract_output import AbstractOutput
 from AthenaTwitchBot._info._v import VERSION
+
+from AthenaTwitchBot.data.output_console import PING_RECEIVED
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class OutputConsole(Output):
+class OutputConsole(AbstractOutput):
     async def connection_made(self,**kwargs):
         print(
             ForeNest.SlateGray(
@@ -27,10 +29,16 @@ class OutputConsole(Output):
         )
 
     async def connection_ping(self,**kwargs):
-        print(ForeNest.ForestGreen("PING RECEIVED"))
+        print(ForeNest.ForestGreen(PING_RECEIVED))
 
     async def undefined(self,text:str,**kwargs):
         print(ForeNest.SlateGray(text),)
 
-    async def command(self,context, **kwargs):
+    async def write(self, context, **kwargs):
+        pass
+
+    async def reply(self, context, **kwargs):
+        pass
+
+    async def scheduled_task(self, context, **kwargs):
         pass

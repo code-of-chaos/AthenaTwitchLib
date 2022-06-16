@@ -8,16 +8,18 @@ import asyncio
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.outputs.output import Output
+from AthenaTwitchBot.models.outputs.abstract_output import AbstractOutput
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
+from AthenaTwitchBot.models.twitch_context import TwitchContext
 
 from AthenaTwitchBot.functions.twitch_irc_messages import format_message
 from AthenaTwitchBot.data.twitch_irc_messages import *
+from AthenaTwitchBot.data.general import EMPTY_STR
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class OutputTwitch(Output):
+class OutputTwitch(AbstractOutput):
     async def connection_made(self, bot:TwitchBot, transport: asyncio.transports.Transport,**kwargs):
         transport.write(format_message(f"{PASS}{bot.oauth_token}"))
         transport.write(format_message(f"{NICK} {bot.nickname}"))
@@ -30,5 +32,18 @@ class OutputTwitch(Output):
     async def undefined(self,**kwargs):
         pass # don't answer to something that is undefined
 
-    async def command(self,context, **kwargs):
+    async def write(self, transport: asyncio.transports.Transport, context:TwitchContext, **kwargs):
+        if context.output_text is not None:
+            transport.write(format_message(f"{PRIVMSG} {context.channel} :{context.output_text}"))
+
+    async def reply(self, transport: asyncio.transports.Transport, context:TwitchContext, **kwargs):
+        if context.output_text is not None and context.message_tags.message_id != EMPTY_STR:
+            transport.write(
+                format_message(
+                    f"@reply-parent-msg-id={context.message_tags.message_id} {PRIVMSG} {context.channel} :{context.output_text}"
+            ))
+
+
+
+    async def scheduled_task(self,transport: asyncio.transports.Transport, context:TwitchContext, **kwargs):
         pass
