@@ -34,7 +34,10 @@ class OutputTwitch(AbstractOutput):
 
     async def write(self, transport: asyncio.transports.Transport, context:TwitchContext, **kwargs):
         if context.output_text is not None:
-            transport.write(format_message(f"{PRIVMSG} {context.channel} :{context.output_text}"))
+            transport.write(
+                format_message(
+                    f"{PRIVMSG} {context.channel} :{context.output_text}"
+            ))
 
     async def reply(self, transport: asyncio.transports.Transport, context:TwitchContext, **kwargs):
         if context.output_text is not None and context.message_tags.message_id != EMPTY_STR:
@@ -42,8 +45,6 @@ class OutputTwitch(AbstractOutput):
                 format_message(
                     f"@reply-parent-msg-id={context.message_tags.message_id} {PRIVMSG} {context.channel} :{context.output_text}"
             ))
-
-
 
     async def scheduled_task(self,transport: asyncio.transports.Transport, context:TwitchContext, **kwargs):
         pass

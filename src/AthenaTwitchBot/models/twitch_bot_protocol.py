@@ -53,7 +53,8 @@ class TwitchBotProtocol(asyncio.Protocol):
                 tags=None,
                 user_name_str=self.bot.nickname,
                 channel_str=channel,
-                text=tuple()
+                text=tuple(),
+                raw_irc=[""]
             )
             if tsk.wait_before: # the wait_before attribute handles if we sleep wait_before or after the task has been called
                 await asyncio.sleep(tsk.delay)
@@ -61,11 +62,8 @@ class TwitchBotProtocol(asyncio.Protocol):
             else:
                 tsk.callback(self=self.bot,context=context)
                 await asyncio.sleep(tsk.delay)
-            self.output_handler(
-                callback=output_scheduled_task,
-                # below this point is all **kwargs
-                context=context
-            )
+
+            self.parse_context_output(context)
 
     def output_handler(self,callback:OUTPUT_CALLBACKS, **kwargs):
         # TODO test code below with asyncio.gather
@@ -79,7 +77,7 @@ class TwitchBotProtocol(asyncio.Protocol):
                 ,
                 loop=self.loop)
 
-    def create_context(self, tags:str|None, user_name_str:str, channel_str:str|TwitchChannel, text:tuple[str]) -> TwitchContext:
+    def create_context(self, raw_irc,tags:str|None, user_name_str:str, channel_str:str|TwitchChannel, text:tuple[str]) -> TwitchContext:
         return TwitchContext(
             message_tags=TwitchMessageTags.new_from_tags_str(tags)
                 if self.bot.twitch_capability_tags and tags is not None else
@@ -88,7 +86,8 @@ class TwitchBotProtocol(asyncio.Protocol):
             channel=channel_str
                 if isinstance(channel_str, TwitchChannel) else
             TwitchChannel(channel_str) ,
-            raw_text=text
+            raw_text=text,
+            raw_irc=raw_irc
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -104,8 +103,11 @@ class TwitchBotProtocol(asyncio.Protocol):
         )
 
         # add frequent_output methods to the coroutine loop
+
+        print(self.bot.scheduled_tasks)
+
         for tsk in self.bot.scheduled_tasks:
-            if tsk.channels: # the list is populated with channels
+            if tsk.channels is not None and tsk.channels: # the list is populated with channels
                 for channel in tsk.channels:
                     coro = self.loop.create_task(self.scheduled_task_coro(tsk, channel=channel))
                     asyncio.ensure_future(coro, loop=self.loop)
@@ -168,14 +170,8 @@ class TwitchBotProtocol(asyncio.Protocol):
                     # PRIVMSG
                     # #directiveathena
                     # :that sentence was poggers
-                    if self.parse_user_message(tags, user_name_str, channel_str, text):
-                        # a command was caught:
-                        continue # because the output was handled by the parser above
-                    # else:
-                    self.output_handler(
-                        callback=output_undefined,
-                        # below this point is all **kwargs
-                        text=" ".join(d_split)
+                    self.parse_context_output(
+                        self.parse_user_message(d_split, tags, user_name_str, channel_str, text)
                     )
 
                 case str(user_name_str), _privmsg, str(channel_str), *text \
@@ -186,14 +182,8 @@ class TwitchBotProtocol(asyncio.Protocol):
                     # PRIVMSG
                     # #directiveathena
                     # :that sentence was poggers
-                    if self.parse_user_message(None, user_name_str, channel_str, text):
-                        # a command was caught:
-                        continue # because the output was handled by the parser above
-                    # else:
-                    self.output_handler(
-                        callback=output_undefined,
-                        # below this point is all **kwargs
-                        text=" ".join(d_split)
+                    self.parse_context_output(
+                        self.parse_user_message(d_split, None, user_name_str, channel_str, text)
                     )
 
                 case str(bot_name_long), _join, str(channel) \
@@ -203,7 +193,6 @@ class TwitchBotProtocol(asyncio.Protocol):
                     # :eva_athenabot!eva_athenabot@eva_athenabot.tmi.twitch.tv
                     # JOIN
                     # #directiveathena
-                    pass # todo functionality
                     self.output_handler(
                         callback=output_undefined,
                         # below this point is all **kwargs
@@ -217,7 +206,6 @@ class TwitchBotProtocol(asyncio.Protocol):
                     # *
                     # ACK
                     # :twitch.tv/tags
-                    pass # todo functionality
                     self.output_handler(
                         callback=output_undefined,
                         # below this point is all **kwargs
@@ -235,7 +223,6 @@ class TwitchBotProtocol(asyncio.Protocol):
                     # =
                     # #directiveathena
                     # :eva_athenabot
-                    pass # todo functionality
                     self.output_handler(
                         callback=output_undefined,
                         # below this point is all **kwargs
@@ -251,7 +238,6 @@ class TwitchBotProtocol(asyncio.Protocol):
                     # =
                     # #directiveathena
                     # :eva_athenabot
-                    pass  # todo functionality
                     self.output_handler(
                         callback=output_undefined,
                         # below this point is all **kwargs
@@ -268,36 +254,42 @@ class TwitchBotProtocol(asyncio.Protocol):
     # ------------------------------------------------------------------------------------------------------------------
     # - Message Parsing  -
     # ------------------------------------------------------------------------------------------------------------------
-    def parse_user_message(self, tags:str|None, user_name_str:str, channel_str:str, text:tuple[str]) -> bool:
-        context:TwitchContext = self.create_context(tags,user_name_str,channel_str,text)
-
+    def parse_user_message(self, raw_irc, tags:str|None, user_name_str:str, channel_str:str, text:tuple[str]) -> TwitchContext:
+        context:TwitchContext = self.create_context(raw_irc, tags,user_name_str,channel_str,text)
         PREFIX_FULL = f":{self.bot.prefix}"
 
-        if (cmd_str := context.raw_text[0]).startswith(PREFIX_FULL) and context.raw_text[0] != PREFIX_FULL:
+        if (cmd_str := context.raw_text[0]).startswith(PREFIX_FULL) and cmd_str != PREFIX_FULL:
+
+            context.command_str = cmd_str.replace(PREFIX_FULL, "")
+            cmd_str_lower = context.command_str.lower()
+
+            try:
+                command:Command = self.bot.commands[cmd_str_lower]
+                # check if the command was case-sensitive and break if it is
+                if command.case_sensitive and context.command_str != cmd_str_lower:
+                    raise KeyError
+            except KeyError:
+                return context
+
             context.is_command = True
-            context.command_str = cmd_str.replace(PREFIX_FULL, "").lower()
+            command.callback(self=self.bot,context=context)
 
-            command:Command= self.bot.commands[context.command_str.lower()]
+        return context
 
-            #checvk if the command was case-sensitive and break if it is
-            if command.case_sensitive and context.command_str != context.command_str.lower():
-                return False
-
-            #check if the user message is a command
-            if context.command_str.lower() in self.bot.commands:
-                command:Command
-                command.callback(self=self.bot,context=context)
-
+    def parse_context_output(self, context:TwitchContext):
+        match context:
+            case TwitchContext(is_write=True):
                 self.output_handler(
-                    callback=output_reply if context.is_reply else output_write,
-                    # below this point is all **kwargs
+                    callback=output_write,
                     context=context
                 )
-                return True
-        return False
-
-
-
-
-
-
+            case TwitchContext(is_reply=True):
+                self.output_handler(
+                    callback=output_reply,
+                    context=context
+                )
+            case _:
+                self.output_handler(
+                    callback=output_undefined,
+                    text=" ".join(context.raw_irc)
+                )

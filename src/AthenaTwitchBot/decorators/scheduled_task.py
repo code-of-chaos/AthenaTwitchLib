@@ -48,16 +48,12 @@ def scheduled_task_method(*, delay:int|Second|Minute|Hour=3600, wait_before:bool
                     channels.append(TwitchChannel(channel))
                 elif isinstance(channel, TwitchChannel):
                     channels.append(c)
-                else:
-                    return NotImplemented
-        else:
-            return NotImplemented
 
         wrapper.tsk = ScheduledTask(
             delay=convert_time_to_seconds(delay,to_int=True),
             wait_before=wait_before,
             callback=wrapper,
-            channels=channels
+            channels=channels if channels else None
         )
         return wrapper
     return decorator
