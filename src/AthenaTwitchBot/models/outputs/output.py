@@ -17,7 +17,7 @@ class Output(ABC):
 
     @abstractmethod
     def pre_launch(self):
-        """Output the state of the application before anything is run"""
+        """Output the state of the application wait_before anything is run"""
     @abstractmethod
     def message(self, message:TwitchMessage):
         """Output of a received message"""

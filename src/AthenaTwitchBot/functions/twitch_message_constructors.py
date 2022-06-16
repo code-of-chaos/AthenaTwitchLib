@@ -64,7 +64,7 @@ def twitch_message_constructor_tags(message_bytes:bytearray, bot_name:str) -> Tw
     content = message.split(" ")
 
     # Certain twitch sent messages have a different consistency than a regular user sent message
-    #   If this happens, this has to be caught before the message is parsed further
+    #   If this happens, this has to be caught wait_before the message is parsed further
     if ping_message := _find_PING(content):
         return ping_message
 

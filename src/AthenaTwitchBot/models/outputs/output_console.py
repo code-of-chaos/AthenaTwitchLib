@@ -11,7 +11,7 @@ from AthenaColor import StyleNest, ForeNest, BackNest
 from AthenaTwitchBot.models.outputs.output import Output
 from AthenaTwitchBot.models.twitch_message import TwitchMessage, TwitchMessagePing, TwitchMessageOnlyForBot
 # noinspection PyProtectedMember
-from AthenaTwitchBot._info._v import _version
+from AthenaTwitchBot._info._v import VERSION
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -21,7 +21,7 @@ class OutputConsole(Output):
     def pre_launch(self):
         print(
             ForeNest.SlateGray(
-                f"- AthenaTwitchBot {ForeNest.HotPink('v', _version(), sep='')} -",
+                f"- AthenaTwitchBot {ForeNest.HotPink('v', VERSION, sep='')} -",
                 f"   made by Andreas Sas",
                 "",
                 sep="\n"

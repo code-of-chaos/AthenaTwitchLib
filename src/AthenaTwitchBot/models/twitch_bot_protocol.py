@@ -60,17 +60,13 @@ class TwitchBotProtocol(asyncio.Protocol):
             message=TwitchMessage(channel=f"#{self.bot.channel}"),
             transport=self.transport
         )
-        if tsk.before: # the before attribute handles if we sleep before or after the task has been called
+        if tsk.wait_before: # the wait_before attribute handles if we sleep wait_before or after the task has been called
             while True:
                 await asyncio.sleep(tsk.delay)
-                tsk.callback(
-                    self=self.bot,
-                    context=context)
+                tsk.callback(self=self.bot,context=context)
         else:
             while True:
-                tsk.callback(
-                    self=self.bot,
-                    context=context)
+                tsk.callback(self=self.bot,context=context)
                 await asyncio.sleep(tsk.delay)
 
 

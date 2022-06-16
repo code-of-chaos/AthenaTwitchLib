@@ -63,4 +63,11 @@ class TwitchBot:
     def __post_init__(self, predefined_commands: dict[str: Callable]=None):
         if predefined_commands is not None:
             # the self instance isn't assigned on the predefined_commands input
-            self.commands |= {k:(v,self) for k, v in predefined_commands.items()}
+            self.commands |= {
+                k.lower():Command(
+                    name=k,
+                    case_sensitive=False,
+                    callback=v
+                )
+                for k, v in predefined_commands.items()
+            }
