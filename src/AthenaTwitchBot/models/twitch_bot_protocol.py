@@ -103,9 +103,6 @@ class TwitchBotProtocol(asyncio.Protocol):
         )
 
         # add frequent_output methods to the coroutine loop
-
-        print(self.bot.scheduled_tasks)
-
         for tsk in self.bot.scheduled_tasks:
             if tsk.channels is not None and tsk.channels: # the list is populated with channels
                 for channel in tsk.channels:
@@ -121,8 +118,6 @@ class TwitchBotProtocol(asyncio.Protocol):
         self.parse_data(data)
 
     def connection_lost(self, exc: Exception | None) -> None:
-        self.loop.stop()
-
         if exc is not None:
             raise exc
 
@@ -154,7 +149,6 @@ class TwitchBotProtocol(asyncio.Protocol):
                     # 001
                     # eva_athenabot
                     # :Welcome, GLHF!
-                    pass # todo functionality
                     self.output_handler(
                         callback=output_undefined,
                         # below this point is all **kwargs
