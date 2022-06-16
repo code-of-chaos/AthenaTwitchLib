@@ -31,3 +31,6 @@ class OutputConsole(Output):
 
     async def undefined(self,text:str,**kwargs):
         print(ForeNest.SlateGray(text),)
+
+    async def command(self,context, **kwargs):
+        pass

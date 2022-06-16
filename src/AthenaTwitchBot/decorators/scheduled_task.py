@@ -49,9 +49,9 @@ def scheduled_task_method(*, delay:int|Second|Minute|Hour=3600, wait_before:bool
                 elif isinstance(channel, TwitchChannel):
                     channels.append(c)
                 else:
-                    return NotImplemented(channel)
+                    return NotImplemented
         else:
-            return NotImplemented(channel)
+            return NotImplemented
 
         wrapper.tsk = ScheduledTask(
             delay=convert_time_to_seconds(delay,to_int=True),

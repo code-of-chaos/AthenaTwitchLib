@@ -27,3 +27,7 @@ class Output(ABC):
     @abstractmethod
     async def undefined(self,text:str, **kwargs):
         """Output response to anything that wasn't caught correctly"""
+
+    @abstractmethod
+    async def command(self,context, **kwargs):
+        """Output response to a command that was given to the bot by a viewer"""

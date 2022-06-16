@@ -34,10 +34,10 @@ def launch(
         if outputs is None:
             outputs=[OutputTwitch()]
         # thanks for fikotta for pointing me to use isinstance here
-        elif not any(isinstance(o, OutputTwitch) for o in outputs):
+        if not any(isinstance(o, OutputTwitch) for o in outputs):
             # always make sure OutputTwitch callbacks are the first to be made
             outputs.insert(0,OutputTwitch())
-        elif not any(isinstance(o, OutputConsole) for o in outputs) and console_enabled:
+        if not any(isinstance(o, OutputConsole) for o in outputs) and console_enabled:
             # placement of the Console does not matter
             outputs.append(OutputConsole())
 

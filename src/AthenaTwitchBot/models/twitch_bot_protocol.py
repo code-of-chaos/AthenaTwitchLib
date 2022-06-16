@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 # Custom Library
+from AthenaColor import ForeNest
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_message import TwitchMessage
@@ -113,7 +114,8 @@ class TwitchBotProtocol(asyncio.Protocol):
         for d in data.decode("utf_8").split("\r\n"):
             # catch some patterns early to be either ignored or parsed
             match d_split:= d.split(" "):
-                case PING(), *ping_response:
+                case _ping, *ping_response \
+                    if _ping == PING:
                     # CATCHES the following pattern:
                     # PING
                     # :tmi.twitch.tv
@@ -124,7 +126,8 @@ class TwitchBotProtocol(asyncio.Protocol):
                     )
                     continue # go to next piece of data
 
-                case TMI_TWITCH_TV(), str(int_id), self.bot.nickname, str(text):
+                case _tmi_twitch_tv, str(int_id), self.bot.nickname, *text \
+                    if _tmi_twitch_tv == TMI_TWITCH_TV:
                     # CATCHES the following pattern:
                     # :tmi.twitch.tv
                     # 001
@@ -138,7 +141,8 @@ class TwitchBotProtocol(asyncio.Protocol):
                     )
 
 
-                case str(info), str(user_name), PRIVMSG(), str(channel), str(text):
+                case str(info), str(user_name), _privmsg, str(channel), *text \
+                    if _privmsg == PRIVMSG:
                     # CATCHES the following pattern:
                     # @badge-info=;badges=;client-nonce=4ac36d90556713038f596be25cc698a2;color=#1E90FF;display-name=badcop_;emotes=;first-msg=0;flags=;id=8b506bf0-517d-4ae7-9dcb-bce5c2145412;mod=0;room-id=600187263;subscriber=0;tmi-sent-ts=1655367514927;turbo=0;user-id=56931496;user-type=
                     # :badcop_!badcop_@badcop_.tmi.twitch.tv
@@ -152,8 +156,9 @@ class TwitchBotProtocol(asyncio.Protocol):
                         text=" ".join(d_split)
                     )
 
-                case str(bot_name_long), JOIN(), str(channel) \
-                    if bot_name_long == f":{self.bot.nickname}!{self.bot.nickname}@{self.bot.nickname}.tmi.twitch.tv":
+                case str(bot_name_long), _join, str(channel) \
+                    if _join == JOIN \
+                       and bot_name_long == f":{self.bot.nickname}!{self.bot.nickname}@{self.bot.nickname}.tmi.twitch.tv":
                     # CATCHES the following pattern:
                     # :eva_athenabot!eva_athenabot@eva_athenabot.tmi.twitch.tv
                     # JOIN
@@ -165,7 +170,7 @@ class TwitchBotProtocol(asyncio.Protocol):
                         text=" ".join(d_split)
                     )
 
-                case TMI_TWITCH_TV(), CAP(), ASTERISK(), ACK(), TWITCH_TAGS():
+                case _list if _list == [TMI_TWITCH_TV, CAP, ASTERISK, ACK, TWITCH_TAGS]:
                     # CATCHES the following pattern:
                     # :tmi.twitch.tv
                     # CAP
@@ -179,8 +184,10 @@ class TwitchBotProtocol(asyncio.Protocol):
                         text=" ".join(d_split)
                     )
 
-                case str(bot_name_long), str(int_id), self.bot.nickname, EQUALS(), str(channel), str(bot_name_short) \
-                    if bot_name_long == f":{self.bot.nickname}.tmi.twitch.tv" and bot_name_short == f":{self.bot.nickname}":
+                case str(bot_name_long), str(int_id), self.bot.nickname, _equals, str(channel), str(bot_name_short) \
+                    if _equals == EQUALS \
+                       and bot_name_long == f":{self.bot.nickname}.tmi.twitch.tv" \
+                       and bot_name_short == f":{self.bot.nickname}":
                     # CATCHES the following pattern:
                     # :eva_athenabot.tmi.twitch.tv
                     # 353
@@ -194,4 +201,28 @@ class TwitchBotProtocol(asyncio.Protocol):
                         # below this point is all **kwargs
                         text=" ".join(d_split)
                     )
+
+                case str(bot_name_long), str(int_id), self.bot.nickname, str(channel), *text \
+                    if  bot_name_long == f":{self.bot.nickname}.tmi.twitch.tv":
+                    # CATCHES the following pattern:
+                    # :eva_athenabot.tmi.twitch.tv
+                    # 353
+                    # eva_athenabot
+                    # =
+                    # #directiveathena
+                    # :eva_athenabot
+                    pass  # todo functionality
+                    self.output_handler(
+                        callback=output_undefined,
+                        # below this point is all **kwargs
+                        text=" ".join(d_split)
+                    )
+
+                case _:
+                    self.output_handler(
+                        callback=output_undefined,
+                        # below this point is all **kwargs
+                        text=ForeNest.Maroon("UNDEFINED : '",ForeNest.SlateGray(" ".join(d_split)), "'", sep="")
+                    )
+
 
