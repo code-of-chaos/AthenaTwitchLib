@@ -5,39 +5,47 @@
 from __future__ import annotations
 
 # Custom Library
-from AthenaColor import StyleNest, ForeNest, BackNest
+from AthenaColor import ForeNest
 
 # Custom Packages
-from AthenaTwitchBot.models.outputs.output import Output
-from AthenaTwitchBot.models.twitch_message import TwitchMessage, TwitchMessagePing, TwitchMessageOnlyForBot
-# noinspection PyProtectedMember
-from AthenaTwitchBot._info._v import _version
+from AthenaTwitchBot.models.outputs.abstract_output import AbstractOutput
+from AthenaTwitchBot._info._v import VERSION
+
+from AthenaTwitchBot.data.output_console import PING_RECEIVED
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class OutputConsole(Output):
-
-    def pre_launch(self):
+class OutputConsole(AbstractOutput):
+    async def connection_made(self,**kwargs):
         print(
             ForeNest.SlateGray(
-                f"- AthenaTwitchBot {ForeNest.HotPink('v', _version(), sep='')} -",
+                f"- AthenaTwitchBot {ForeNest.HotPink('v', VERSION, sep='')} -",
                 f"   made by Andreas Sas",
                 "",
+                f"Connection established to {ForeNest.MediumPurple('Twitch')}",
                 sep="\n"
             ),
         )
 
-    def message(self, message:TwitchMessage):
-        match message:
-            case TwitchMessagePing():
-                print(ForeNest.SlateGray(message.text), ForeNest.ForestGreen("PING RECEIVED"))
-            case TwitchMessageOnlyForBot():
-                print(ForeNest.SlateGray(message.text))
-            case TwitchMessage(first_msg=True):
-                print(ForeNest.BlueViolet(message.username), ForeNest.SlateGray(":"),ForeNest.White(message.text))
-            case TwitchMessage():
-                print(ForeNest.SlateGray(message.username, ":"),ForeNest.White(message.text))
+    async def connection_ping(self,**kwargs):
+        print(ForeNest.ForestGreen(PING_RECEIVED))
 
-    def undefined(self,message=None):
-        print(ForeNest.SlateGray(message))
+    async def undefined(self,text:str,**kwargs):
+        print(ForeNest.SlateGray(text),)
+
+    async def write(self, context, **kwargs):
+        await self.undefined(text=" ".join(context.raw_irc))
+        if context.is_command:
+            print(ForeNest.SlateGray(context.user, ":", ForeNest.Gold("!", context.command_str, sep="")),)
+            print(ForeNest.SlateGray(context.output_text))
+
+    async def reply(self, context, **kwargs):
+        await self.undefined(text=" ".join(context.raw_irc))
+        if context.is_command:
+            print(ForeNest.SlateGray(context.user, ":", ForeNest.Gold("!", context.command_str, sep="")),)
+            print(ForeNest.SlateGray(context.output_text))
+
+
+    async def scheduled_task(self, context, **kwargs):
+        await self.undefined(text=" ".join(context.raw_irc))

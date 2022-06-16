@@ -18,3 +18,4 @@ class Command:
     name:str
     case_sensitive:bool
     callback:Callable
+    args_enabled:bool

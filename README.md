@@ -28,40 +28,40 @@ import AthenaLib        # Not needed for the following example, but is a depende
 
 # --- Twitch bot ---
 class newBot(AthenaTwitchBot.TwitchBot):
-    def __init__(self):
-        super(newBot, self).__init__(
-            # Make sure you fill in the fields below
-            #   else the bot will not be able to be authenticated by Twitch
-            nickname="...",     # <--- The registered bot name
-            oauth_token="...",  # <--- the registered bots access token. Don't put this in plain text!
-            channel="...",      # <--- The twitch channel name you want to bind your bot to
-            prefix="!",         # <--- The "default" prefix is an exclamation point, but technically you can assign any string as a prefix 
-        )
-    
-    # - Command -
-    #   A command is only ran when it is invoked by a user in chat
-    #   In the following case this would be by typing "!ping" in chat
-    @AthenaTwitchBot.command_method(name="ping")
-    def command_ping(self, context: AthenaTwitchBot.TwitchMessageContext):
-        context.reply("pong!") # a "context.reply" function will reply to the user whi invoked the command
-        
-    # - Task -
-    #   A task is run automatically every "delay" amount of seconds
-    #   In the following case, the method will be run every minute
-    #   The "before" kwarg will 
-    @AthenaTwitchBot.scheduled_task_method(delay=60, before=True)
-    def task_post_github(self, context: AthenaTwitchBot.TwitchMessageContext):
-        context.write(f"This bot is made possible by: https://github.com/DirectiveAthena/AthenaTwitchBot")
-    
-# --- Main function ---
-def main():
-    AthenaTwitchBot.launch(
-        bot=newBot(),
-        ssl=True # set to true to enable ssl connection to Twitch
+  def __init__(self):
+    super(newBot, self).__init__(
+      # Make sure you fill in the fields below
+      #   else the bot will not be able to be authenticated by Twitch
+      nickname="...",       # <--- The registered bot name
+      oauth_token="...",    # <--- the registered bots access token. Don't put this in plain text!
+      channel="...",        # <--- The twitch channel name you want to bind your bot to
+      prefix="!",           # <--- The "default" prefix is an exclamation point, but technically you can assign any string as a prefix 
     )
 
+  # - Command -
+  #   A command is only ran when it is invoked by a user in chat
+  #   In the following case this would be by typing "!ping" in chat
+  @AthenaTwitchBot.command_method(name="ping")
+  def command_ping(self, context: AthenaTwitchBot.TwitchMessageContext):
+    context.reply("pong!")  # a "context.reply" function will reply to the user whi invoked the command
+
+  # - Task -
+  #   A task is run automatically every "delay" amount of seconds
+  #   In the following case, the method will be run every minute
+  #   The "wait_before" kwarg defines if the asyncio.sleep runs before or after the first call of the callback
+  @AthenaTwitchBot.scheduled_task_method(delay=60, wait_before=True)
+  def task_post_github(self, context: AthenaTwitchBot.TwitchMessageContext):
+    context.write(f"This bot is made possible by: https://github.com/DirectiveAthena/AthenaTwitchBot")
+
+# --- Main function ---
+def main():
+  AthenaTwitchBot.launch(
+    bot=newBot(),
+    ssl=True  # set to true to enable ssl connection to Twitch
+  )
+
 if __name__ == '__main__':
-    main()
+  main()
 
 ```
 

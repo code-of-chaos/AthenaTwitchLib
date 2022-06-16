@@ -10,8 +10,9 @@ import inspect
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.wrapper_helpers.command import Command
-from AthenaTwitchBot.models.wrapper_helpers.scheduled_task import ScheduledTask
+from AthenaTwitchBot.models.decorator_helpers.command import Command
+from AthenaTwitchBot.models.decorator_helpers.scheduled_task import ScheduledTask
+from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -20,7 +21,7 @@ from AthenaTwitchBot.models.wrapper_helpers.scheduled_task import ScheduledTask
 class TwitchBot:
     nickname:str
     oauth_token:str
-    channel:str
+    channels:list[TwitchChannel|str]
     prefix:str
 
     # Twitch-specific capabilities : https://dev.twitch.tv/docs/irc/capabilities
@@ -61,6 +62,20 @@ class TwitchBot:
         return obj
 
     def __post_init__(self, predefined_commands: dict[str: Callable]=None):
+        # format every channel into the correct model
+        self.channels = [
+            TwitchChannel(c) if not isinstance(c, TwitchChannel) else c
+            for c in self.channels
+        ]
+
         if predefined_commands is not None:
             # the self instance isn't assigned on the predefined_commands input
-            self.commands |= {k:(v,self) for k, v in predefined_commands.items()}
+            self.commands |= {
+                k.lower():Command(
+                    name=k,
+                    case_sensitive=False,
+                    callback=v,
+                    args_enabled=False
+                )
+                for k, v in predefined_commands.items()
+            }

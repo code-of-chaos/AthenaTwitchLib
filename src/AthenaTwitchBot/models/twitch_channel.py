@@ -4,7 +4,6 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Callable
 
 # Custom Library
 
@@ -13,8 +12,13 @@ from typing import Callable
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(kw_only=True, match_args=True, slots=True)
-class ScheduledTask:
-    delay:int
-    before:bool
-    callback:Callable
+@dataclass(slots=True)
+class TwitchChannel:
+    name:str
+
+    def __post_init__(self):
+        # remove any "#" if they exists
+        self.name = self.name.replace("#", "")
+
+    def __str__(self) -> str:
+        return f"#{self.name}"
