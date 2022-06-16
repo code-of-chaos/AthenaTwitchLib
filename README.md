@@ -42,7 +42,7 @@ class newBot(AthenaTwitchBot.TwitchBot):
   #   A command is only ran when it is invoked by a user in chat
   #   In the following case this would be by typing "!ping" in chat
   @AthenaTwitchBot.command_method(name="ping")
-  def command_ping(self, context: AthenaTwitchBot.TwitchMessageContext):
+  def command_ping(self, context: AthenaTwitchBot.TwitchContext):
     context.reply("pong!")  # a "context.reply" function will reply to the user whi invoked the command
 
   # - Task -
@@ -50,7 +50,7 @@ class newBot(AthenaTwitchBot.TwitchBot):
   #   In the following case, the method will be run every minute
   #   The "wait_before" kwarg defines if the asyncio.sleep runs before or after the first call of the callback
   @AthenaTwitchBot.scheduled_task_method(delay=60, wait_before=True)
-  def task_post_github(self, context: AthenaTwitchBot.TwitchMessageContext):
+  def task_post_github(self, context: AthenaTwitchBot.TwitchContext):
     context.write(f"This bot is made possible by: https://github.com/DirectiveAthena/AthenaTwitchBot")
 
 # --- Main function ---
