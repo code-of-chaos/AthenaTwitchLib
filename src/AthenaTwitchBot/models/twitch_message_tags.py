@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 # Custom Library
-from AthenaColor import HEX
+from AthenaColor import HEX, ForeNest
 
 # Custom Packages
 from AthenaTwitchBot.data.general import EMPTY_STR
@@ -40,6 +40,7 @@ class TwitchMessageTags:
     reply_parent_msg_id: int = 0
     reply_parent_user_id: int = 0
     reply_parent_user_login: str = EMPTY_STR
+    returning_chatter:bool = False
 
     @classmethod
     def new_from_tags_str(cls, tags_str:str) -> TwitchMessageTags:
@@ -49,7 +50,8 @@ class TwitchMessageTags:
             try:
                 attr_value[MESSAGE_TAG_MAPPING[tag]] = MESSAGE_TAG_CONVERSION_MAPPING[tag](value=value)
             except KeyError:
-                print(f"{tag} not found in mapping")
+                # don't make this crash the bot !
+                print(ForeNest.Maroon(f"{tag} not found in mapping"))
 
         return cls(**attr_value)
 
