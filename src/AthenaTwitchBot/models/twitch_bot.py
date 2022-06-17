@@ -3,17 +3,15 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field, InitVar
-from typing import Callable
-import inspect
+from dataclasses import dataclass, field
 
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.decorator_helpers.command import Command
-from AthenaTwitchBot.models.decorator_helpers.scheduled_task import ScheduledTask
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 from AthenaTwitchBot.models.twitch_bot_method import TwitchBotMethod
+
+from AthenaTwitchBot.functions.general import channel_list_to_TwitchChannels
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -49,16 +47,15 @@ class TwitchBot:
         #   Done for ease of use
         for k,v in cls.__dict__.items():
             if isinstance(v,TwitchBotMethod):
+                v.owner = twitch_bot_obj
                 if v.is_command:
-                    v.owner = twitch_bot_obj
                     for name in v.command_names:
                         twitch_bot_obj.commands[name] = v
+                if v.is_scheduled_task:
+                    twitch_bot_obj.scheduled_tasks.append(v)
 
         return twitch_bot_obj
 
     def __post_init__(self):
         # format every channel into the correct model
-        self.channels = [
-            TwitchChannel(c) if not isinstance(c, TwitchChannel) else c
-            for c in self.channels
-        ]
+        self.channels = channel_list_to_TwitchChannels(self.channels)

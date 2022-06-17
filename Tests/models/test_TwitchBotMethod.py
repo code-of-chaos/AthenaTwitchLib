@@ -7,7 +7,7 @@ import unittest
 
 # Custom Library
 from AthenaTwitchBot.models.twitch_bot_method import TwitchBotMethod
-from AthenaTwitchBot.models.twitch_bot import TwitchBot
+from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 
 # Custom Packages
 from Tests.support import EmptyBot
@@ -54,7 +54,7 @@ class Test_TwitchBotMethod(unittest.TestCase):
     def test_Bot1(self):
         test_bot1 = TestBot_1()
         self.assertEqual(
-            ["some_channel"],
+            [TwitchChannel("some_channel")],
             test_bot1.command_help.channels
         )
         self.assertIs(
