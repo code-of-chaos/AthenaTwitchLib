@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 # Custom Library
-from AthenaLib.models import Second, Minute, Hour
-from AthenaLib.functions.time import convert_time_to_seconds
+from AthenaLib.models import Hour
+from AthenaLib.models.time import TimeValue
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
@@ -79,12 +79,12 @@ class TwitchBotMethod:
     def scheduled_task(
             self=None,
             *,
-            interval:int|Second|Minute|Hour=Hour(1),
+            interval:TimeValue=Hour(1),
             call_on_startup:bool=False
     ) -> TwitchBotMethod:
         kwargs: dict = {
             "is_scheduled_task": True,
-            "task_interval": convert_time_to_seconds(interval, to_int=True),
+            "task_interval": interval.to_int_as_seconds(),
             "task_call_on_startup": call_on_startup
         }
 

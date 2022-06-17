@@ -4,6 +4,7 @@
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
 from AthenaTwitchBot.models.twitch_bot_protocol import TwitchBotProtocol
 from AthenaTwitchBot.models.twitch_context import TwitchContext
+from AthenaTwitchBot.models.twitch_bot_method import TwitchBotMethod
 
 from AthenaTwitchBot.functions.launch import launch
 

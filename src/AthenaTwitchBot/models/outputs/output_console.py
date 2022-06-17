@@ -9,6 +9,7 @@ from AthenaColor import ForeNest
 
 # Custom Packages
 from AthenaTwitchBot.models.outputs.abstract_output import AbstractOutput
+# noinspection PyProtectedMember
 from AthenaTwitchBot._info._v import VERSION
 
 from AthenaTwitchBot.data.output_console import PING_RECEIVED

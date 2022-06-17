@@ -41,20 +41,21 @@ class newBot(AthenaTwitchBot.TwitchBot):
   # - Command -
   #   A command is only ran when it is invoked by a user in chat
   #   In the following case this would be by typing "!ping" in chat
-  @AthenaTwitchBot.command_method(name="ping")
+  @AthenaTwitchBot.TwitchBotMethod.command(names="ping")
   def command_ping(self, context: AthenaTwitchBot.TwitchContext):
-    context.reply("pong!")  # a "context.reply" function will reply to the user whi invoked the command
+    context.reply("pong!")  # a "context.reply" function will reply to the user who invoked the command
 
   # - Task -
   #   A task is run automatically every "delay" amount of seconds
   #   In the following case, the method will be run every minute
-  #   The "wait_before" kwarg defines if the asyncio.sleep runs before or after the first call of the callback
-  @AthenaTwitchBot.scheduled_task_method(delay=60, wait_before=True)
+  #   The "call_on_startup" kwarg defines if the task has to be run on bot startup
+  @AthenaTwitchBot.TwitchBotMethod.scheduled_task(interval=AthenaLib.models.Minute(1), call_on_startup=True)
   def task_post_github(self, context: AthenaTwitchBot.TwitchContext):
     context.write(f"This bot is made possible by: https://github.com/DirectiveAthena/AthenaTwitchBot")
 
 # --- Main function ---
 def main():
+  # the launch function handles everything about the protocol setup and command handling
   AthenaTwitchBot.launch(
     bot=newBot(),
     ssl=True  # set to true to enable ssl connection to Twitch

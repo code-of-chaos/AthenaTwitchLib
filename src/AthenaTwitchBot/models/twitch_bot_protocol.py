@@ -243,6 +243,10 @@ class TwitchBotProtocol(asyncio.Protocol):
                         text=" ".join(d_split)
                     )
 
+                case str(a), if not a:
+                    # skip empty lines
+                    continue
+
                 case _:
                     self.output_handler(
                         callback=output_undefined,
