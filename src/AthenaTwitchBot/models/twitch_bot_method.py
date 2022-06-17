@@ -7,7 +7,8 @@ from dataclasses import dataclass, field
 from typing import Callable, Any
 
 # Custom Library
-from AthenaLib.models import Second
+from AthenaLib.models import Second, Minute, Hour
+from AthenaLib.functions.time import convert_time_to_seconds
 
 # Custom Packages
 
@@ -25,12 +26,12 @@ class TwitchBotMethod:
     command_case_sensitive:bool = False
 
     # scheduled task related attributes
-    is_task:bool = False
+    is_scheduled_task:bool = False
     task_delay:Second = field(default=lambda : Second(60))
 
     # non init stuff
     callback:Callable = field(init=False)
-    owner:object = field(init=False, default=None)
+    owner:object = field(init=False, default=None) # defined by TwitchBot
 
     def __call__(self, fnc:Callable):
         self.callback = lambda *args, **kwargs: fnc(self.owner, *args, **kwargs)
@@ -55,4 +56,22 @@ class TwitchBotMethod:
 
         # set the command to true and return
         obj.is_command = True
+        return obj
+
+    def scheduled_task(self=None, *, delay:int=Hour(1)):
+        kwargs: dict = {
+            "is_scheduled_task": True,
+            "task_delay": convert_time_to_seconds(delay),
+        }
+
+        # if the method is used on a TwitchBotMethod instance
+        obj: TwitchBotMethod = TwitchBotMethod(
+            channels=self.channels,
+            **kwargs
+        ) if self is not None else TwitchBotMethod(
+            **kwargs
+        )
+
+        # set the command to true and return
+        obj.is_scheduled_task = True
         return obj
