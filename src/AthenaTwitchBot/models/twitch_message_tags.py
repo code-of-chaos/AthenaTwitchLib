@@ -37,7 +37,7 @@ class TwitchMessageTags:
     emote_only: bool = False
     reply_parent_display_name: str = EMPTY_STR
     reply_parent_msg_body: str = EMPTY_STR
-    reply_parent_msg_id: int = 0
+    reply_parent_msg_id: str = EMPTY_STR
     reply_parent_user_id: int = 0
     reply_parent_user_login: str = EMPTY_STR
     returning_chatter:bool = False

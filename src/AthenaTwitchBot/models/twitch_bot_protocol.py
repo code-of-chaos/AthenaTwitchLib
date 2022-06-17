@@ -20,6 +20,7 @@ from AthenaTwitchBot.models.twitch_message_tags import TwitchMessageTags
 from AthenaTwitchBot.models.twitch_user import TwitchUser
 from AthenaTwitchBot.models.twitch_context import TwitchContext
 from AthenaTwitchBot.models.decorator_helpers.command import Command
+from AthenaTwitchBot.models.twitch_bot_method import TwitchBotMethod
 
 from AthenaTwitchBot.functions.output import *
 
@@ -258,15 +259,16 @@ class TwitchBotProtocol(asyncio.Protocol):
             cmd_str_lower = context.command_str.lower()
 
             try:
-                command:Command = self.bot.commands[cmd_str_lower]
+                print(self.bot.commands)
+                method:TwitchBotMethod = self.bot.commands[cmd_str_lower]
                 # check if the command was case-sensitive and break if it is
-                if command.case_sensitive and context.command_str != cmd_str_lower:
+                if method.command_case_sensitive and context.command_str != cmd_str_lower:
                     raise KeyError
             except KeyError:
                 return context
 
             context.is_command = True
-            command.callback(self=self.bot,context=context)
+            method.callback(context=context)
 
         return context
 

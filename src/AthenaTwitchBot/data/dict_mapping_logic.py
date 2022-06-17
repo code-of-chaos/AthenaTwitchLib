@@ -58,7 +58,7 @@ MESSAGE_TAG_CONVERSION_MAPPING:dict[str:Callable] = {
     "user-type":                lambda value: value,
     "reply-parent-display-name":lambda value: value,
     "reply-parent-msg-body":    lambda value: value,
-    "reply-parent-msg-id":      lambda value: int(value),
+    "reply-parent-msg-id":      lambda value: value,
     "reply-parent-user-id":     lambda value: int(value),
     "reply-parent-user-login":  lambda value: value,
     "emote-only":               lambda value: bool(int(value)),
