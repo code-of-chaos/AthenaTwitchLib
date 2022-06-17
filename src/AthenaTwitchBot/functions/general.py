@@ -17,3 +17,6 @@ def channel_list_to_TwitchChannels(channels:list[str|TwitchChannel]) -> list[Twi
         TwitchChannel(channel) if not isinstance(channel, TwitchChannel) else channel
         for channel in channels
     ]
+
+def cleanup_text(text:str) -> str:
+    return text.replace("\n", " ")
