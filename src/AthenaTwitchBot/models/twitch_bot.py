@@ -13,6 +13,7 @@ import inspect
 from AthenaTwitchBot.models.decorator_helpers.command import Command
 from AthenaTwitchBot.models.decorator_helpers.scheduled_task import ScheduledTask
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
+from AthenaTwitchBot.models.twitch_bot_method import TwitchBotMethod
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -32,7 +33,7 @@ class TwitchBot:
     predefined_commands:InitVar[dict[str: Callable]]=None # made part of init if someone wants to feel the pain of adding commands manually
 
     # noinspection PyDataclass
-    commands:dict[str: Command]=field(init=False)
+    commands:dict=field(init=False)
     scheduled_tasks:list[ScheduledTask]=field(init=False)
 
     # non init slots
@@ -45,12 +46,11 @@ class TwitchBot:
         cls.commands = {}
         cls.scheduled_tasks = []
 
-        # create the actual instance
-        #   Which is to be used in the commands tuple
-        obj = super(TwitchBot, cls).__new__(cls,*args,**kwargs)
-
         # loop over the bots methods and parse the different methods
         for k,v in cls.__dict__.items():
+            if isinstance(v,TwitchBotMethod):
+                print("FOUND A METHOD")
+
             if inspect.isfunction(v):
                 if "is_command" in (attributes := [attribute for attribute in dir(v) if not attribute.startswith("__")]):
                     for cmd in v.cmd:
@@ -59,7 +59,7 @@ class TwitchBot:
                 elif "is_task" in attributes:
                     cls.scheduled_tasks.append(v.tsk)
 
-        return obj
+        return super(TwitchBot, cls).__new__(cls,*args,**kwargs)
 
     def __post_init__(self, predefined_commands: dict[str: Callable]=None):
         # format every channel into the correct model
