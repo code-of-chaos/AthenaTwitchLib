@@ -7,9 +7,10 @@ from __future__ import annotations
 # Custom Library
 
 # Custom Packages
+from AthenaTwitchBot.functions.general import cleanup_text
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 def format_message(message:str) -> bytes:
-    return f"{message}\r\n".encode("UTF_8")
+    return f"{cleanup_text(message)}\r\n".encode("UTF_8")

@@ -12,8 +12,6 @@ from AthenaTwitchBot.models.twitch_user import TwitchUser
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 from AthenaTwitchBot.models.twitch_message_tags import TwitchMessageTags
 
-from AthenaTwitchBot.functions.general import cleanup_text
-
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
@@ -34,8 +32,8 @@ class TwitchContext:
 
     def reply(self, text:str):
         self.is_reply = True
-        self.output_text = cleanup_text(text)
+        self.output_text = text
 
     def write(self, text:str):
         self.is_write = True
-        self.output_text = cleanup_text(text)
+        self.output_text = text
