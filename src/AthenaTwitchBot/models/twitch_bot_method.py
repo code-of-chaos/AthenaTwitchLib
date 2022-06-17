@@ -58,7 +58,7 @@ class TwitchBotMethod:
         obj.is_command = True
         return obj
 
-    def scheduled_task(self=None, *, delay:int=Hour(1)):
+    def scheduled_task(self=None, *, delay:int|Second|Minute|Hour=Hour(1)):
         kwargs: dict = {
             "is_scheduled_task": True,
             "task_delay": convert_time_to_seconds(delay),
