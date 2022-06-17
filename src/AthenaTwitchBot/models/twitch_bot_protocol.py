@@ -39,9 +39,11 @@ class TwitchBotProtocol(asyncio.Protocol):
     transport:asyncio.transports.Transport = field(init=False)
     message_constructor:Callable = field(init=False)
     loop:asyncio.AbstractEventLoop = field(init=False)
+    PREFIX_FULL:str = field(init=False)
 
     def __post_init__(self):
         self.loop = asyncio.get_running_loop()
+        self.PREFIX_FULL = f":{self.bot.prefix}"
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Support Methods  -
@@ -96,7 +98,6 @@ class TwitchBotProtocol(asyncio.Protocol):
                 for channel in self.bot.channels:
                     coro = self.loop.create_task(self.scheduled_task_coro(tsk, channel=channel))
                     asyncio.ensure_future(coro, loop=self.loop)
-
 
     def data_received(self, data: bytearray) -> None:
         self.parse_data(data)
@@ -253,11 +254,9 @@ class TwitchBotProtocol(asyncio.Protocol):
     # - Message Parsing  -
     # ------------------------------------------------------------------------------------------------------------------
     def parse_user_message(self, context:TwitchContext) -> TwitchContext:
-        PREFIX_FULL = f":{self.bot.prefix}"
+        if (cmd_str := context.raw_text[0]).startswith(self.PREFIX_FULL) and cmd_str != self.PREFIX_FULL:
 
-        if (cmd_str := context.raw_text[0]).startswith(PREFIX_FULL) and cmd_str != PREFIX_FULL:
-
-            context.command_str = cmd_str.replace(PREFIX_FULL, "")
+            context.command_str = cmd_str.replace(self.PREFIX_FULL, "")
             cmd_str_lower = context.command_str.lower()
 
             try:
