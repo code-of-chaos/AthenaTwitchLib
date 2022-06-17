@@ -25,6 +25,7 @@ from AthenaTwitchBot.data.unions import OUTPUT_CALLBACKS
 from AthenaTwitchBot.data.twitch_irc_messages import (
     PING, PRIVMSG, TMI_TWITCH_TV, JOIN, ACK, ASTERISK, CAP, TWITCH_TAGS, EQUALS
 )
+from AthenaTwitchBot.data.emotes import emotes_set
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -261,13 +262,17 @@ class TwitchBotProtocol(asyncio.Protocol):
 
             try:
                 method:TwitchBotMethod = self.bot.commands[cmd_str_lower]
-                # check if the command was case-sensitive and break if it is
-                if method.command_case_sensitive and context.command_str != cmd_str_lower:
-                    raise KeyError
-                if method.command_args:
-                    context.command_args = context.raw_text[1:]
             except KeyError:
                 return context
+
+            match method:
+                case TwitchBotMethod(command_case_sensitive=True) if context.command_str != cmd_str_lower:
+                    return context # checks if the command was case-sensitive and break if it is
+                case TwitchBotMethod(command_args=True, command_args_skip_emotes=True):
+                    # use set logic to filter out the emotes
+                    context.command_args = tuple(set(context.raw_text[1:]).difference(emotes_set))
+                case TwitchBotMethod(command_args=True, command_args_skip_emotes=False):
+                    context.command_args = context.raw_text[1:]
 
             method.callback(context=context)
 

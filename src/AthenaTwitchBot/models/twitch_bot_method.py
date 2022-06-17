@@ -18,7 +18,7 @@ from AthenaTwitchBot.functions.general import channel_list_to_TwitchChannels
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True, kw_only=True)
+@dataclass(slots=True, kw_only=True, match_args=True)
 class TwitchBotMethod:
     channels:list[TwitchChannel|str] = field(default_factory=list)
 
@@ -26,6 +26,7 @@ class TwitchBotMethod:
     is_command:bool = False
     command_names:list[str] = field(default_factory=list)
     command_args:bool = False
+    command_args_skip_emotes:bool = False
     command_case_sensitive:bool = False
 
     # scheduled task related attributes
@@ -52,6 +53,7 @@ class TwitchBotMethod:
             *,
             names:str|list[str],
             args_enabled:bool=False,
+            args_skip_emotes:bool=False,
             case_sensitive:bool = False
     ) -> TwitchBotMethod:
         # if the method is used on the TwitchBotMethod class and not an instance of it
@@ -60,6 +62,7 @@ class TwitchBotMethod:
             "command_names" : [names] if isinstance(names, str) else [str(n) for n in names],
             "command_args" : args_enabled,
             "command_case_sensitive" : case_sensitive,
+            "command_args_skip_emotes":args_skip_emotes
         }
 
         # if the method is used on a TwitchBotMethod instance
