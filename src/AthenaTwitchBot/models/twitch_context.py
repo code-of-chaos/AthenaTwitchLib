@@ -25,6 +25,7 @@ class TwitchContext:
 
     #some non init stuff
     command_str:str=field(init=False, default=None)
+    command_args:tuple[str]=field(init=False, default_factory=tuple)
     is_reply:bool=field(init=False, default=False)
     is_write:bool=field(init=False, default=False)
     output_text:str=field(init=False, default=None)

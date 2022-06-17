@@ -264,6 +264,8 @@ class TwitchBotProtocol(asyncio.Protocol):
                 # check if the command was case-sensitive and break if it is
                 if method.command_case_sensitive and context.command_str != cmd_str_lower:
                     raise KeyError
+                if method.command_args:
+                    context.command_args = context.raw_text[1:]
             except KeyError:
                 return context
 
