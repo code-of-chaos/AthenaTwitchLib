@@ -25,19 +25,15 @@ class TwitchContext:
 
     #some non init stuff
     command_str:str=field(init=False, default=None)
-    is_command:bool=field(init=False, default=False)
+    command_args:tuple[str]=field(init=False, default_factory=tuple)
     is_reply:bool=field(init=False, default=False)
     is_write:bool=field(init=False, default=False)
     output_text:str=field(init=False, default=None)
 
     def reply(self, text:str):
         self.is_reply = True
-        self.output_text=self._cleanup_output_text(text)
+        self.output_text = text
 
     def write(self, text:str):
         self.is_write = True
-        self.output_text=self._cleanup_output_text(text)
-
-    @staticmethod
-    def _cleanup_output_text(text:str) -> str:
-        return text.replace("\n", " ")
+        self.output_text = text

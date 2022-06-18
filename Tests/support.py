@@ -5,12 +5,18 @@
 from __future__ import annotations
 
 # Custom Library
+from AthenaTwitchBot.models.twitch_bot import TwitchBot
 
 # Custom Packages
-from AthenaTwitchBot.functions.general import cleanup_text
 
 # ----------------------------------------------------------------------------------------------------------------------
-# - Code -
+# - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
-def format_message(message:str) -> bytes:
-    return f"{cleanup_text(message)}\r\n".encode("UTF_8")
+class EmptyBot(TwitchBot):
+    def __init__(self):
+        super(EmptyBot, self).__init__(
+            nickname="empty_bot",
+            oauth_token="...",
+            channels=["directiveathena"],
+            prefix="!",
+        )

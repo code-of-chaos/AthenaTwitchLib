@@ -9,6 +9,7 @@ from AthenaColor import ForeNest
 
 # Custom Packages
 from AthenaTwitchBot.models.outputs.abstract_output import AbstractOutput
+# noinspection PyProtectedMember
 from AthenaTwitchBot._info._v import VERSION
 
 from AthenaTwitchBot.data.output_console import PING_RECEIVED
@@ -36,16 +37,9 @@ class OutputConsole(AbstractOutput):
 
     async def write(self, context, **kwargs):
         await self.undefined(text=" ".join(context.raw_irc))
-        if context.is_command:
-            print(ForeNest.SlateGray(context.user, ":", ForeNest.Gold("!", context.command_str, sep="")),)
-            print(ForeNest.SlateGray(context.output_text))
 
     async def reply(self, context, **kwargs):
         await self.undefined(text=" ".join(context.raw_irc))
-        if context.is_command:
-            print(ForeNest.SlateGray(context.user, ":", ForeNest.Gold("!", context.command_str, sep="")),)
-            print(ForeNest.SlateGray(context.output_text))
-
 
     async def scheduled_task(self, context, **kwargs):
         await self.undefined(text=" ".join(context.raw_irc))
