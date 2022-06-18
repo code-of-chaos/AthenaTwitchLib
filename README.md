@@ -56,10 +56,9 @@ class newBot(AthenaTwitchBot.TwitchBot):
 # --- Main function ---
 def main():
   # the launch function handles everything about the protocol setup and command handling
-  AthenaTwitchBot.launch(
-    bot=newBot(),
-    ssl=True  # set to true to enable ssl connection to Twitch
-  )
+  AthenaTwitchBot.Launcher(
+    ssl_enabled=True # set to true to enable ssl connection to Twitch (default is True)
+  ).launch()
 
 if __name__ == '__main__':
   main()
