@@ -66,7 +66,6 @@ class TwitchBotProtocol(asyncio.Protocol):
             self.parse_context_output(context)
 
     def output_handler(self,callback:OUTPUT_CALLBACKS, **kwargs):
-<<<<<<< Updated upstream
         # TODO test code below with asyncio.gather
         for output in self.outputs:
             # schedule the coro
@@ -89,14 +88,6 @@ class TwitchBotProtocol(asyncio.Protocol):
             TwitchChannel(channel_str) ,
             raw_text=text,
             raw_irc=raw_irc
-=======
-        asyncio.ensure_future(
-            asyncio.gather(
-                *(callback(output=output, **kwargs)
-                for output in self.outputs_initiated)
-            ),
-            loop=self.loop
->>>>>>> Stashed changes
         )
 
     # ------------------------------------------------------------------------------------------------------------------
