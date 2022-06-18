@@ -22,7 +22,7 @@ def launch(
         *, # after this, keywords only
         bot:TwitchBot=None,
         protocol_factory:Callable=None,
-        outputs:list[AbstractOutput]=None,
+        outputs:list[type[AbstractOutput]]=None,
         console_enabled:bool=True,
         irc_connection:bool=True,
         irc_host:str='irc.chat.twitch.tv',
@@ -32,14 +32,14 @@ def launch(
 ):
     if irc_connection:
         if outputs is None:
-            outputs=[OutputTwitch()]
+            outputs=[OutputTwitch]
         # thanks for fikotta for pointing me to use isinstance here
-        if not any(isinstance(o, OutputTwitch) for o in outputs):
+        if not any(issubclass(o, OutputTwitch) for o in outputs):
             # always make sure OutputTwitch callbacks are the first to be made
-            outputs.insert(0,OutputTwitch())
-        if not any(isinstance(o, OutputConsole) for o in outputs) and console_enabled:
+            outputs.insert(0,OutputTwitch)
+        if not any(issubclass(o, OutputConsole) for o in outputs) and console_enabled:
             # placement of the Console does not matter
-            outputs.append(OutputConsole())
+            outputs.append(OutputConsole)
 
         # a bot always has to be defined
         if bot is None or not isinstance(bot, TwitchBot):

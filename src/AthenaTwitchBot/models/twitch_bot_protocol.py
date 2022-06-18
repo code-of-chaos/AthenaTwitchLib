@@ -33,10 +33,10 @@ from AthenaTwitchBot.data.emotes import emotes_set
 @dataclass(kw_only=True, slots=True, eq=False, order=False)
 class TwitchBotProtocol(asyncio.Protocol):
     bot:TwitchBot
-    outputs:list[AbstractOutput]
+    outputs:list[type[AbstractOutput]]
 
     # non init slots
-    transport:asyncio.transports.Transport = field(init=False)
+    outputs_initialized:list[AbstractOutput] =field(init=False)
     message_constructor:Callable = field(init=False)
     loop:asyncio.AbstractEventLoop = field(init=False)
     PREFIX_FULL:str = field(init=False)
@@ -70,8 +70,8 @@ class TwitchBotProtocol(asyncio.Protocol):
     def output_handler(self,callback:OUTPUT_CALLBACKS, **kwargs):
         asyncio.ensure_future(
             asyncio.gather(
-                *(callback(output=output, transport=self.transport, **kwargs)
-                for output in self.outputs)
+                *(callback(output=output, **kwargs)
+                for output in self.outputs_initialized)
             ),
             loop=self.loop
         )
@@ -80,7 +80,8 @@ class TwitchBotProtocol(asyncio.Protocol):
     # - Protocol necessary  -
     # ------------------------------------------------------------------------------------------------------------------
     def connection_made(self, transport: asyncio.transports.Transport) -> None:
-        self.transport = transport
+        self.outputs_initialized = [output(transport=transport) for output in self.outputs]
+
         # first write the password then the nickname else the connection will fail
         self.output_handler(
             callback=output_connection_made,
