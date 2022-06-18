@@ -34,10 +34,10 @@ from AthenaTwitchBot.data.twitch_irc_messages import (
 @dataclass(kw_only=True, slots=True, eq=False, order=False)
 class TwitchBotProtocol(asyncio.Protocol):
     bot:TwitchBot
-    outputs:list[AbstractOutput]
+    outputs:list[type[AbstractOutput]]
 
     # non init slots
-    transport:asyncio.transports.Transport = field(init=False)
+    outputs_initiated:list[AbstractOutput]=field(init=False)
     message_constructor:Callable = field(init=False)
     loop:asyncio.AbstractEventLoop = field(init=False)
 
@@ -66,6 +66,7 @@ class TwitchBotProtocol(asyncio.Protocol):
             self.parse_context_output(context)
 
     def output_handler(self,callback:OUTPUT_CALLBACKS, **kwargs):
+<<<<<<< Updated upstream
         # TODO test code below with asyncio.gather
         for output in self.outputs:
             # schedule the coro
@@ -88,13 +89,21 @@ class TwitchBotProtocol(asyncio.Protocol):
             TwitchChannel(channel_str) ,
             raw_text=text,
             raw_irc=raw_irc
+=======
+        asyncio.ensure_future(
+            asyncio.gather(
+                *(callback(output=output, **kwargs)
+                for output in self.outputs_initiated)
+            ),
+            loop=self.loop
+>>>>>>> Stashed changes
         )
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Protocol necessary  -
     # ------------------------------------------------------------------------------------------------------------------
     def connection_made(self, transport: asyncio.transports.Transport) -> None:
-        self.transport = transport
+        self.outputs_initiated = [output(transport=transport) for output in self.outputs]
         # first write the password then the nickname else the connection will fail
         self.output_handler(
             callback=output_connection_made,
