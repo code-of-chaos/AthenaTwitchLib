@@ -17,7 +17,7 @@ class TwitchChannel:
     name:str
 
     def __post_init__(self):
-        # remove any "#" if they exists
+        # remove any "#" if they exist, so that all the __str__ casting happens the same way
         self.name = self.name.replace("#", "")
 
     def __str__(self) -> str:
