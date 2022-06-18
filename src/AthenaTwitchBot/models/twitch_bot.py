@@ -3,16 +3,15 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field, InitVar
-from typing import Callable
-import inspect
+from dataclasses import dataclass, field
 
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.decorator_helpers.command import Command
-from AthenaTwitchBot.models.decorator_helpers.scheduled_task import ScheduledTask
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
+from AthenaTwitchBot.models.twitch_bot_method import TwitchBotMethod
+
+from AthenaTwitchBot.functions.general import channel_list_to_TwitchChannels
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -29,53 +28,34 @@ class TwitchBot:
     twitch_capability_membership:bool=False
     twitch_capability_tags:bool=True # only one that has the default set to true, as this is required to make reply's work
 
-    predefined_commands:InitVar[dict[str: Callable]]=None # made part of init if someone wants to feel the pain of adding commands manually
-
     # noinspection PyDataclass
-    commands:dict[str: Command]=field(init=False)
-    scheduled_tasks:list[ScheduledTask]=field(init=False)
+    commands:dict[str:TwitchBotMethod]=field(init=False)
+    scheduled_tasks:list[TwitchBotMethod]=field(init=False)
 
     # non init slots
 
+
     # ------------------------------------------------------------------------------------------------------------------
-    # - Code -
+    # - init -
     # ------------------------------------------------------------------------------------------------------------------
     def __new__(cls, *args, **kwargs):
-        # Loop over own functions to see if any is decorated with the command setup
         cls.commands = {}
         cls.scheduled_tasks = []
+        twitch_bot_obj = super(TwitchBot, cls).__new__(cls,*args,**kwargs)
 
-        # create the actual instance
-        #   Which is to be used in the commands tuple
-        obj = super(TwitchBot, cls).__new__(cls,*args,**kwargs)
-
-        # loop over the bots methods and parse the different methods
+        # store commands, tasks, etc...
+        #   Done for ease of use
         for k,v in cls.__dict__.items():
-            if inspect.isfunction(v):
-                if "is_command" in (attributes := [attribute for attribute in dir(v) if not attribute.startswith("__")]):
-                    for cmd in v.cmd:
-                        cls.commands[cmd.name.lower()] = cmd
+            if isinstance(v,TwitchBotMethod):
+                v.owner = twitch_bot_obj
+                if v.is_command:
+                    for name in v.command_names:
+                        twitch_bot_obj.commands[name] = v
+                if v.is_scheduled_task:
+                    twitch_bot_obj.scheduled_tasks.append(v)
 
-                elif "is_task" in attributes:
-                    cls.scheduled_tasks.append(v.tsk)
+        return twitch_bot_obj
 
-        return obj
-
-    def __post_init__(self, predefined_commands: dict[str: Callable]=None):
+    def __post_init__(self):
         # format every channel into the correct model
-        self.channels = [
-            TwitchChannel(c) if not isinstance(c, TwitchChannel) else c
-            for c in self.channels
-        ]
-
-        if predefined_commands is not None:
-            # the self instance isn't assigned on the predefined_commands input
-            self.commands |= {
-                k.lower():Command(
-                    name=k,
-                    case_sensitive=False,
-                    callback=v,
-                    args_enabled=False
-                )
-                for k, v in predefined_commands.items()
-            }
+        self.channels = channel_list_to_TwitchChannels(self.channels)

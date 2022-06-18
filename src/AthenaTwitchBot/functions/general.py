@@ -7,10 +7,16 @@ from __future__ import annotations
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.functions.general import cleanup_text
+from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-def format_message(message:str) -> bytes:
-    return f"{cleanup_text(message)}\r\n".encode("UTF_8")
+def channel_list_to_TwitchChannels(channels:list[str|TwitchChannel]) -> list[TwitchChannel]:
+    return [
+        TwitchChannel(channel) if not isinstance(channel, TwitchChannel) else channel
+        for channel in channels
+    ]
+
+def cleanup_text(text:str) -> str:
+    return text.replace("\n", " ")
