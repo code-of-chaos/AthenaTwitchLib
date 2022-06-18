@@ -42,31 +42,12 @@ class OutputTwitch(AbstractOutput):
                     f"{PRIVMSG} {context.channel} :{context.output_text}"
             ))
 
-<<<<<<< Updated upstream
-    async def reply(self, transport: asyncio.transports.Transport, context:TwitchContext, **kwargs):
+    async def reply(self, context:TwitchContext, **kwargs):
         if context.output_text is not None and context.message_tags.message_id != EMPTY_STR:
-            transport.write(
+            self.transport.write(
                 format_message(
                     f"@reply-parent-msg-id={context.message_tags.message_id} {PRIVMSG} {context.channel} :{context.output_text}"
             ))
 
-    async def scheduled_task(self,transport: asyncio.transports.Transport, context:TwitchContext, **kwargs):
-        pass
-=======
-    async def reply(self, context:TwitchContext, **kwargs):
-        if context.output_text is not None:
-            if context.message_tags.message_id != EMPTY_STR:
-                self.transport.write(
-                    format_message(
-                        f"@reply-parent-msg-id={context.message_tags.message_id} {PRIVMSG} {context.channel} :{context.output_text}"
-                ))
-            else:
-                self.transport.write(
-                    format_message(
-                        f"{PRIVMSG} {context.channel} :{context.output_text}"
-                    ))
-
-
     async def scheduled_task(self, context:TwitchContext, **kwargs):
-        pass # is handled by the "write" output
->>>>>>> Stashed changes
+        pass
