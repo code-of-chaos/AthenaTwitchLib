@@ -11,6 +11,7 @@ from typing import Callable
 # Custom Library
 
 # Custom Packages
+from AthenaTwitchBot.models.twitch_data_handler import TwitchDataHandler
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - All -
@@ -23,6 +24,7 @@ __all__ = ["Protocol"]
 
 @dataclass(slots=True, eq=False, order=False, match_args=False, kw_only=True)
 class Protocol(asyncio.Protocol, ABC):
+    data_handler:TwitchDataHandler
     # non init values
     transport: asyncio.transports.Transport = field(init=False, default=None)
 
