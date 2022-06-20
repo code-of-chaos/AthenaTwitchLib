@@ -10,7 +10,8 @@ from dataclasses import dataclass
 
 # Custom Packages
 from AthenaTwitchBot.models.protocols.protocol import Protocol
-from AthenaTwitchBot.models.twitch_data_handler import TwitchDataHandler
+from AthenaTwitchBot.models.data_handlers.data_handler_twitch import DataHandlerTwitch
+from AthenaTwitchBot.models.contexts.context import Context
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - All -
@@ -22,16 +23,28 @@ __all__ = ["ProtocolTwitch"]
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, eq=False, order=False, match_args=False, kw_only=True)
 class ProtocolTwitch(Protocol):
-    data_handler:TwitchDataHandler
+    data_handler:DataHandlerTwitch
 
     # ------------------------------------------------------------------------------------------------------------------
     # - asyncio.Protocol methods ( most are defined in AthenaTwitchBot.models.protocols.protocol.Protocol )-
     # ------------------------------------------------------------------------------------------------------------------
     def data_received(self, data: bytearray) -> None:
-        result = self.data_handler.handle(data)
+        context: Context = self.data_handler.handle(data)
+        self.command_handler(context)
+        self.output_handler(context)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Twitch authenticate and define outputs methods-
     # ------------------------------------------------------------------------------------------------------------------
     def authenticate(self, bot_name:str, bot_oath_token:str):
         pass
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # - content handlers -
+    # ------------------------------------------------------------------------------------------------------------------
+    def command_handler(self, context:Context) -> Context:
+        return context
+
+    def task_handler(self, context:Context) -> Context:
+        return context
+

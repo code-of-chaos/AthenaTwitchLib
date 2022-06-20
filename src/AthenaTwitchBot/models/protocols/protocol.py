@@ -11,7 +11,8 @@ from typing import Callable
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.twitch_data_handler import TwitchDataHandler
+from AthenaTwitchBot.models.data_handlers.data_handler import DataHandler
+from AthenaTwitchBot.models.contexts.context import Context
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - All -
@@ -24,7 +25,8 @@ __all__ = ["Protocol"]
 
 @dataclass(slots=True, eq=False, order=False, match_args=False, kw_only=True)
 class Protocol(asyncio.Protocol, ABC):
-    data_handler:TwitchDataHandler
+    data_handler:DataHandler
+
     # non init values
     transport: asyncio.transports.Transport = field(init=False, default=None)
 
@@ -44,8 +46,15 @@ class Protocol(asyncio.Protocol, ABC):
     def connection_made(self, transport: asyncio.transports.Transport) -> None:
         self.transport = transport
 
-    @abstractmethod
-    def data_received(self, data: bytearray) -> None:...
+    def data_received(self, data: bytearray) -> None:
+        context: Context = self.data_handler.handle(data)
+        self.output_handler(context)
 
     def connection_lost(self, exc: Exception | None) -> None:
         raise exc
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Outputs -
+    # ------------------------------------------------------------------------------------------------------------------
+    def output_handler(self, context:Context):
+        pass
