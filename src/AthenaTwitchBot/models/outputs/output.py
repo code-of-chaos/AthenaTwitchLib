@@ -3,6 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+from abc import ABC, abstractmethod
 
 # Custom Library
 
@@ -11,3 +12,9 @@ from __future__ import annotations
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
+class Output(ABC):
+    def __init__(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def undefined(self, data):...
