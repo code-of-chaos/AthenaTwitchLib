@@ -7,9 +7,11 @@ from __future__ import annotations
 # Custom Library
 
 # Custom Packages
+from AthenaTwitchBot.models.bot.outputs.output import Output
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class Context:
-    pass
+class OutputConsole(Output):
+    def undefined(self, data):
+        pass

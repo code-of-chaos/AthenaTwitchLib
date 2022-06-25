@@ -8,7 +8,7 @@ import asyncio
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.outputs.output import Output
+from AthenaTwitchBot.models.bot.outputs.output import Output
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

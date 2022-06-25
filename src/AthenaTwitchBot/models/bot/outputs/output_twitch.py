@@ -3,17 +3,20 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from abc import ABC, abstractmethod
+import asyncio
 
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.contexts.context import Context
+from AthenaTwitchBot.models.bot.outputs.output import Output
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class DataHandler(ABC):
-    @abstractmethod
-    def handle(self, data:bytearray) -> Context:
-        """handles the data in a proper manner"""
+class OutputTwitch(Output):
+    transport:asyncio.Transport
+    def __init__(self, transport:asyncio.Transport, **kwargs):
+        self.transport = transport
+
+    def undefined(self, data):
+        pass

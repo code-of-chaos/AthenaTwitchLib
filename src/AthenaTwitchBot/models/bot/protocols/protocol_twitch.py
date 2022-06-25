@@ -9,9 +9,9 @@ from dataclasses import dataclass
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.protocols.protocol import Protocol
-from AthenaTwitchBot.models.data_handlers.data_handler_twitch import DataHandlerTwitch
-from AthenaTwitchBot.models.contexts.context import Context
+from AthenaTwitchBot.models.bot.protocols.protocol import Protocol
+from AthenaTwitchBot.models.bot.data_handlers.data_handler_twitch import DataHandlerTwitch
+from AthenaTwitchBot.models.bot.contexts.context import Context
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - All -

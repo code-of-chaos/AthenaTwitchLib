@@ -7,7 +7,7 @@ from __future__ import annotations
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.data_handlers.data_handler import DataHandler
+from AthenaTwitchBot.models.bot.data_handlers.data_handler import DataHandler
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

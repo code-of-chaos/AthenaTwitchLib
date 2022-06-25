@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.twitch_channel import TwitchChannel
+from AthenaTwitchBot.models.bot.twitch_channel import TwitchChannel
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

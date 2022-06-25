@@ -17,7 +17,7 @@ from AthenaTwitchBot.models.outputs.output import Output
 from AthenaTwitchBot.models.outputs.output_console import OutputConsole
 from AthenaTwitchBot.models.outputs.output_twitch import OutputTwitch
 from AthenaTwitchBot.models.outputs.output_server import OutputServer
-
+from AthenaTwitchBot.models.twitch_bot import TwitchBot
 
 from AthenaTwitchBot.data.connections import *
 
@@ -31,15 +31,10 @@ __all__ = ["Launcher"]
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, kw_only=True)
 class Launcher:
-    protocol_twitch_type:type[ProtocolTwitch]=ProtocolTwitch
-    protocol_server_type:type[ProtocolServer]=ProtocolServer
-
-    loop:asyncio.AbstractEventLoop=field(default_factory=asyncio.get_event_loop)
-
+    twitch_bot:TwitchBot
     ssl_twitch_enabled:bool=True
 
     server_enabled:bool=False
-    ssl_server_enabled:bool=False
     server_host:str=None
     server_port:int=None
 
@@ -48,6 +43,7 @@ class Launcher:
     # non init
     protocol_twitch:ProtocolTwitch=field(init=False, default=None)
     protocol_server:ProtocolServer=field(init=False, default=None)
+    loop:asyncio.AbstractEventLoop=field(default_factory=asyncio.get_event_loop)
 
     def launch(self):
         # create the connection to twitch and handle basic setup
@@ -82,7 +78,7 @@ class Launcher:
 
     async def create_connection_twitch(self):
         _, self.protocol_twitch = await self.loop.create_connection(
-            protocol_factory=self.protocol_twitch_type.factory(
+            protocol_factory=ProtocolTwitch.factory(
                 data_handler=DataHandlerTwitch()
             ),
             host=TWITCH_IRC_HOST if not self.ssl_twitch_enabled else TWITCH_IRC_HOST_SSL,
@@ -97,10 +93,9 @@ class Launcher:
             raise ValueError
 
         _, self.protocol_server = await self.loop.create_connection(
-            protocol_factory=self.protocol_server.factory(
+            protocol_factory=ProtocolServer.factory(
                 data_handler=DataHandlerServer()
             ),
             host=self.server_host,
             port=self.server_port,
-            ssl=self.ssl_server_enabled
         )

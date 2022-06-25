@@ -11,8 +11,8 @@ from typing import Callable
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.data_handlers.data_handler import DataHandler
-from AthenaTwitchBot.models.contexts.context import Context
+from AthenaTwitchBot.models.bot.data_handlers.data_handler import DataHandler
+from AthenaTwitchBot.models.bot.contexts.context import Context
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - All -

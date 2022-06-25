@@ -45,6 +45,8 @@ setuptools.setup(
     python_requires=">=3.10",
     install_requires=[
         "AthenaLib>=1.1.0",
-        "AthenaColor>=6.0.1"
+        "AthenaColor>=6.0.1",
+        "AthenaServer>=0.1.0",
+        "AthenaServerClient>=0.0.0"
     ]
 )
