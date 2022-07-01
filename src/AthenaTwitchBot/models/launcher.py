@@ -9,15 +9,10 @@ import asyncio
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.protocols.protocol_twitch import ProtocolTwitch
-from AthenaTwitchBot.models.protocols.protocol_server import ProtocolServer
-from AthenaTwitchBot.models.data_handlers.data_handler_server import DataHandlerServer
-from AthenaTwitchBot.models.data_handlers.data_handler_twitch import DataHandlerTwitch
-from AthenaTwitchBot.models.outputs.output import Output
-from AthenaTwitchBot.models.outputs.output_console import OutputConsole
-from AthenaTwitchBot.models.outputs.output_twitch import OutputTwitch
-from AthenaTwitchBot.models.outputs.output_server import OutputServer
-from AthenaTwitchBot.models.twitch_bot import TwitchBot
+from AthenaTwitchBot.models.bot.outputs.output import Output
+from AthenaTwitchBot.models.bot.outputs.output_console import OutputConsole
+from AthenaTwitchBot.models.bot.outputs.output_twitch import OutputTwitch
+from AthenaTwitchBot.models.bot.twitch_bot import TwitchBot
 
 from AthenaTwitchBot.data.connections import *
 
@@ -41,7 +36,7 @@ class Launcher:
     console_enabled: bool = True
 
     # non init
-    protocol_twitch:ProtocolTwitch=field(init=False, default=None)
+    protocol_twitch:T=field(init=False, default=None)
     protocol_server:ProtocolServer=field(init=False, default=None)
     loop:asyncio.AbstractEventLoop=field(default_factory=asyncio.get_event_loop)
 

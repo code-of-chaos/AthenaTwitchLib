@@ -3,17 +3,19 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.bot.contexts.context import Context
+from AthenaTwitchBot.models.bot.twitch_bot import TwitchBot
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class DataHandler(ABC):
-    @abstractmethod
-    def handle(self, data:bytearray) -> Context:
-        """handles the data in a proper manner"""
+@dataclass(slots=True, kw_only=True, eq=False, order=False)
+class TwitchBotHandler:
+    bot:TwitchBot
+
+    def handle(self, data:bytearray):
+        pass

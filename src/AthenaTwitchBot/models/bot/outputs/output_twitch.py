@@ -15,7 +15,7 @@ from AthenaTwitchBot.models.bot.outputs.output import Output
 # ----------------------------------------------------------------------------------------------------------------------
 class OutputTwitch(Output):
     transport:asyncio.Transport
-    def __init__(self, transport:asyncio.Transport, **kwargs):
+    def __init__(self, transport:asyncio.Transport, **_):
         self.transport = transport
 
     def undefined(self, data):
