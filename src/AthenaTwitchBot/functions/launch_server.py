@@ -8,7 +8,7 @@ import tracemalloc
 # Custom Library
 
 # Custom Packages
-import AthenaTwitchBot.functions.global_vars as gbl
+import AthenaTwitchBot.data.global_vars as gbl
 from AthenaTwitchBot.models.twitch_bot import TwitchBot
 from AthenaTwitchBot.models.bot_server import BotServer
 

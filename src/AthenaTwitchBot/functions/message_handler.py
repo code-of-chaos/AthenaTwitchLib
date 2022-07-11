@@ -13,4 +13,5 @@ from AthenaTwitchBot.models.message_context import MessageContext
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 async def message_handler(data:bytearray) -> MessageContext:
-    return MessageContext()
+    context = MessageContext(raw_input=data)
+    return context

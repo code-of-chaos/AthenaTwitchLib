@@ -13,7 +13,7 @@ from AthenaTwitchBot.models.twitch_bot_protocol import TwitchBotProtocol
 from AthenaTwitchBot.models.message_context import MessageContext
 from AthenaTwitchBot.data.output_types import OutputTypes
 from AthenaTwitchBot.models.output_system import OutputSystem
-import AthenaTwitchBot.functions.global_vars as gbl
+import AthenaTwitchBot.data.global_vars as gbl
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -51,18 +51,18 @@ class BotServer:
         )
 
     async def login_chat_bot(self):
-        await gbl.bot_server.output_direct(
-            output_type=OutputTypes.twitch,
-            context=MessageContext(
-                _output=[
-                    f"PASS oauth:{gbl.bot.oauth_token}",
-                    f"NICK {gbl.bot.nickname}",
-                    f"JOIN {','.join(str(c) for c in gbl.bot.channels)}",
-                    "CAP REQ :twitch.tv/tags"
-                ]
-            )
+        await self.output_twitch(
+            MessageContext(_output=[
+                f"PASS oauth:{gbl.bot.oauth_token}",
+                f"NICK {gbl.bot.nickname}",
+                f"JOIN {','.join(str(c) for c in gbl.bot.channels)}",
+                "CAP REQ :twitch.tv/tags"
+            ])
         )
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Outputs -
+    # ------------------------------------------------------------------------------------------------------------------
     async def output_all(self, context:MessageContext):
         await asyncio.gather(
             self.output_direct(
@@ -77,5 +77,10 @@ class BotServer:
         except KeyError:
             print("here")
 
+    async def output_twitch(self, context:MessageContext):
+        try:
+            await self.output_system[OutputTypes.twitch].output(context, transport=self.bot_transport)
+        except KeyError:
+            print("here")
 
 
