@@ -42,6 +42,7 @@ class MessageTags:
     reply_parent_user_id: int = 0
     reply_parent_user_login: str = NOTHING
     returning_chatter:bool = False
+    custom_reward_id:str = NOTHING
 
     @classmethod
     def new_from_tags_str(cls, tags_str:str) -> MessageTags:

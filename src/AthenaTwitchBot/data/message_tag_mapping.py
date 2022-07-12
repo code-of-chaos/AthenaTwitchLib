@@ -37,7 +37,8 @@ MESSAGE_TAG_MAPPING:dict[str:Callable] = {
     "reply-parent-user-id":         "reply_parent_user_id",
     "reply-parent-user-login":      "reply_parent_user_login",
     "emote-only":                   "emote_only",
-    "returning-chatter":            "returning_chatter"
+    "returning-chatter":            "returning_chatter",
+    "custom-reward-id":             "custom_reward_id"
 }
 
 MESSAGE_TAG_CONVERSION_MAPPING:dict[str:Callable] = {
@@ -65,4 +66,5 @@ MESSAGE_TAG_CONVERSION_MAPPING:dict[str:Callable] = {
     "reply-parent-user-login":  lambda value: value,
     "emote-only":               lambda value: bool(int(value)),
     "returning-chatter":        lambda value: bool(int(value)),
+    "custom-reward-id":         lambda value: value
 }
