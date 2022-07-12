@@ -11,9 +11,10 @@ import asyncio
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot_protocol import TwitchBotProtocol
 from AthenaTwitchBot.models.message_context import MessageContext
-from AthenaTwitchBot.data.output_types import OutputTypes
 from AthenaTwitchBot.models.logic_output import LogicOutput
+from AthenaTwitchBot.data.output_types import OutputTypes
 import AthenaTwitchBot.data.global_vars as gbl
+from AthenaTwitchBot.data.message_flags import MessageFlags
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -54,13 +55,17 @@ class BotServer:
         )
 
     async def login_chat_bot(self):
-        await self.output_twitch(
-            MessageContext(_output=[
-                f"PASS oauth:{gbl.bot.oauth_token}",
-                f"NICK {gbl.bot.nickname}",
-                f"JOIN {','.join(str(c) for c in gbl.bot.channels)}",
-                "CAP REQ :twitch.tv/tags"
-            ])
+        await self.output_twitch(MessageContext(
+            flag=MessageFlags.login,output=f"PASS oauth:{gbl.bot.oauth_token}")
+        )
+        await self.output_twitch(MessageContext(
+            flag=MessageFlags.login,output=f"NICK {gbl.bot.nickname}")
+        )
+        await self.output_twitch(MessageContext(
+            flag=MessageFlags.login,output=f"JOIN {','.join(str(c) for c in gbl.bot.channels)}")
+        )
+        await self.output_twitch(MessageContext(
+            flag=MessageFlags.login,output="CAP REQ :twitch.tv/tags")
         )
 
     # ------------------------------------------------------------------------------------------------------------------

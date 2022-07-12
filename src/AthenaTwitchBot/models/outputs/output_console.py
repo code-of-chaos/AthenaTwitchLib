@@ -10,7 +10,6 @@ import asyncio
 # Custom Packages
 from AthenaTwitchBot.models.outputs.output import Output
 from AthenaTwitchBot.models.message_context import MessageContext
-from AthenaTwitchBot.functions.output_twitch_prep import output_twitch_prep
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

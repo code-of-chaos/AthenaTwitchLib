@@ -17,6 +17,7 @@ from AthenaTwitchBot.models.outputs.output_console import OutputConsole
 # ----------------------------------------------------------------------------------------------------------------------
 class LogicOutput:
     mapping:dict[OutputTypes:Output]
+    __slots__ = ("mapping",)
 
     def __init__(self):
         self.mapping = {

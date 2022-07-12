@@ -28,3 +28,7 @@ class TwitchBot:
     oauth_token:str
     channels:list[TwitchChannel]
     command_prefix:str
+
+    twitch_capability_commands:bool=False
+    twitch_capability_membership:bool=False
+    twitch_capability_tags:bool=True # only one that has the default set to true, is required to make reply's work

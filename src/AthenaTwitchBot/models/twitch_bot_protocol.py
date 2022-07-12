@@ -8,9 +8,7 @@ import asyncio
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.functions.message_handler import message_handler
-import AthenaTwitchBot.data.global_vars as gbl
-
+from AthenaTwitchBot.functions.message_handler import line_received_handler
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
@@ -19,19 +17,14 @@ class TwitchBotProtocol(asyncio.Protocol):
     __slots__ = ("transport",)
 
     # ------------------------------------------------------------------------------------------------------------------
-    # - Incoming Data Parsing -
+    # - asyncio.Protocol methods-
     # ------------------------------------------------------------------------------------------------------------------
     def data_received(self, data: bytearray) -> None:
         for line in data.split(b"\r\n"):
             if line == b"":
                 continue
-            asyncio.create_task(self._line_received(line))
+            asyncio.create_task(line_received_handler(line))
 
-    async def _line_received(self, line:bytearray):
-        await gbl.bot_server.output_all(context=await message_handler(line))
-
-    # ------------------------------------------------------------------------------------------------------------------
-    # - Connection Lost -
-    # ------------------------------------------------------------------------------------------------------------------
     def connection_lost(self, exc: Exception | None) -> None:
-        print(exc)
+        if exc is not None:
+            print(exc)
