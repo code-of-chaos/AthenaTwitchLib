@@ -11,7 +11,7 @@ from AthenaLib.data.text import NOTHING
 from AthenaColor import ForeNest, HEX
 
 # Custom Packages
-from AthenaTwitchBot.data.message_tag_mapping import MESSAGE_TAG_CONVERSION_MAPPING, MESSAGE_TAG_MAPPING
+from AthenaTwitchBot.data.message_tag_mapping import MESSAGE_TAG_MAPPING
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -50,9 +50,9 @@ class MessageTags:
         for tag_value in tags_str.split(";"):
             tag,value = tag_value.split("=")
             try:
-                attr_value[MESSAGE_TAG_MAPPING[tag]] = MESSAGE_TAG_CONVERSION_MAPPING[tag](value=value)
+                attr_name, callback = MESSAGE_TAG_MAPPING[tag]
+                attr_value[attr_name] = callback(value=value)
             except KeyError:
                 # don't make this crash the bot !
                 print(ForeNest.Maroon(f"{tag} not found in mapping"))
-
         return cls(**attr_value)

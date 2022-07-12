@@ -13,5 +13,8 @@ import enum
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class OutputTypes(enum.Enum):
+    """
+    Collection of stored output types which are used in the LogicOutput class
+    """
     twitch="twitch"
     console="console"

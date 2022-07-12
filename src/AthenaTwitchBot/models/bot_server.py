@@ -77,13 +77,14 @@ class BotServer:
     # - Register and start up tasks to be run every interval -
     # ------------------------------------------------------------------------------------------------------------------
     async def start_chat_bot_tasks(self):
-        for task in BotTask.registered: #type:BotTask
-            if task.channel is None:
-                task.channel = gbl.bot.channels
-            loop = asyncio.get_running_loop()
-            coro = loop.create_task(self.schedule_chat_bot_task(task=task))
-            asyncio.ensure_future(coro, loop=loop)
-            self.bot_tasks.add(coro)
+        if BotTask.registered is not None:
+            for task in BotTask.registered: #type:BotTask
+                if task.channel is None:
+                    task.channel = gbl.bot.channels
+                loop = asyncio.get_running_loop()
+                coro = loop.create_task(self.schedule_chat_bot_task(task=task))
+                asyncio.ensure_future(coro, loop=loop)
+                self.bot_tasks.add(coro)
 
     async def schedule_chat_bot_task(self, task:BotTask):
         while True:

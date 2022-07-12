@@ -13,6 +13,10 @@ import enum
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class MessageFlags(enum.Enum):
+    """
+    Collection of all Flags that can be set on a message.
+    This is purely for the output handlers and doesn't affect the MessageContext
+    """
     undefined="undefined"
     ping="ping"
     write="write"

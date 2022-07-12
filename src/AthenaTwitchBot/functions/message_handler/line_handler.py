@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 # Custom Library
+from AthenaLib.data.text import NOTHING
 
 # Custom Packages
 from AthenaTwitchBot.models.message_context import MessageContext
@@ -13,22 +14,33 @@ import AthenaTwitchBot.data.global_vars as gbl
 
 from AthenaTwitchBot.functions.message_handler.handle_ping import handle_ping
 from AthenaTwitchBot.functions.message_handler.handle_chat_message import handle_chat_message
+from AthenaTwitchBot.functions.message_handler.handle_join import handle_join
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-async def line_received_handler(line: bytearray):
-    await gbl.bot_server.output_all(context=await message_handler(line))
+async def line_handler(line:bytearray) -> None:
+    """
+    Handles a specific line brought in from the connection. Handles every line as a unique message.
+    Will therefor constantly need to make new context objects and output them correctly.
 
-async def message_handler(line:bytearray) -> MessageContext:
+    Parameters:
+    - line:
+    """
+
+    # Assemble a bare context
+    #   This is handled by the MessageContext class
+    #   Decoding of the line into a string format is also handled by the MessageContext class
     context = MessageContext(raw_input=line)
+
+    # match the pattern of th line to something we can use and pas off to other "sub handlers"
+    #   User "sub handlers" for ease of writing and stuff like that
     match context.raw_input_decoded_split:
         case "PING", *ping_response :
             # CATCHES the following pattern:
             # PING
             # :tmi.twitch.tv
-            await handle_ping(context, ping_response)
-
+            await handle_ping(context, NOTHING.join(ping_response))
 
         case _tmi_twitch_tv, str(_), gbl.bot.nickname, *_ if (
                 _tmi_twitch_tv == TMI_TWITCH_TV
@@ -38,7 +50,7 @@ async def message_handler(line:bytearray) -> MessageContext:
             # 001
             # eva_athenabot
             # :Welcome, GLHF!
-            context.output = None # undefined output, not needed for anything to send back to twitch
+            pass # undefined output, not needed for anything to send back to twitch
 
         case str(tags), str(user_name_str), "PRIVMSG", str(channel_str), *text if (
             gbl.bot.twitch_capability_tags
@@ -69,7 +81,7 @@ async def message_handler(line:bytearray) -> MessageContext:
             # :eva_athenabot!eva_athenabot@eva_athenabot.tmi.twitch.tv
             # JOIN
             # #directiveathena
-            context.output = None
+            await handle_join(context)
 
         case ":tmi.twitch.tv", "CAP", "*", "ACK", ":twitch.tv/tags":
             # CATCHES the following pattern:
@@ -78,7 +90,7 @@ async def message_handler(line:bytearray) -> MessageContext:
             # *
             # ACK
             # :twitch.tv/tags
-            context.output = None
+            pass
 
         case str(bot_name_long), str(_), gbl.bot.nickname, "=", str(_), str(bot_name_short) if (
                 bot_name_long == f":{gbl.bot.nickname}.tmi.twitch.tv"
@@ -91,7 +103,7 @@ async def message_handler(line:bytearray) -> MessageContext:
             # =
             # #directiveathena
             # :eva_athenabot
-            context.output = None
+            pass
 
         case str(bot_name_long), str(_), gbl.bot.nickname, str(_), *_ \
             if bot_name_long == f":{gbl.bot.nickname}.tmi.twitch.tv":
@@ -102,11 +114,11 @@ async def message_handler(line:bytearray) -> MessageContext:
             # =
             # #directiveathena
             # :eva_athenabot
-            context.output = None
+            pass
 
         case _:
             # something wasn't caught correctly
-            context.output = None
+            pass
 
 
-    return context
+    await gbl.bot_server.output_all(context)

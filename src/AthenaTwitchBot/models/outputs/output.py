@@ -14,4 +14,10 @@ from AthenaTwitchBot.models.message_context import MessageContext
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class Output(abc.ABC):
-    async def output(self, context:MessageContext,**kwargs):...
+    """
+    An abstract class to define which structure the output classes should use
+    """
+    async def output(self, context:MessageContext,**kwargs):
+        """
+        Output a context the correct end state
+        """

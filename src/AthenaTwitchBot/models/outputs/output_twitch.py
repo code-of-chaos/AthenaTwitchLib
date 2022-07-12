@@ -14,8 +14,12 @@ from AthenaTwitchBot.functions.output_twitch_prep import output_twitch_prep
 from AthenaTwitchBot.data.message_flags import MessageFlags
 
 # ----------------------------------------------------------------------------------------------------------------------
-# - Code -
+# - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
+
+# depending on the flag a slightly different output format is expected to be used
+#   I went for a dict mapping because it's easier than doing a bunch of if checks
+
 OUTPUT_MAPPING = {
     MessageFlags.ping:lambda transport,context:(
         transport.write(
@@ -44,6 +48,9 @@ OUTPUT_MAPPING = {
     )
 }
 
+# ----------------------------------------------------------------------------------------------------------------------
+# - Code -
+# ----------------------------------------------------------------------------------------------------------------------
 class OutputTwitch(Output):
     # noinspection PyMethodOverriding
     async def output(self, context:MessageContext,*,transport:asyncio.Transport):
