@@ -20,12 +20,7 @@ def version_handler() -> str:
     # ------------------------------------------------------------------------------------------------------------------
     version = 0,7,0 # <-- DEFINE THE VERSION IN A TUPLE FORMAT HERE
     # ------------------------------------------------------------------------------------------------------------------
-    version_str = ".".join(str(i) for i in version)
-
-    with open("src/AthenaTwitchBot/_info/_v.py", "w") as file:
-        file.write(f"VERSION='{version_str}'")
-
-    return version_str
+    return ".".join(str(i) for i in version)
 
 setuptools.setup(
     name="AthenaTwitchBot",
