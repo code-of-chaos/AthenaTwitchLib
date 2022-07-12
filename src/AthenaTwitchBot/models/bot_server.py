@@ -12,6 +12,7 @@ import asyncio
 from AthenaTwitchBot.models.twitch_bot_protocol import TwitchBotProtocol
 from AthenaTwitchBot.models.message_context import MessageContext
 from AthenaTwitchBot.models.logic_output import LogicOutput
+from AthenaTwitchBot.models.bot_methods.bot_task import BotTask
 from AthenaTwitchBot.data.output_types import OutputTypes
 import AthenaTwitchBot.data.global_vars as gbl
 from AthenaTwitchBot.data.message_flags import MessageFlags
@@ -32,13 +33,17 @@ class BotServer:
     logic_output:LogicOutput=LogicOutput()
 
     # non init stuff
-    bot_transport:asyncio.Transport=field(init=False)
+    bot_transport:asyncio.Transport=field(init=False, repr=False)
+    bot_tasks:set[asyncio.Task]=field(init=False, repr=False, default_factory=set)
 
     def launch(self):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self.start_chat_bot(loop))
         # login with the chatbot
         loop.create_task(self.login_chat_bot())
+
+        loop.create_task(self.start_chat_bot_tasks())
+
         # make sure we run forever?
         loop.run_forever()
         loop.close()
@@ -67,6 +72,27 @@ class BotServer:
         await self.output_twitch(MessageContext(
             flag=MessageFlags.login,output="CAP REQ :twitch.tv/tags")
         )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Register and start up tasks to be run every interval -
+    # ------------------------------------------------------------------------------------------------------------------
+    async def start_chat_bot_tasks(self):
+        for task in BotTask.registered: #type:BotTask
+            if task.channel is None:
+                task.channel = gbl.bot.channels
+            loop = asyncio.get_running_loop()
+            coro = loop.create_task(self.schedule_chat_bot_task(task=task))
+            asyncio.ensure_future(coro, loop=loop)
+            self.bot_tasks.add(coro)
+
+    async def schedule_chat_bot_task(self, task:BotTask):
+        while True:
+            for channel in task.channel:
+                await asyncio.sleep(task.interval.to_int_as_seconds())
+                context = MessageContext(_channel=channel)
+                await task.callback(self=gbl.bot, context=context)
+                await self.output_all(context)
+                del context
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Outputs -

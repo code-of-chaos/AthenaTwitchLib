@@ -8,7 +8,7 @@ import asyncio
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.functions.message_handler import line_received_handler
+from AthenaTwitchBot.functions.message_handler.message_handler import line_received_handler
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------

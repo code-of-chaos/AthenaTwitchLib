@@ -41,7 +41,9 @@ class MessageContext:
         return self._tags
     @tags.setter
     def tags(self, value:str):
-        self._tags = MessageTags.new_from_tags_str(value)
+        if value is not None:
+            self._tags = MessageTags.new_from_tags_str(value)
+
     # ------------------------------------------------------------------------------------------------------------------
     @property
     def channel(self):
@@ -65,5 +67,10 @@ class MessageContext:
         self.flag = MessageFlags.write
 
     def reply(self, output: list[str] | str):
+        if self.raw_input is None: # which means the context was probably created in a task or something like it
+            raise ValueError(
+                "This context was not created as a reponse to a chat message and therefor can't reply to anything"
+            )
+
         self.output = output
         self.flag= MessageFlags.reply

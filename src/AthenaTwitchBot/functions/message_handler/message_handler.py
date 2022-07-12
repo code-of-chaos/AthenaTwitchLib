@@ -8,10 +8,11 @@ from __future__ import annotations
 
 # Custom Packages
 from AthenaTwitchBot.models.message_context import MessageContext
-from AthenaTwitchBot.functions.bot_methods import bot_commands
 from AthenaTwitchBot.data.itc_twitch import *
 import AthenaTwitchBot.data.global_vars as gbl
-from AthenaTwitchBot.data.message_flags import MessageFlags
+
+from AthenaTwitchBot.functions.message_handler.handle_ping import handle_ping
+from AthenaTwitchBot.functions.message_handler.handle_chat_message import handle_chat_message
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -26,9 +27,8 @@ async def message_handler(line:bytearray) -> MessageContext:
             # CATCHES the following pattern:
             # PING
             # :tmi.twitch.tv
-            print("pinged")
-            context.flag = MessageFlags.ping
-            context.output = " ".join(ping_response)
+            await handle_ping(context, ping_response)
+
 
         case _tmi_twitch_tv, str(_), gbl.bot.nickname, *_ if (
                 _tmi_twitch_tv == TMI_TWITCH_TV
@@ -49,19 +49,8 @@ async def message_handler(line:bytearray) -> MessageContext:
             # PRIVMSG
             # #directiveathena
             # :that sentence was poggers
-            print("message, with tags enabled")
-            context.tags = tags
-            context.channel = channel_str
-            context.user=user_name_str
-            context.chat_message = text
+            await handle_chat_message(context, tags, user_name_str, channel_str, text)
 
-            if text[0].startswith(":!"):
-                try:
-                    bot_commands[text[0][2:]](self=gbl.bot, context=context, args=text[1:])
-                except KeyError:
-                    pass
-
-            context.output = None
 
         case str(user_name_str), "PRIVMSG", str(channel_str), *text if (
                 not gbl.bot.twitch_capability_tags
@@ -71,12 +60,7 @@ async def message_handler(line:bytearray) -> MessageContext:
             # PRIVMSG
             # #directiveathena
             # :that sentence was poggers
-            print("message, with tags disabled")
-            context.user=user_name_str
-            context.channel = channel_str
-            context.chat_message = text
-
-            context.output = None
+            await handle_chat_message(context, None, user_name_str, channel_str, text)
 
         case str(bot_name_long), "JOIN", str(_) if (
                 bot_name_long == f":{gbl.bot.nickname}!{gbl.bot.nickname}@{gbl.bot.nickname}.tmi.twitch.tv"

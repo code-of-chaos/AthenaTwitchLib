@@ -3,24 +3,16 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import inspect
 
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.bot_methods.bot_command import BotCommand
+from AthenaTwitchBot.models.message_context import MessageContext
+from AthenaTwitchBot.data.message_flags import MessageFlags
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-bot_commands:dict[str:BotCommand] = {}
-bot_tasks = {}
-
-def bot_command(name:str, args:bool=False):
-    def decorator(fnc):
-        if isinstance(name, list):
-            for n in name:
-                bot_commands[n] = BotCommand(name=n, callback=fnc, args=args)
-        else:
-            bot_commands[name] = BotCommand(name=name, callback=fnc, args=args)
-    return decorator
+async def handle_ping(context:MessageContext, ping_response:tuple[str]) -> None:
+    context.flag = MessageFlags.ping
+    context.output = " ".join(ping_response)
