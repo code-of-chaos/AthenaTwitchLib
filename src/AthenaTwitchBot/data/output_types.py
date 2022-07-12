@@ -14,5 +14,4 @@ import enum
 # ----------------------------------------------------------------------------------------------------------------------
 class OutputTypes(enum.Enum):
     twitch="twitch"
-    database="database"
-    log="log"
+    console="console"

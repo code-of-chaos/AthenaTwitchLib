@@ -3,31 +3,19 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+import asyncio
 
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.data.output_types import OutputTypes
 from AthenaTwitchBot.models.outputs.output import Output
-from AthenaTwitchBot.models.outputs.output_twitch import OutputTwitch
+from AthenaTwitchBot.models.message_context import MessageContext
+from AthenaTwitchBot.functions.output_twitch_prep import output_twitch_prep
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class OutputSystem:
-    mapping:dict[OutputTypes:Output]
-
-    def __init__(self):
-        self.mapping = {
-            OutputTypes.twitch:OutputTwitch()
-        }
-
-    def __getitem__(self, item:OutputTypes):
-        return self.mapping[item]
-
-    def register_mapping(self, item:OutputTypes, output:Output):
-        if item in self.mapping:
-            raise ValueError(f"No same item ({item.value}) can be used in the output system")
-        # noinspection PyTypeChecker
-        self.mapping[item] = output
-
+class OutputConsole(Output):
+    # noinspection PyMethodOverriding
+    async def output(self, context:MessageContext,**_):
+        print(context.raw_input_decoded)

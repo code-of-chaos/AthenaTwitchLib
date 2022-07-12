@@ -3,7 +3,6 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import abc
 
 # Custom Library
 
@@ -13,5 +12,8 @@ from AthenaTwitchBot.models.message_context import MessageContext
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class Output(abc.ABC):
-    async def output(self, context:MessageContext,**kwargs):...
+def output_twitch_prep(text:str) -> bytes:
+    if text.endswith("\r\n"):
+        return text.encode("utf_8")
+    else:
+        return f"{text}\r\n".encode("utf_8")

@@ -15,7 +15,12 @@ from dataclasses import dataclass
 @dataclass(kw_only=True, slots=True)
 class MessageContext:
     raw_input:bytearray=None
+    raw_input_decoded:str=None
     _output:list[str]=None
+
+    def __post_init__(self):
+        if self.raw_input is not None:
+            self.raw_input_decoded = self.raw_input.decode("utf_8")
 
     @property
     def output(self) -> list[str]:

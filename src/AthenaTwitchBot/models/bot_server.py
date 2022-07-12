@@ -12,7 +12,7 @@ import asyncio
 from AthenaTwitchBot.models.twitch_bot_protocol import TwitchBotProtocol
 from AthenaTwitchBot.models.message_context import MessageContext
 from AthenaTwitchBot.data.output_types import OutputTypes
-from AthenaTwitchBot.models.output_system import OutputSystem
+from AthenaTwitchBot.models.logic_output import LogicOutput
 import AthenaTwitchBot.data.global_vars as gbl
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -21,14 +21,14 @@ import AthenaTwitchBot.data.global_vars as gbl
 @dataclass(kw_only=True, eq=False, order=False, slots=True)
 class BotServer:
     # optional kwargs
-    ssl_enabled:bool=False
+    ssl_enabled:bool=True
     irc_host:str='irc.chat.twitch.tv'
     irc_port:int=6667
     irc_port_ssl:int=6697
 
     # things that aren't normally customized, but you never know what a user might want
     chat_bot_protocol:type[TwitchBotProtocol]=TwitchBotProtocol
-    output_system:OutputSystem=OutputSystem()
+    logic_output:LogicOutput=LogicOutput()
 
     # non init stuff
     bot_transport:asyncio.Transport=field(init=False)
@@ -42,6 +42,9 @@ class BotServer:
         loop.run_forever()
         loop.close()
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Launch the chat bot -
+    # ------------------------------------------------------------------------------------------------------------------
     async def start_chat_bot(self, loop:asyncio.AbstractEventLoop):
         self.bot_transport,_ = await loop.create_connection(
             protocol_factory=self.chat_bot_protocol,
@@ -65,22 +68,16 @@ class BotServer:
     # ------------------------------------------------------------------------------------------------------------------
     async def output_all(self, context:MessageContext):
         await asyncio.gather(
-            self.output_direct(
+            *[self.output_direct(
                 output_type=t,
                 context=context
-            ) for t in OutputTypes
+            ) for t in OutputTypes]
         )
 
     async def output_direct(self, output_type: OutputTypes, context:MessageContext):
-        try:
-            await self.output_system[output_type].output(context, transport=self.bot_transport)
-        except KeyError:
-            print("here")
+        await self.logic_output[output_type].output(context, transport=self.bot_transport)
 
     async def output_twitch(self, context:MessageContext):
-        try:
-            await self.output_system[OutputTypes.twitch].output(context, transport=self.bot_transport)
-        except KeyError:
-            print("here")
+        await self.logic_output[OutputTypes.twitch].output(context, transport=self.bot_transport)
 
 
