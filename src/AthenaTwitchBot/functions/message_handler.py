@@ -8,6 +8,7 @@ from __future__ import annotations
 
 # Custom Packages
 from AthenaTwitchBot.models.message_context import MessageContext
+from AthenaTwitchBot.functions.bot_methods import bot_commands
 from AthenaTwitchBot.data.itc_twitch import *
 import AthenaTwitchBot.data.global_vars as gbl
 from AthenaTwitchBot.data.message_flags import MessageFlags
@@ -53,6 +54,13 @@ async def message_handler(line:bytearray) -> MessageContext:
             context.channel = channel_str
             context.user=user_name_str
             context.chat_message = text
+
+            if text[0].startswith(":!"):
+                try:
+                    bot_commands[text[0][2:]](self=gbl.bot, context=context, args=text[1:])
+                except KeyError:
+                    pass
+
             context.output = None
 
         case str(user_name_str), "PRIVMSG", str(channel_str), *text if (
