@@ -9,7 +9,7 @@ from AthenaLib.data.text import NOTHING
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
-from AthenaTwitchBot.data.itc_twitch import *
+from AthenaTwitchBot.data.irc_twitch import *
 import AthenaTwitchBot.data.global_vars as gbl
 
 from AthenaTwitchBot.functions.message_handler.handle_ping import handle_ping
