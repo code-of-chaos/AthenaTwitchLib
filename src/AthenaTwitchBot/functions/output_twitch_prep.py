@@ -19,4 +19,5 @@ def output_twitch_prep(text:str) -> bytes:
     Parameters:
     - text:
     """
-    return f"{text}\r\n".encode("utf_8")
+    text_flat = text.replace('\n',' ')
+    return f"{text_flat}\r\n".encode("utf_8")

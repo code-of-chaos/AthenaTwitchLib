@@ -62,11 +62,11 @@ class MessageContext:
     # ------------------------------------------------------------------------------------------------------------------
     # - Special methods -
     # ------------------------------------------------------------------------------------------------------------------
-    def write(self,output: list[str] | str):
+    def write(self,output: str):
         self.output = output
         self.flag = MessageFlags.write
 
-    def reply(self, output: list[str] | str):
+    def reply(self, output: str):
         if self.raw_input is None: # which means the context was probably created in a task or something like it
             raise ValueError(
                 "This context was not created as a reponse to a chat message and therefor can't reply to anything"
