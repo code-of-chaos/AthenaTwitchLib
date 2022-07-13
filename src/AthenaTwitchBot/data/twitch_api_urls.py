@@ -22,5 +22,6 @@ class TwitchApiURL(enum.Enum):
     get_bits_leaderboard = "https://api.twitch.tv/helix/bits/leaderboard"
     get_cheermotes = "https://api.twitch.tv/helix/bits/cheermotes"
     get_extension_transactions = "https://api.twitch.tv/helix/extensions/transactions"
+    channel_information = "https://api.twitch.tv/helix/channels"
 
     get_custom_rewards= "https://api.twitch.tv/helix/channel_points/custom_rewards"

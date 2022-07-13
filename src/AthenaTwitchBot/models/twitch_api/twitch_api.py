@@ -55,16 +55,16 @@ class TwitchAPI:
     # non init stuff
     is_connected:bool=field(init=False, default=False)
     _loop:asyncio.AbstractEventLoop = field(init=False)
-    _get_header:dict=field(init=False, default=None)
-    _post_header_json:dict=field(init=False, default=None)
+    _header:dict=field(init=False, default=None)
+    _header_json:dict=field(init=False, default=None)
 
     def __post_init__(self):
         self._loop = asyncio.get_running_loop()
-        self._get_header = {
+        self._header = {
             "Authorization":f"Bearer {self.broadcaster_token}",
             "Client-Id":self.broadcaster_client_id
         }
-        self._post_header_json = {
+        self._header_json = {
             "Authorization":f"Bearer {self.broadcaster_token}",
             "Client-Id":self.broadcaster_client_id,
             "Content-Type":"application/json"
@@ -80,7 +80,10 @@ class TwitchAPI:
                 loop=self._loop,
                 query_parameters=query_parameters
             )
-            return json.loads(response.read())
+            try:
+                return json.loads(response.read())
+            except json.JSONDecodeError:
+                return response.read()
         except urllib.error.URLError as e:
             print(e)
             raise
@@ -96,7 +99,29 @@ class TwitchAPI:
             )
             if response is None:
                 return {}
-            return json.loads(response.read())
+            try:
+                return json.loads(response.read())
+            except json.JSONDecodeError:
+                return response.read()
+        except urllib.error.URLError as e:
+            print(e)
+            raise
+
+    async def _patch(self,url:str, headers:dict,data:dict,query_parameters:dict=None):
+        try:
+            response = await requests.patch(
+                url=url,
+                headers=headers,
+                data=json.dumps(data).encode("utf_8"),
+                loop=self._loop,
+                query_parameters=query_parameters
+            )
+            if response is None:
+                return {}
+            try:
+                return json.loads(response.read())
+            except json.JSONDecodeError:
+                return response.read()
         except urllib.error.URLError as e:
             print(e)
             raise
@@ -121,7 +146,7 @@ class TwitchAPI:
     async def login(self) -> dict:
         return await self._get(
             url=TwitchApiURL.login.value,
-            headers=self._get_header
+            headers=self._header
         )
 
     async def get_scopes(self) -> dict:
@@ -143,7 +168,7 @@ class TwitchAPI:
 
         return await self._get(
             url=TwitchApiURL.get_custom_rewards.value,
-            headers=self._get_header,
+            headers=self._header,
             query_parameters=query
         )
 
@@ -153,7 +178,7 @@ class TwitchAPI:
     async def start_commercial(self, *, length:int):
         return await self._post(
             url=TwitchApiURL.start_commercial.value,
-            headers=self._post_header_json,
+            headers=self._header_json,
             data={
                 "broadcaster_id": self.user.id,
                 "length": length
@@ -185,7 +210,7 @@ class TwitchAPI:
 
         return await self._get(
             url=TwitchApiURL.get_extension_analytics.value,
-            headers=self._get_header,
+            headers=self._header,
             query_parameters=query
         )
 
@@ -214,7 +239,7 @@ class TwitchAPI:
 
         return await self._get(
             url=TwitchApiURL.get_extension_analytics.value,
-            headers=self._get_header,
+            headers=self._header,
             query_parameters=query
         )
 
@@ -238,7 +263,7 @@ class TwitchAPI:
 
         return await self._get(
             url=TwitchApiURL.get_bits_leaderboard.value,
-            headers=self._get_header,
+            headers=self._header,
             query_parameters=query
         )
 
@@ -247,7 +272,7 @@ class TwitchAPI:
     async def get_cheermotes(self, broadcaster_id:str=None):
         return await self._get(
             url=TwitchApiURL.get_cheermotes.value,
-            headers=self._get_header,
+            headers=self._header,
             query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id}
         )
 
@@ -265,8 +290,40 @@ class TwitchAPI:
 
         return await self._get(
             url=TwitchApiURL.get_cheermotes.value,
-            headers=self._get_header,
+            headers=self._header,
             query_parameters=query
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_channel_information(self, broadcaster_id:str=None):
+        return await self._get(
+            url=TwitchApiURL.channel_information.value,
+            headers=self._header,
+            query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id}
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def modify_channel_information(
+            self, broadcaster_id:str=None, game_id:str=None, broadcaster_language:str=None, title:str=None,
+            delay:int=None
+    ):
+        data={}
+        if game_id is not None:
+            data["game_id"] = game_id
+        if broadcaster_language is not None:
+            data["broadcaster_language"] = broadcaster_language
+        if title is not None:
+            data["title"] = title
+        if delay is not None:
+            data["delay"] = delay
+
+        return await self._patch(
+            url=TwitchApiURL.channel_information.value,
+            headers=self._header_json,
+            query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id},
+            data=data
         )
 
 
