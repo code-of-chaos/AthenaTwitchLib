@@ -133,8 +133,6 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_custom_reward(self, *, reward_id:str=None, only_manageable_rewards:bool=False) -> dict:
-        # assemble base url
-        #   the TwitchAPI.connect() has to be run before this method can be used as it relies on TwitchAPI.user.id
         query = {"broadcaster_id":self.user.id}
 
         # assemble arguments
@@ -169,8 +167,6 @@ class TwitchAPI:
             self, *, after:str=None, ended_at:str=None, extension_id:str=None, first:int=None, started_at:str=None,
             type_:str=None
     ):
-        # assemble base url
-        #   the TwitchAPI.connect() has to be run before this method can be used as it relies on TwitchAPI.user.id
         query = {}
 
         # assemble query
@@ -200,8 +196,6 @@ class TwitchAPI:
             self, *, after:str=None, ended_at:str=None, game_id:str=None, first:int=None, started_at:str=None,
             type_:str=None
     ):
-        # assemble base url
-        #   the TwitchAPI.connect() has to be run before this method can be used as it relies on TwitchAPI.user.id
         query = {}
 
         # assemble query
@@ -230,8 +224,6 @@ class TwitchAPI:
     async def get_bits_leaderboard(
             self, *, count:int = None, period:str = None, started_at:str=None, user_id:str=None
     ):
-        # assemble base url
-        #   the TwitchAPI.connect() has to be run before this method can be used as it relies on TwitchAPI.user.id
         query = {}
 
         # assemble query
@@ -250,5 +242,15 @@ class TwitchAPI:
             headers=self._get_header,
             query_parameters=query
         )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_cheermotes(self, broadcaster_id:str=None):
+        return await self._get(
+            url=TwitchApiURL.get_cheermotes.value,
+            headers=self._get_header,
+            query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id}
+        )
+
 
 
