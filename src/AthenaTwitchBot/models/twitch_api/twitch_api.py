@@ -110,7 +110,7 @@ class TwitchAPI:
     async def login(self) -> dict:
         return await self._request(
             callback=requests.get,
-            url=TwitchApiURL.login.value,
+            url=TwitchApiURL.users.value,
             headers=self._header
         )
 

@@ -13,7 +13,7 @@ import enum
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class TwitchApiURL(enum.Enum):
-    login = "https://api.twitch.tv/helix/users"
+    users = "https://api.twitch.tv/helix/users"
     scopes = "https://id.twitch.tv/oauth2/validate"
 
     commercial = "https://api.twitch.tv/helix/channels/commercial"
