@@ -9,10 +9,10 @@ import asyncio
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.twitch_bot_protocol import TwitchBotProtocol
-from AthenaTwitchBot.models.message_context import MessageContext
-from AthenaTwitchBot.models.logic_output import LogicOutput
-from AthenaTwitchBot.models.bot_methods.bot_task import BotTask
+from AthenaTwitchBot.models.twitch_bot.twitch_bot_protocol import TwitchBotProtocol
+from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
+from AthenaTwitchBot.models.twitch_bot.logic_output import LogicOutput
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_task import BotTask
 from AthenaTwitchBot.data.output_types import OutputTypes
 import AthenaTwitchBot.data.global_vars as gbl
 from AthenaTwitchBot.data.message_flags import MessageFlags

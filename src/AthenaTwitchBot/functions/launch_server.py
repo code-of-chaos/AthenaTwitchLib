@@ -9,13 +9,13 @@ import tracemalloc
 
 # Custom Packages
 import AthenaTwitchBot.data.global_vars as gbl
-from AthenaTwitchBot.models.twitch_bot import TwitchBot
-from AthenaTwitchBot.models.bot_server import BotServer
-from AthenaTwitchBot.models.bot_methods.bot_command import BotCommand
-from AthenaTwitchBot.models.bot_methods.bot_mentioned import BotMentioned
-from AthenaTwitchBot.models.bot_methods.bot_mentioned_start import BotMentionedStart
-from AthenaTwitchBot.models.bot_methods.bot_custom_reward import BotCustomReward
-from AthenaTwitchBot.models.bot_methods.bot_first_time_chatter import BotFirstTimeChatter
+from AthenaTwitchBot.models.twitch_bot.twitch_bot import TwitchBot
+from AthenaTwitchBot.models.twitch_bot.bot_server import BotServer
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_command import BotCommand
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_mentioned import BotMentioned
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_mentioned_start import BotMentionedStart
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_custom_reward import BotCustomReward
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_first_time_chatter import BotFirstTimeChatter
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

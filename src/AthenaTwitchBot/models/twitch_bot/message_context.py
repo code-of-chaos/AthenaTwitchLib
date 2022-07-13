@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 # Custom Packages
 from AthenaTwitchBot.data.message_flags import MessageFlags
-from AthenaTwitchBot.models.message_tags import MessageTags
+from AthenaTwitchBot.models.twitch_bot.message_tags import MessageTags
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 from AthenaTwitchBot.models.twitch_user import TwitchUser
 

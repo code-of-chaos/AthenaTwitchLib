@@ -8,13 +8,13 @@ from __future__ import annotations
 from AthenaLib.data.text import NOTHING
 
 # Custom Packages
-from AthenaTwitchBot.models.message_context import MessageContext
-from AthenaTwitchBot.models.message_tags import MessageTags
-from AthenaTwitchBot.models.bot_methods.bot_command import BotCommand
-from AthenaTwitchBot.models.bot_methods.bot_mentioned import BotMentioned
-from AthenaTwitchBot.models.bot_methods.bot_mentioned_start import BotMentionedStart
-from AthenaTwitchBot.models.bot_methods.bot_custom_reward import BotCustomReward
-from AthenaTwitchBot.models.bot_methods.bot_first_time_chatter import BotFirstTimeChatter
+from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
+from AthenaTwitchBot.models.twitch_bot.message_tags import MessageTags
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_command import BotCommand
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_mentioned import BotMentioned
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_mentioned_start import BotMentionedStart
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_custom_reward import BotCustomReward
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_first_time_chatter import BotFirstTimeChatter
 import AthenaTwitchBot.data.global_vars as gbl
 
 # ----------------------------------------------------------------------------------------------------------------------

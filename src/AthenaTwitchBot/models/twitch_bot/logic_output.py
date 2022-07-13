@@ -8,9 +8,9 @@ from __future__ import annotations
 
 # Custom Packages
 from AthenaTwitchBot.data.output_types import OutputTypes
-from AthenaTwitchBot.models.outputs.output import Output
-from AthenaTwitchBot.models.outputs.output_twitch import OutputTwitch
-from AthenaTwitchBot.models.outputs.output_console import OutputConsole
+from AthenaTwitchBot.models.twitch_bot.outputs.output import Output
+from AthenaTwitchBot.models.twitch_bot.outputs.output_twitch import OutputTwitch
+from AthenaTwitchBot.models.twitch_bot.outputs.output_console import OutputConsole
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

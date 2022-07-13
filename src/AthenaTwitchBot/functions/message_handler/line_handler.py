@@ -8,7 +8,7 @@ from __future__ import annotations
 from AthenaLib.data.text import NOTHING
 
 # Custom Packages
-from AthenaTwitchBot.models.message_context import MessageContext
+from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
 from AthenaTwitchBot.data.itc_twitch import *
 import AthenaTwitchBot.data.global_vars as gbl
 

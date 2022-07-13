@@ -32,3 +32,6 @@ class TwitchBot:
     twitch_capability_commands:bool=False
     twitch_capability_membership:bool=False
     twitch_capability_tags:bool=True # only one that has the default set to true, is required to make reply's work
+
+
+    client_id:str=None # needed for the twitch API
