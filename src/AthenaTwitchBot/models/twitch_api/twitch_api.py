@@ -224,9 +224,8 @@ class TwitchAPI:
     async def get_bits_leaderboard(
             self, *, count:int = None, period:str = None, started_at:str=None, user_id:str=None
     ):
-        query = {}
-
         # assemble query
+        query = {}
         if count is not None:
             query["count"] = count
         if period is not None:
@@ -250,6 +249,24 @@ class TwitchAPI:
             url=TwitchApiURL.get_cheermotes.value,
             headers=self._get_header,
             query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id}
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_extension_transactions(self, extension_id:str, id_:str=None, after:str=None, first:int=None):
+        # assemble query
+        query = {"extension_id": extension_id}
+        if id_ is not None:
+            query["id_"] = id_
+        if after is not None:
+            query["after"] = after
+        if first is not None:
+            query["first"] = first
+
+        return await self._get(
+            url=TwitchApiURL.get_cheermotes.value,
+            headers=self._get_header,
+            query_parameters=query
         )
 
 
