@@ -9,6 +9,7 @@ import urllib.error
 import asyncio
 from dataclasses import dataclass, field
 from functools import wraps
+from typing import Callable
 
 # Custom Library
 import AthenaLib.HTTP.functions.requests as requests
@@ -72,52 +73,15 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     # - Methods that do all the magic -
     # ------------------------------------------------------------------------------------------------------------------
-    async def _get(self, url:str, headers:dict,query_parameters:dict=None):
+    async def _request(self, callback:Callable, url:str, headers:dict,data:dict=None,query_parameters:dict=None):
         try:
-            response = await requests.get(
+            response = await (callback(
                 url=url,
                 headers=headers,
                 loop=self._loop,
+                data=data,
                 query_parameters=query_parameters
-            )
-            try:
-                return json.loads(response.read())
-            except json.JSONDecodeError:
-                return response.read()
-        except urllib.error.URLError as e:
-            print(e)
-            raise
-
-    async def _post(self,url:str, headers:dict,data:dict,query_parameters:dict=None):
-        try:
-            response = await requests.post(
-                url=url,
-                headers=headers,
-                data=json.dumps(data).encode("utf_8"),
-                loop=self._loop,
-                query_parameters=query_parameters
-            )
-            if response is None:
-                return {}
-            try:
-                return json.loads(response.read())
-            except json.JSONDecodeError:
-                return response.read()
-        except urllib.error.URLError as e:
-            print(e)
-            raise
-
-    async def _patch(self,url:str, headers:dict,data:dict,query_parameters:dict=None):
-        try:
-            response = await requests.patch(
-                url=url,
-                headers=headers,
-                data=json.dumps(data).encode("utf_8"),
-                loop=self._loop,
-                query_parameters=query_parameters
-            )
-            if response is None:
-                return {}
+            ))
             try:
                 return json.loads(response.read())
             except json.JSONDecodeError:
@@ -144,13 +108,15 @@ class TwitchAPI:
         return login_data
 
     async def login(self) -> dict:
-        return await self._get(
+        return await self._request(
+            callback=requests.get,
             url=TwitchApiURL.login.value,
             headers=self._header
         )
 
     async def get_scopes(self) -> dict:
-        return await self._get(
+        return await self._request(
+            callback=requests.get,
             url=TwitchApiURL.scopes.value,
             headers={"Authorization": f"OAuth {self.broadcaster_token}"}
         )
@@ -166,7 +132,8 @@ class TwitchAPI:
         if only_manageable_rewards:
             query["only_manageable_rewards"] = only_manageable_rewards
 
-        return await self._get(
+        return await self._request(
+            callback=requests.get,
             url=TwitchApiURL.custom_rewards.value,
             headers=self._header,
             query_parameters=query
@@ -176,7 +143,8 @@ class TwitchAPI:
     @user_has_scope(scope=TwitchApiScopes.ChannelEditCommercial)
     @connected_to_twitch
     async def start_commercial(self, *, length:int):
-        return await self._post(
+        return await self._request(
+            callback=requests.post,
             url=TwitchApiURL.commercial.value,
             headers=self._header_json,
             data={
@@ -208,7 +176,8 @@ class TwitchAPI:
         if type_ is not None:
             query["type"] = type_
 
-        return await self._get(
+        return await self._request(
+            callback=requests.get,
             url=TwitchApiURL.analytics_extension.value,
             headers=self._header,
             query_parameters=query
@@ -237,7 +206,8 @@ class TwitchAPI:
         if type_ is not None:
             query["type"] = type_
 
-        return await self._get(
+        return await self._request(
+            callback=requests.get,
             url=TwitchApiURL.analytics_extension.value,
             headers=self._header,
             query_parameters=query
@@ -261,7 +231,8 @@ class TwitchAPI:
             query["user_id"] = user_id
 
 
-        return await self._get(
+        return await self._request(
+            callback=requests.get,
             url=TwitchApiURL.bits_leaderboard.value,
             headers=self._header,
             query_parameters=query
@@ -270,7 +241,8 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_cheermotes(self, broadcaster_id:str=None):
-        return await self._get(
+        return await self._request(
+            callback=requests.get,
             url=TwitchApiURL.cheermotes.value,
             headers=self._header,
             query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id}
@@ -288,7 +260,8 @@ class TwitchAPI:
         if first is not None:
             query["first"] = first
 
-        return await self._get(
+        return await self._request(
+            callback=requests.get,
             url=TwitchApiURL.cheermotes.value,
             headers=self._header,
             query_parameters=query
@@ -297,7 +270,8 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_channel_information(self, broadcaster_id:str=None):
-        return await self._get(
+        return await self._request(
+            callback=requests.get,
             url=TwitchApiURL.channel_information.value,
             headers=self._header,
             query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id}
@@ -320,7 +294,8 @@ class TwitchAPI:
         if delay is not None:
             data["delay"] = delay
 
-        return await self._patch(
+        return await self._request(
+            callback=requests.patch,
             url=TwitchApiURL.channel_information.value,
             headers=self._header_json,
             query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id},
@@ -331,7 +306,8 @@ class TwitchAPI:
     @user_has_scope(scope=TwitchApiScopes.ChannelReadEditors)
     @connected_to_twitch
     async def get_channel_editors(self, broadcaster_id:str=None):
-        return await self._get(
+        return await self._request(
+            callback=requests.get,
             url=TwitchApiURL.channel_editors.value,
             headers=self._header,
             query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id},
@@ -371,11 +347,25 @@ class TwitchAPI:
         if should_redemptions_skip_request_queue is not None:
             data["should_redemptions_skip_request_queue"] = should_redemptions_skip_request_queue
 
-        return await self._post(
+        return await self._request(
+            callback=requests.post,
             url=TwitchApiURL.custom_rewards.value,
             headers=self._header_json,
             query_parameters={"broadcaster_id": self.user.id},
             data=data
         )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ChannelManageRedemptions)
+    @connected_to_twitch
+    async def delete_custom_reward(self, id_:str):
+
+        return await self._request(
+            callback=requests.delete,
+            url=TwitchApiURL.custom_rewards.value,
+            headers=self._header_json,
+            query_parameters={"broadcaster_id": self.user.id, "id":id_},
+        )
+
 
 
