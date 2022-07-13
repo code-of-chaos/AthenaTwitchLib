@@ -14,15 +14,15 @@ import enum
 # ----------------------------------------------------------------------------------------------------------------------
 class TwitchApiURL(enum.Enum):
     login = "https://api.twitch.tv/helix/users"
-    get_scopes = "https://id.twitch.tv/oauth2/validate"
+    scopes = "https://id.twitch.tv/oauth2/validate"
 
-    start_commercial = "https://api.twitch.tv/helix/channels/commercial"
-    get_extension_analytics = "https://api.twitch.tv/helix/analytics/extensions"
-    get_game_analytics = "https://api.twitch.tv/helix/analytics/games"
-    get_bits_leaderboard = "https://api.twitch.tv/helix/bits/leaderboard"
-    get_cheermotes = "https://api.twitch.tv/helix/bits/cheermotes"
-    get_extension_transactions = "https://api.twitch.tv/helix/extensions/transactions"
+    commercial = "https://api.twitch.tv/helix/channels/commercial"
+    analytics_extension = "https://api.twitch.tv/helix/analytics/extensions"
+    analytics_game = "https://api.twitch.tv/helix/analytics/games"
+    bits_leaderboard = "https://api.twitch.tv/helix/bits/leaderboard"
+    cheermotes = "https://api.twitch.tv/helix/bits/cheermotes"
+    extension_transactions = "https://api.twitch.tv/helix/extensions/transactions"
     channel_information = "https://api.twitch.tv/helix/channels"
-    get_channel_editors = "https://api.twitch.tv/helix/channels/editors"
+    channel_editors = "https://api.twitch.tv/helix/channels/editors"
 
-    get_custom_rewards= "https://api.twitch.tv/helix/channel_points/custom_rewards"
+    custom_rewards= "https://api.twitch.tv/helix/channel_points/custom_rewards"

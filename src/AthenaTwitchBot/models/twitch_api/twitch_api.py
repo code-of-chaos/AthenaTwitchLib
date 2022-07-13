@@ -151,7 +151,7 @@ class TwitchAPI:
 
     async def get_scopes(self) -> dict:
         return await self._get(
-            url=TwitchApiURL.get_scopes.value,
+            url=TwitchApiURL.scopes.value,
             headers={"Authorization": f"OAuth {self.broadcaster_token}"}
         )
 
@@ -167,7 +167,7 @@ class TwitchAPI:
             query["only_manageable_rewards"] = only_manageable_rewards
 
         return await self._get(
-            url=TwitchApiURL.get_custom_rewards.value,
+            url=TwitchApiURL.custom_rewards.value,
             headers=self._header,
             query_parameters=query
         )
@@ -177,7 +177,7 @@ class TwitchAPI:
     @connected_to_twitch
     async def start_commercial(self, *, length:int):
         return await self._post(
-            url=TwitchApiURL.start_commercial.value,
+            url=TwitchApiURL.commercial.value,
             headers=self._header_json,
             data={
                 "broadcaster_id": self.user.id,
@@ -209,7 +209,7 @@ class TwitchAPI:
             query["type"] = type_
 
         return await self._get(
-            url=TwitchApiURL.get_extension_analytics.value,
+            url=TwitchApiURL.analytics_extension.value,
             headers=self._header,
             query_parameters=query
         )
@@ -238,7 +238,7 @@ class TwitchAPI:
             query["type"] = type_
 
         return await self._get(
-            url=TwitchApiURL.get_extension_analytics.value,
+            url=TwitchApiURL.analytics_extension.value,
             headers=self._header,
             query_parameters=query
         )
@@ -262,7 +262,7 @@ class TwitchAPI:
 
 
         return await self._get(
-            url=TwitchApiURL.get_bits_leaderboard.value,
+            url=TwitchApiURL.bits_leaderboard.value,
             headers=self._header,
             query_parameters=query
         )
@@ -271,7 +271,7 @@ class TwitchAPI:
     @connected_to_twitch
     async def get_cheermotes(self, broadcaster_id:str=None):
         return await self._get(
-            url=TwitchApiURL.get_cheermotes.value,
+            url=TwitchApiURL.cheermotes.value,
             headers=self._header,
             query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id}
         )
@@ -289,7 +289,7 @@ class TwitchAPI:
             query["first"] = first
 
         return await self._get(
-            url=TwitchApiURL.get_cheermotes.value,
+            url=TwitchApiURL.cheermotes.value,
             headers=self._header,
             query_parameters=query
         )
@@ -332,7 +332,7 @@ class TwitchAPI:
     @connected_to_twitch
     async def get_channel_editors(self, broadcaster_id:str=None):
         return await self._get(
-            url=TwitchApiURL.get_channel_editors.value,
+            url=TwitchApiURL.channel_editors.value,
             headers=self._header,
             query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id},
         )
