@@ -122,24 +122,6 @@ class TwitchAPI:
         )
 
     # ------------------------------------------------------------------------------------------------------------------
-    @connected_to_twitch
-    async def get_custom_reward(self, *, reward_id:str=None, only_manageable_rewards:bool=False) -> dict:
-        query = {"broadcaster_id":self.user.id}
-
-        # assemble arguments
-        if reward_id is not None:
-            query["reward_id"] = reward_id
-        if only_manageable_rewards:
-            query["only_manageable_rewards"] = only_manageable_rewards
-
-        return await self._request(
-            callback=requests.get,
-            url=TwitchApiURL.custom_rewards.value,
-            headers=self._header,
-            query_parameters=query
-        )
-
-    # ------------------------------------------------------------------------------------------------------------------
     @user_has_scope(scope=TwitchApiScopes.ChannelEditCommercial)
     @connected_to_twitch
     async def start_commercial(self, *, length:int):
@@ -366,6 +348,25 @@ class TwitchAPI:
             headers=self._header_json,
             query_parameters={"broadcaster_id": self.user.id, "id":id_},
         )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_custom_reward(self, *, reward_id: str = None, only_manageable_rewards: bool = False) -> dict:
+        query = {"broadcaster_id": self.user.id}
+
+        # assemble arguments
+        if reward_id is not None:
+            query["reward_id"] = reward_id
+        if only_manageable_rewards:
+            query["only_manageable_rewards"] = only_manageable_rewards
+
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.custom_rewards.value,
+            headers=self._header,
+            query_parameters=query
+        )
+
 
 
 
