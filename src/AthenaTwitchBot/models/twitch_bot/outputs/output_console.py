@@ -3,13 +3,12 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import asyncio
 
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.outputs.output import Output
-from AthenaTwitchBot.models.message_context import MessageContext
+from AthenaTwitchBot.models.twitch_bot.outputs.output import Output
+from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

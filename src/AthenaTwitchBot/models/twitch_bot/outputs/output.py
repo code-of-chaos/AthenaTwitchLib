@@ -8,7 +8,7 @@ import abc
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.message_context import MessageContext
+from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

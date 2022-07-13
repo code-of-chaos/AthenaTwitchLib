@@ -8,8 +8,8 @@ import asyncio
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.outputs.output import Output
-from AthenaTwitchBot.models.message_context import MessageContext
+from AthenaTwitchBot.models.twitch_bot.outputs.output import Output
+from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
 from AthenaTwitchBot.functions.output_twitch_prep import output_twitch_prep
 from AthenaTwitchBot.data.message_flags import MessageFlags
 
