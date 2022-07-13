@@ -328,7 +328,7 @@ class TwitchAPI:
         )
 
     # ------------------------------------------------------------------------------------------------------------------
-    @user_has_scope(scope=TwitchApiScopes.ChannelManageBroadcast)
+    @user_has_scope(scope=TwitchApiScopes.ChannelReadEditors)
     @connected_to_twitch
     async def get_channel_editors(self, broadcaster_id:str=None):
         return await self._get(
@@ -337,5 +337,45 @@ class TwitchAPI:
             query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id},
         )
 
+    # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ChannelManageRedemptions)
+    @connected_to_twitch
+    async def create_custom_reward(
+            self, title:str, cost:int, prompt:str=None,is_enabled:bool=None,background_color:str=None,
+            is_user_input_required:bool=None, is_max_per_stream_enabled:bool=None,max_per_stream:int=None,
+            is_max_per_user_per_stream_enabled:bool=None, max_per_user_per_stream:int=None,
+            is_global_cooldown_enabled:bool=None, global_cooldown_seconds:int=None,
+            should_redemptions_skip_request_queue:bool=None
+    ):
+        data={"title":title, "cost":cost}
+        if prompt is not None:
+            data["prompt"] = prompt
+        if is_enabled is not None:
+            data["is_enabled"] = is_enabled
+        if background_color is not None:
+            data["background_color"] = background_color
+        if is_user_input_required is not None:
+            data["is_user_input_required"] = is_user_input_required
+        if is_max_per_stream_enabled is not None:
+            data["is_max_per_stream_enabled"] = is_max_per_stream_enabled
+        if max_per_stream is not None:
+            data["max_per_stream"] = max_per_stream
+        if is_max_per_user_per_stream_enabled is not None:
+            data["is_max_per_user_per_stream_enabled"] = is_max_per_user_per_stream_enabled
+        if max_per_user_per_stream is not None:
+            data["max_per_user_per_stream"] = max_per_user_per_stream
+        if is_global_cooldown_enabled is not None:
+            data["is_global_cooldown_enabled"] = is_global_cooldown_enabled
+        if global_cooldown_seconds is not None:
+            data["global_cooldown_seconds"] = global_cooldown_seconds
+        if should_redemptions_skip_request_queue is not None:
+            data["should_redemptions_skip_request_queue"] = should_redemptions_skip_request_queue
+
+        return await self._post(
+            url=TwitchApiURL.custom_rewards.value,
+            headers=self._header_json,
+            query_parameters={"broadcaster_id": self.user.id},
+            data=data
+        )
 
 

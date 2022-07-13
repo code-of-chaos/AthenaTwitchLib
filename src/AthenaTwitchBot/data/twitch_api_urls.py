@@ -24,5 +24,4 @@ class TwitchApiURL(enum.Enum):
     extension_transactions = "https://api.twitch.tv/helix/extensions/transactions"
     channel_information = "https://api.twitch.tv/helix/channels"
     channel_editors = "https://api.twitch.tv/helix/channels/editors"
-
-    custom_rewards= "https://api.twitch.tv/helix/channel_points/custom_rewards"
+    custom_rewards = "https://api.twitch.tv/helix/channel_points/custom_rewards"
