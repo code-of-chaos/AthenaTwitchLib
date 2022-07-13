@@ -304,6 +304,7 @@ class TwitchAPI:
         )
 
     # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ChannelManageBroadcast)
     @connected_to_twitch
     async def modify_channel_information(
             self, broadcaster_id:str=None, game_id:str=None, broadcaster_language:str=None, title:str=None,
