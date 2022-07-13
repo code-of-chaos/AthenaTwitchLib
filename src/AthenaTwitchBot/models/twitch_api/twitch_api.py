@@ -327,5 +327,15 @@ class TwitchAPI:
             data=data
         )
 
+    # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ChannelManageBroadcast)
+    @connected_to_twitch
+    async def get_channel_editors(self, broadcaster_id:str=None):
+        return await self._get(
+            url=TwitchApiURL.get_channel_editors.value,
+            headers=self._header,
+            query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id},
+        )
+
 
 
