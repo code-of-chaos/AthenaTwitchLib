@@ -71,21 +71,9 @@ async def handle_chat_message(
             # catch a command that was meant to be used by a moderator but wasn't called by a moderator
             case MessageContext(tags=MessageTags(mod=False)), BotCommand(mod_only=True):
                 return
-            # Subscriber only commands
-            case MessageContext(tags=MessageTags(mod=True)), BotCommand(mod_only=True):
-                await _execute_command(command=command, context=context, text=text)
 
             # catch a command that was meant to be used by a subscriber but wasn't called by a subscriber
             case MessageContext(tags=MessageTags(subscriber=False)), BotCommand(subscriber_only=True):
-                return
-            # Subscriber only commands
-            case MessageContext(tags=MessageTags(subscriber=True)), BotCommand(subscriber_only=True):
-                await _execute_command(command=command, context=context, text=text)
-
-            # catch a command that is only allowed on a specific channel
-            #   If the command was caught in a channel that wasn't in the allowed channels, simply return
-            case MessageContext(channel=msg_channel), BotCommand(channels=cmd_channels) if cmd_channels is not None \
-                and msg_channel not in cmd_channels :
                 return
 
             # any remaining cases
