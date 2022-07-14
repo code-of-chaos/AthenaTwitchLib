@@ -142,27 +142,16 @@ class TwitchAPI:
             self, *, after:str=None, ended_at:str=None, extension_id:str=None, first:int=None, started_at:str=None,
             type_:str=None
     ):
-        query = {}
+        query = {"after": after, "ended_at": ended_at, "extension_id": extension_id, "first": first,
+                 "started_at": started_at, "type": type_}
 
         # assemble query
-        if after is not None:
-            query["after"] = after
-        if ended_at is not None:
-            query["ended_at"] = ended_at
-        if extension_id is not None:
-            query["extension_id"] = extension_id
-        if first is not None:
-            query["first"] = first
-        if started_at is not None:
-            query["started_at"] = started_at
-        if type_ is not None:
-            query["type"] = type_
 
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.analytics_extension.value,
             headers=self._header,
-            query_parameters=query
+            query_parameters={k:v for k,v in query if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -172,27 +161,14 @@ class TwitchAPI:
             self, *, after:str=None, ended_at:str=None, game_id:str=None, first:int=None, started_at:str=None,
             type_:str=None
     ):
-        query = {}
-
-        # assemble query
-        if after is not None:
-            query["after"] = after
-        if ended_at is not None:
-            query["ended_at"] = ended_at
-        if game_id is not None:
-            query["game_id"] = game_id
-        if first is not None:
-            query["first"] = first
-        if started_at is not None:
-            query["started_at"] = started_at
-        if type_ is not None:
-            query["type"] = type_
+        query = {"after": after, "ended_at": ended_at, "game_id": game_id, "first": first, "started_at": started_at,
+                 "type": type_}
 
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.analytics_extension.value,
             headers=self._header,
-            query_parameters=query
+            query_parameters={k:v for k,v in query if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -201,23 +177,13 @@ class TwitchAPI:
     async def get_bits_leaderboard(
             self, *, count:int = None, period:str = None, started_at:str=None, user_id:str=None
     ):
-        # assemble query
-        query = {}
-        if count is not None:
-            query["count"] = count
-        if period is not None:
-            query["period"] = period
-        if started_at is not None:
-            query["started_at"] = started_at
-        if user_id is not None:
-            query["user_id"] = user_id
-
+        query = {"count": count, "period": period, "started_at": started_at, "user_id": user_id}
 
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.bits_leaderboard.value,
             headers=self._header,
-            query_parameters=query
+            query_parameters={k:v for k,v in query if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -234,19 +200,13 @@ class TwitchAPI:
     @connected_to_twitch
     async def get_extension_transactions(self, extension_id:str, id_:str=None, after:str=None, first:int=None):
         # assemble query
-        query = {"extension_id": extension_id}
-        if id_ is not None:
-            query["id_"] = id_
-        if after is not None:
-            query["after"] = after
-        if first is not None:
-            query["first"] = first
+        query = {"extension_id": extension_id, "id_": id_, "after": after, "first": first}
 
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.cheermotes.value,
             headers=self._header,
-            query_parameters=query
+            query_parameters={k:v for k,v in query if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -266,22 +226,14 @@ class TwitchAPI:
             self, broadcaster_id:str=None, game_id:str=None, broadcaster_language:str=None, title:str=None,
             delay:int=None
     ):
-        data={}
-        if game_id is not None:
-            data["game_id"] = game_id
-        if broadcaster_language is not None:
-            data["broadcaster_language"] = broadcaster_language
-        if title is not None:
-            data["title"] = title
-        if delay is not None:
-            data["delay"] = delay
+        data= {"game_id": game_id, "broadcaster_language": broadcaster_language, "title": title, "delay": delay}
 
         return await self._request(
             callback=requests.patch,
             url=TwitchApiURL.channel_information.value,
             headers=self._header_json,
             query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id},
-            data=data
+            data={k:v for k,v in data if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -305,36 +257,21 @@ class TwitchAPI:
             is_global_cooldown_enabled:bool=None, global_cooldown_seconds:int=None,
             should_redemptions_skip_request_queue:bool=None
     ):
-        data={"title":title, "cost":cost}
-        if prompt is not None:
-            data["prompt"] = prompt
-        if is_enabled is not None:
-            data["is_enabled"] = is_enabled
-        if background_color is not None:
-            data["background_color"] = background_color
-        if is_user_input_required is not None:
-            data["is_user_input_required"] = is_user_input_required
-        if is_max_per_stream_enabled is not None:
-            data["is_max_per_stream_enabled"] = is_max_per_stream_enabled
-        if max_per_stream is not None:
-            data["max_per_stream"] = max_per_stream
-        if is_max_per_user_per_stream_enabled is not None:
-            data["is_max_per_user_per_stream_enabled"] = is_max_per_user_per_stream_enabled
-        if max_per_user_per_stream is not None:
-            data["max_per_user_per_stream"] = max_per_user_per_stream
-        if is_global_cooldown_enabled is not None:
-            data["is_global_cooldown_enabled"] = is_global_cooldown_enabled
-        if global_cooldown_seconds is not None:
-            data["global_cooldown_seconds"] = global_cooldown_seconds
-        if should_redemptions_skip_request_queue is not None:
-            data["should_redemptions_skip_request_queue"] = should_redemptions_skip_request_queue
+        data= {"title": title, "cost": cost, "prompt": prompt, "is_enabled": is_enabled,
+               "background_color": background_color, "is_user_input_required": is_user_input_required,
+               "is_max_per_stream_enabled": is_max_per_stream_enabled, "max_per_stream": max_per_stream,
+               "is_max_per_user_per_stream_enabled": is_max_per_user_per_stream_enabled,
+               "max_per_user_per_stream": max_per_user_per_stream,
+               "is_global_cooldown_enabled": is_global_cooldown_enabled,
+               "global_cooldown_seconds": global_cooldown_seconds,
+               "should_redemptions_skip_request_queue": should_redemptions_skip_request_queue}
 
         return await self._request(
             callback=requests.post,
             url=TwitchApiURL.custom_rewards.value,
             headers=self._header_json,
             query_parameters={"broadcaster_id": self.user.id},
-            data=data
+            data={k:v for k,v in data if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -351,19 +288,14 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_custom_reward(self, *, reward_id: str = None, only_manageable_rewards: bool = False) -> dict:
-        query = {"broadcaster_id": self.user.id}
-
-        # assemble arguments
-        if reward_id is not None:
-            query["reward_id"] = reward_id
-        if only_manageable_rewards is not None:
-            query["only_manageable_rewards"] = only_manageable_rewards
+        query = {"broadcaster_id": self.user.id, "reward_id":reward_id,
+                 "only_manageable_rewards":only_manageable_rewards}
 
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.custom_rewards.value,
             headers=self._header,
-            query_parameters=query
+            query_parameters={k:v for k,v in query if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -372,25 +304,13 @@ class TwitchAPI:
     async def get_custom_reward_redemption(
             self,reward_id:str,*,id_:str=None, status:str=None, sort:str=None, after:str=None, first:int=None
     ):
-        query = {"broadcaster_id": self.user.id, "reward_id":reward_id}
-
-        # assemble arguments
-        if id_ is not None:
-            query["id"] = id_
-        if status is not None:
-            query["status"] = status
-        if sort is not None:
-            query["sort"] = sort
-        if after is not None:
-            query["after"] = after
-        if first is not None:
-            query["first"] = first
-
+        query = {"broadcaster_id": self.user.id, "reward_id": reward_id, "id": id_, "status": status, "sort": sort,
+                 "after": after, "first": first}
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.custom_reward_redemptions.value,
             headers=self._header,
-            query_parameters=query
+            query_parameters={k:v for k,v in query if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -403,43 +323,34 @@ class TwitchAPI:
             is_global_cooldown_enabled:bool=None, global_cooldown_seconds:int=None,
             should_redemptions_skip_request_queue:bool=None
     ):
-        query = {"broadcaster_id": self.user.id, "id":id_}
-        data={}
+        query = {
+            "broadcaster_id": self.user.id,
+            "id":id_
+        }
+        data= {
+            "title": title,
+            "cost": cost,
+            "prompt": prompt,
+            "is_enabled": is_enabled,
+            "background_color": background_color,
+            "is_user_input_required": is_user_input_required,
+            "is_max_per_stream_enabled": is_max_per_stream_enabled,
+            "max_per_stream": max_per_stream,
+            "is_max_per_user_per_stream_enabled": is_max_per_user_per_stream_enabled,
+            "max_per_user_per_stream": max_per_user_per_stream,
+            "is_global_cooldown_enabled": is_global_cooldown_enabled,
+            "global_cooldown_seconds": global_cooldown_seconds,
+            "should_redemptions_skip_request_queue": should_redemptions_skip_request_queue
+        }
 
         # assemble arguments
-        if title is not None:
-            data["title"] = title
-        if cost is not None:
-            data["cost"] = cost
-        if prompt is not None:
-            data["prompt"] = prompt
-        if is_enabled is not None:
-            data["is_enabled"] = is_enabled
-        if background_color is not None:
-            data["background_color"] = background_color
-        if is_user_input_required is not None:
-            data["is_user_input_required"] = is_user_input_required
-        if is_max_per_stream_enabled is not None:
-            data["is_max_per_stream_enabled"] = is_max_per_stream_enabled
-        if max_per_stream is not None:
-            data["max_per_stream"] = max_per_stream
-        if is_max_per_user_per_stream_enabled is not None:
-            data["is_max_per_user_per_stream_enabled"] = is_max_per_user_per_stream_enabled
-        if max_per_user_per_stream is not None:
-            data["max_per_user_per_stream"] = max_per_user_per_stream
-        if is_global_cooldown_enabled is not None:
-            data["is_global_cooldown_enabled"] = is_global_cooldown_enabled
-        if global_cooldown_seconds is not None:
-            data["global_cooldown_seconds"] = global_cooldown_seconds
-        if should_redemptions_skip_request_queue is not None:
-            data["should_redemptions_skip_request_queue"] = should_redemptions_skip_request_queue
 
         return await self._request(
             callback=requests.patch,
             url=TwitchApiURL.custom_rewards.value,
             headers=self._header_json,
             query_parameters=query,
-            data=data
+            data={k:v for k,v in data if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -505,15 +416,16 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_chat_settings(self, *, moderator_id:str=None):
-        query = {"broadcaster_id": self.user.id}
-        if moderator_id is not None:
-            query["moderator_id"] = moderator_id
+        query = {
+            "broadcaster_id": self.user.id,
+            "moderator_id":moderator_id
+        }
 
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.chat_settings.value,
             headers=self._header,
-            query_parameters=query
+            query_parameters={k:v for k,v in query if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
