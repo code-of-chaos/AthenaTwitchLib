@@ -285,7 +285,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_custom_reward(self, *, reward_id: str = None, only_manageable_rewards: bool = False) -> dict:
+    async def get_custom_reward(self, *, reward_id: str = None, only_manageable_rewards: bool = None) -> dict:
         query = {"broadcaster_id": self.user.id, "reward_id":reward_id,
                  "only_manageable_rewards":only_manageable_rewards}
 

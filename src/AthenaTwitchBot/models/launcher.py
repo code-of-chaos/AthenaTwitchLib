@@ -40,8 +40,9 @@ class Launcher:
         return cls._api
 
     @classmethod
-    def get_loop(cls):
+    def get_loop(cls) -> asyncio.AbstractEventLoop:
         cls._loop = asyncio.get_event_loop()
+        return cls._loop
 
     @classmethod
     def start_API_connector(cls,broadcaster_token:str,broadcaster_client_id:str):
@@ -52,9 +53,6 @@ class Launcher:
         )
         # connect to the API
         cls._loop.run_until_complete(cls.api.connect())
-
-        if not cls.started_from_all:
-            cls._loop.run_forever()
 
     @classmethod
     def start_Bot(cls, bot:TwitchBot,*,sll:bool=True,**kwargs):
