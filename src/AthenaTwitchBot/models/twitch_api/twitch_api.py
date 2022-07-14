@@ -341,7 +341,6 @@ class TwitchAPI:
     @user_has_scope(scope=TwitchApiScopes.ChannelManageRedemptions)
     @connected_to_twitch
     async def delete_custom_reward(self, id_:str):
-
         return await self._request(
             callback=requests.delete,
             url=TwitchApiURL.custom_rewards.value,
@@ -357,7 +356,7 @@ class TwitchAPI:
         # assemble arguments
         if reward_id is not None:
             query["reward_id"] = reward_id
-        if only_manageable_rewards:
+        if only_manageable_rewards is not None:
             query["only_manageable_rewards"] = only_manageable_rewards
 
         return await self._request(
@@ -366,6 +365,190 @@ class TwitchAPI:
             headers=self._header,
             query_parameters=query
         )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ChannelReadRedemptions)
+    @connected_to_twitch
+    async def get_custom_reward_redemption(
+            self,reward_id:str,*,id_:str=None, status:str=None, sort:str=None, after:str=None, first:int=None
+    ):
+        query = {"broadcaster_id": self.user.id, "reward_id":reward_id}
+
+        # assemble arguments
+        if id_ is not None:
+            query["id"] = id_
+        if status is not None:
+            query["status"] = status
+        if sort is not None:
+            query["sort"] = sort
+        if after is not None:
+            query["after"] = after
+        if first is not None:
+            query["first"] = first
+
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.custom_reward_redemptions.value,
+            headers=self._header,
+            query_parameters=query
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ChannelManageRedemptions)
+    @connected_to_twitch
+    async def update_custom_reward(
+            self, id_:str,*,title:str=None, cost:int, prompt:str=None,is_enabled:bool=None,background_color:str=None,
+            is_user_input_required:bool=None, is_max_per_stream_enabled:bool=None,max_per_stream:int=None,
+            is_max_per_user_per_stream_enabled:bool=None, max_per_user_per_stream:int=None,
+            is_global_cooldown_enabled:bool=None, global_cooldown_seconds:int=None,
+            should_redemptions_skip_request_queue:bool=None
+    ):
+        query = {"broadcaster_id": self.user.id, "id":id_}
+        data={}
+
+        # assemble arguments
+        if title is not None:
+            data["title"] = title
+        if cost is not None:
+            data["cost"] = cost
+        if prompt is not None:
+            data["prompt"] = prompt
+        if is_enabled is not None:
+            data["is_enabled"] = is_enabled
+        if background_color is not None:
+            data["background_color"] = background_color
+        if is_user_input_required is not None:
+            data["is_user_input_required"] = is_user_input_required
+        if is_max_per_stream_enabled is not None:
+            data["is_max_per_stream_enabled"] = is_max_per_stream_enabled
+        if max_per_stream is not None:
+            data["max_per_stream"] = max_per_stream
+        if is_max_per_user_per_stream_enabled is not None:
+            data["is_max_per_user_per_stream_enabled"] = is_max_per_user_per_stream_enabled
+        if max_per_user_per_stream is not None:
+            data["max_per_user_per_stream"] = max_per_user_per_stream
+        if is_global_cooldown_enabled is not None:
+            data["is_global_cooldown_enabled"] = is_global_cooldown_enabled
+        if global_cooldown_seconds is not None:
+            data["global_cooldown_seconds"] = global_cooldown_seconds
+        if should_redemptions_skip_request_queue is not None:
+            data["should_redemptions_skip_request_queue"] = should_redemptions_skip_request_queue
+
+        return await self._request(
+            callback=requests.patch,
+            url=TwitchApiURL.custom_rewards.value,
+            headers=self._header_json,
+            query_parameters=query,
+            data=data
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ChannelManageRedemptions)
+    @connected_to_twitch
+    async def update_custom_reward_redemption(self,id_:str,reward_id:str, status:str):
+        return await self._request(
+            callback=requests.patch,
+            url=TwitchApiURL.custom_reward_redemptions.value,
+            headers=self._header_json,
+            query_parameters={"id":id_,"reward_id":reward_id,"broadcaster_id": self.user.id},
+            data={"status":status}
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_channel_emotes(self):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.emotes_chat.value,
+            headers=self._header,
+            query_parameters={"broadcaster_id": self.user.id},
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_global_emotes(self):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.emotes_global.value,
+            headers=self._header,
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_emote_sets(self, emote_set_id:str):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.emotes_set.value,
+            headers=self._header,
+            query_parameters={"emote_set_id":emote_set_id}
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_channel_chat_badges(self):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.badges_chat.value,
+            headers=self._header,
+            query_parameters={"broadcaster_id": self.user.id}
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_global_chat_badges(self):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.badges_global.value,
+            headers=self._header
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_chat_settings(self, *, moderator_id:str=None):
+        query = {"broadcaster_id": self.user.id}
+        if moderator_id is not None:
+            query["moderator_id"] = moderator_id
+
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.chat_settings.value,
+            headers=self._header,
+            query_parameters=query
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def update_chat_settings(
+            self, moderator_id:str=None,*,emote_mode:bool=None, follower_mode:bool=None,
+            follower_mode_duration:int=None,non_moderator_chat_delay:bool=None,
+            non_moderator_chat_delay_duration:int=None,slow_mode:bool=None, slow_mode_wait_time:int=None,
+            subscriber_mode:bool=None,unique_chat_mode:bool=None
+
+    ):
+        query = {
+            "broadcaster_id": self.user.id,
+            "moderator_id": moderator_id
+        }
+        data={
+            "emote_mode":emote_mode,
+            "follower_mode":follower_mode,
+            "follower_mode_duration":follower_mode_duration,
+            "non_moderator_chat_delay":non_moderator_chat_delay,
+            "non_moderator_chat_delay_duration":non_moderator_chat_delay_duration,
+            "slow_mode":slow_mode,
+            "slow_mode_wait_time":slow_mode_wait_time,
+            "subscriber_mode":subscriber_mode,
+            "unique_chat_mode":unique_chat_mode
+        }
+
+        return await self._request(
+            callback=requests.patch,
+            url=TwitchApiURL.chat_settings.value,
+            headers=self._header,
+            query_parameters={k:v for k,v in query if v is not None},
+            data={k:v for k,v in data if v is not None}
+        )
+
 
 
 
