@@ -27,6 +27,7 @@ class MessageContext:
     _tags:MessageTags=None
     _channel:TwitchChannel=None
     _user:TwitchUser=None
+    rate_limited:bool=False
 
     def __post_init__(self):
         if self.raw_input is not None:

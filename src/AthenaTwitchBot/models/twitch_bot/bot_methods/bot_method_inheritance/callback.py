@@ -10,6 +10,7 @@ from typing import Callable
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot.twitch_bot import TwitchBot
+from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -18,5 +19,5 @@ from AthenaTwitchBot.models.twitch_bot.twitch_bot import TwitchBot
 class BotMethodCallback:
     callback:Callable=None
     args:bool=None
-    async def __call__(self, *args, callback_self:TwitchBot, **kwargs):
-        return await self.callback(self=callback_self,*args,**kwargs)
+    async def __call__(self, *args, callback_self:TwitchBot, context:MessageContext, **kwargs):
+        return await self.callback(*args,self=callback_self,context=context,**kwargs)
