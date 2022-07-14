@@ -6,6 +6,7 @@ from __future__ import annotations
 
 # Custom Library
 from AthenaLib.data.text import NOTHING
+from AthenaColor import ForeNest
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
@@ -90,7 +91,7 @@ async def line_handler(line:bytearray) -> None:
             # *
             # ACK
             # :twitch.tv/tags
-            pass
+            print(f"NOT CAUGHT : {ForeNest.Maroon(line)}")
 
         case str(bot_name_long), str(_), gbl.bot.nickname, "=", str(_), str(bot_name_short) if (
                 bot_name_long == f":{gbl.bot.nickname}.tmi.twitch.tv"
@@ -103,7 +104,7 @@ async def line_handler(line:bytearray) -> None:
             # =
             # #directiveathena
             # :eva_athenabot
-            pass
+            print(f"NOT CAUGHT : {ForeNest.Maroon(line)}")
 
         case str(bot_name_long), str(_), gbl.bot.nickname, str(_), *_ \
             if bot_name_long == f":{gbl.bot.nickname}.tmi.twitch.tv":
@@ -114,11 +115,11 @@ async def line_handler(line:bytearray) -> None:
             # =
             # #directiveathena
             # :eva_athenabot
-            pass
+            print(f"NOT CAUGHT : {ForeNest.Maroon(line)}")
 
         case _:
             # something wasn't caught correctly
-            pass
+            print(f"NOT CAUGHT : {ForeNest.Maroon(line)}")
 
 
     await gbl.bot_server.output_all(context)

@@ -49,12 +49,18 @@ class BotServer:
     # - Launch the chat bot -
     # ------------------------------------------------------------------------------------------------------------------
     async def start_chat_bot(self, loop:asyncio.AbstractEventLoop):
-        self.bot_transport,_ = await loop.create_connection(
+        future = loop.create_connection(
             protocol_factory=self.chat_bot_protocol,
             host=self.irc_host,
             port=self.irc_port_ssl if self.ssl_enabled else self.irc_port,
-            ssl=self.ssl_enabled
+            ssl=self.ssl_enabled,
+            happy_eyeballs_delay=0.25,
+            ssl_handshake_timeout=5.
         )
+        try:
+            self.bot_transport, _ = await asyncio.wait_for(future, timeout=5)
+        except asyncio.TimeoutError:
+            raise TimeoutError("connection timed out")
 
     async def login_chat_bot(self):
         await self.output_twitch(MessageContext(
