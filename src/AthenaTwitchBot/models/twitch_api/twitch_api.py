@@ -58,7 +58,7 @@ class TwitchAPI:
     _header_json:dict=field(init=False, default=None)
 
     def __post_init__(self):
-        self._loop = asyncio.get_running_loop()
+        self._loop = asyncio.get_event_loop()
         self._header = {
             "Authorization":f"Bearer {self.broadcaster_token}",
             "Client-Id":self.broadcaster_client_id

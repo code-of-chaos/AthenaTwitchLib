@@ -35,18 +35,15 @@ class BotServer:
     # non init stuff
     bot_transport:asyncio.Transport=field(init=False, repr=False)
     bot_tasks:set[asyncio.Task]=field(init=False, repr=False, default_factory=set)
+    loop:asyncio.AbstractEventLoop=field(init=False, repr=False)
 
     def launch(self):
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.start_chat_bot(loop))
+        self.loop = asyncio.get_event_loop()
+        self.loop.run_until_complete(self.start_chat_bot(self.loop))
         # login with the chatbot
-        loop.create_task(self.login_chat_bot())
-
-        loop.create_task(self.start_chat_bot_tasks())
-
-        # make sure we run forever?
-        loop.run_forever()
-        loop.close()
+        self.loop.create_task(self.login_chat_bot())
+        # start tasks
+        self.loop.create_task(self.start_chat_bot_tasks())
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Launch the chat bot -
