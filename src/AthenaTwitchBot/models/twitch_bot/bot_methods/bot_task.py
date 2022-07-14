@@ -10,7 +10,6 @@ from typing import Callable, ClassVar
 from AthenaLib.models.time import TimeValue, Minute
 
 # Custom Packages
-from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -37,16 +36,10 @@ class BotTask:
     """
     callback:Callable
     interval:TimeValue=field(default_factory=lambda: Minute(10))
-    channel:str|TwitchChannel=None
-
     registered:ClassVar[list[BotTask]]=None
 
-    def __post_init__(self):
-        if isinstance(self.channel, str):
-            self.channel = TwitchChannel(self.channel)
-
     @classmethod
-    def register(cls, *,interval:TimeValue=Minute(10), channel:TwitchChannel=None):
+    def register(cls, *,interval:TimeValue=Minute(10)):
         """Registers the function to the class"""
         # make sure the register exists
         if cls.registered is None:
@@ -58,6 +51,6 @@ class BotTask:
         #   It is expected that the function is located within the defined TwitchBot of the application
         def decorator(fnc):
             cls.registered.append(
-                cls(callback=fnc, interval=interval, channel=channel)
+                cls(callback=fnc, interval=interval)
             )
         return decorator

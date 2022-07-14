@@ -26,7 +26,7 @@ class TwitchBot:
     """
     nickname:str
     oauth_token:str
-    channels:list[TwitchChannel]
+    channel:TwitchChannel
     command_prefix:str
 
     twitch_capability_commands:bool=False

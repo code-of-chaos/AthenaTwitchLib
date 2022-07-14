@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 # Custom Library
+import datetime
+
 from AthenaLib.data.text import NOTHING
 
 # Custom Packages
@@ -22,9 +24,9 @@ import AthenaTwitchBot.data.global_vars as gbl
 # ----------------------------------------------------------------------------------------------------------------------
 async def _execute_command(command:BotCommand, context:MessageContext, text:tuple[str]):
     if command.args:
-        await command.callback(self=gbl.bot, context=context, args=text[1:])
+        await command(callback_self=gbl.bot, context=context, args=text[1:])
     else:
-        await command.callback(self=gbl.bot, context=context)
+        await command(callback_self=gbl.bot, context=context)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -94,8 +96,7 @@ async def handle_chat_message(
 
     # the bot is mentioned at the start of the message
     elif text[0].startswith(f":@{gbl.bot.nickname}") and gbl.bot_mentioned_start_enabled:
-        await BotMentionedStart.registered.callback(self=gbl.bot, context=context)
-        return
+        await _execute_command(command=BotMentionedStart.registered, context=context, text=text)
 
     # ------------------------------------------------------------------------------------------------------------------
     # other edge cases
@@ -103,14 +104,14 @@ async def handle_chat_message(
 
     # the bot was mentioned in a message
     if f"@{gbl.bot.nickname}" in " ".join(text) and gbl.bot_mentioned_enabled:
-        await BotMentioned.registered.callback(self=gbl.bot, context=context)
+        await _execute_command(command=BotMentioned.registered, context=context, text=text)
 
     # custom redeemable with text is caught
     if (custom_reward_id := context.tags.custom_reward_id) is not NOTHING \
             and gbl.bot_custom_reward_enabled \
             and custom_reward_id in BotCustomReward.registered:
-        await BotCustomReward.registered[custom_reward_id].callback(self=gbl.bot, context=context)
+        await _execute_command(command=BotCustomReward.registered[custom_reward_id], context=context, text=text)
 
     # first time chatter
     if context.tags.first_msg and gbl.bot_first_time_chatter_enabled:
-        await BotFirstTimeChatter.registered.callback(self=gbl.bot, context=context)
+        await _execute_command(command=BotFirstTimeChatter.registered, context=context, text=text)

@@ -64,7 +64,7 @@ class BotServer:
             flag=MessageFlags.login,output=f"NICK {gbl.bot.nickname}")
         )
         await self.output_twitch(MessageContext(
-            flag=MessageFlags.login,output=f"JOIN {','.join(str(c) for c in gbl.bot.channels)}")
+            flag=MessageFlags.login,output=f"JOIN {str(gbl.bot.channel)}")
         )
         await self.output_twitch(MessageContext(
             flag=MessageFlags.login,output="CAP REQ :twitch.tv/tags")
@@ -76,8 +76,6 @@ class BotServer:
     async def start_chat_bot_tasks(self):
         if BotTask.registered is not None:
             for task in BotTask.registered: #type:BotTask
-                if task.channel is None:
-                    task.channel = gbl.bot.channels
                 loop = asyncio.get_running_loop()
                 coro = loop.create_task(self.schedule_chat_bot_task(task=task))
                 asyncio.ensure_future(coro, loop=loop)
@@ -85,12 +83,11 @@ class BotServer:
 
     async def schedule_chat_bot_task(self, task:BotTask):
         while True:
-            for channel in task.channel:
-                await asyncio.sleep(task.interval.to_int_as_seconds())
-                context = MessageContext(_channel=channel)
-                await task.callback(self=gbl.bot, context=context)
-                await self.output_all(context)
-                del context
+            await asyncio.sleep(task.interval.to_int_as_seconds())
+            context = MessageContext(_channel=gbl.bot.channel)
+            await task.callback(self=gbl.bot, context=context)
+            await self.output_all(context)
+            del context
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Outputs -

@@ -4,18 +4,19 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Callable, ClassVar
+from typing import ClassVar
+import datetime
 
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.twitch_channel import TwitchChannel
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_method_inheritance.rate_limit import BotMethodRateLimit
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
-class BotCommand:
+class BotCommand(BotMethodRateLimit):
     """
     A command, always preceded by the TwitchBot.command_prefix.
     Holds the callback to be used when a user calls the command in chat.
@@ -38,20 +39,19 @@ class BotCommand:
     - channel : list of TwitchChannel values which defines on which channels this command should be enabled.
         If left unassigned it will work on all channels the bot is joined on
     """
-    name:str
-    callback:Callable
-    args:bool
-    subscriber_only:bool
-    mod_only:bool
-    channels:list[TwitchChannel]=None
+    name:str=None
+    subscriber_only:bool=None
+    mod_only:bool=None
 
     registered:ClassVar[dict[str,BotCommand]]=None
 
+    # ------------------------------------------------------------------------------------------------------------------
     @classmethod
     def register(
             cls, name:str,
             *,
-            args:bool=False,subscriber_only:bool=False, mod_only:bool=False):
+            args:bool=False,subscriber_only:bool=False, mod_only:bool=False, rate_limit:datetime.timedelta=None
+    ):
         """Registers the function to the class"""
 
         # make sure the register exists
@@ -77,6 +77,7 @@ class BotCommand:
                 callback=fnc,
                 args=args,
                 subscriber_only=subscriber_only,
-                mod_only=mod_only
+                mod_only=mod_only,
+                rate_limit=rate_limit
             )
         return decorator

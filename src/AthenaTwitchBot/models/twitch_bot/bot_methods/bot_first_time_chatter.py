@@ -4,18 +4,18 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Callable, ClassVar
+from typing import ClassVar
 
 # Custom Library
 
 # Custom Packages
-from AthenaTwitchBot.models.twitch_channel import TwitchChannel
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_method_inheritance.callback import BotMethodCallback
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
-class BotFirstTimeChatter:
+class BotFirstTimeChatter(BotMethodCallback):
     """
     A function the bot does when a viewer joins the chat for the first time ever.
     If a user wants to register a command to the bot, they should make a method in class which inherits from TwitchBot,
@@ -32,17 +32,14 @@ class BotFirstTimeChatter:
     - channel : list of TwitchChannel values which defines on which channels this command should be enabled.
         If left unassigned it will work on all channels the bot is joined on
     """
-    callback:Callable
-    channel:str|TwitchChannel=None
-
     registered: ClassVar[BotFirstTimeChatter] = None
 
-    def __post_init__(self):
-        if isinstance(self.channel, str):
-            self.channel = TwitchChannel(self.channel)
-
     @classmethod
-    def register(cls, *, channel:TwitchChannel=None):
+    def register(
+            cls,
+            *,
+            args:bool=False
+    ):
         """Registers the function to the class"""
         # Only allow one registered command for this type
         if cls.registered is not None:
@@ -53,5 +50,8 @@ class BotFirstTimeChatter:
         #   Args and kwargs of the function are handled by the handle_chat_message function
         #   It is expected that the function is located within the defined TwitchBot of the application
         def decorator(fnc):
-            cls.registered = cls(callback=fnc, channel=channel)
+            cls.registered = cls(
+                callback=fnc,
+                args=args
+            )
         return decorator
