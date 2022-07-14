@@ -149,7 +149,7 @@ class TwitchAPI:
             callback=requests.get,
             url=TwitchApiURL.analytics_extension.value,
             headers=self._header,
-            query_parameters={k:v for k,v in query if v is not None}
+            query_parameters={k:v for k,v in query.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -166,7 +166,7 @@ class TwitchAPI:
             callback=requests.get,
             url=TwitchApiURL.analytics_extension.value,
             headers=self._header,
-            query_parameters={k:v for k,v in query if v is not None}
+            query_parameters={k:v for k,v in query.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -181,7 +181,7 @@ class TwitchAPI:
             callback=requests.get,
             url=TwitchApiURL.bits_leaderboard.value,
             headers=self._header,
-            query_parameters={k:v for k,v in query if v is not None}
+            query_parameters={k:v for k,v in query.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -204,7 +204,7 @@ class TwitchAPI:
             callback=requests.get,
             url=TwitchApiURL.cheermotes.value,
             headers=self._header,
-            query_parameters={k:v for k,v in query if v is not None}
+            query_parameters={k:v for k,v in query.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -231,7 +231,7 @@ class TwitchAPI:
             url=TwitchApiURL.channel_information.value,
             headers=self._header_json,
             query_parameters={"broadcaster_id": broadcaster_id if broadcaster_id is not None else self.user.id},
-            data={k:v for k,v in data if v is not None}
+            data={k:v for k,v in data.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -269,7 +269,7 @@ class TwitchAPI:
             url=TwitchApiURL.custom_rewards.value,
             headers=self._header_json,
             query_parameters={"broadcaster_id": self.user.id},
-            data={k:v for k,v in data if v is not None}
+            data={k:v for k,v in data.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -293,7 +293,7 @@ class TwitchAPI:
             callback=requests.get,
             url=TwitchApiURL.custom_rewards.value,
             headers=self._header,
-            query_parameters={k:v for k,v in query if v is not None}
+            query_parameters={k:v for k,v in query.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -308,7 +308,7 @@ class TwitchAPI:
             callback=requests.get,
             url=TwitchApiURL.custom_reward_redemptions.value,
             headers=self._header,
-            query_parameters={k:v for k,v in query if v is not None}
+            query_parameters={k:v for k,v in query.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -348,7 +348,7 @@ class TwitchAPI:
             url=TwitchApiURL.custom_rewards.value,
             headers=self._header_json,
             query_parameters=query,
-            data={k:v for k,v in data if v is not None}
+            data={k:v for k,v in data.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -423,7 +423,7 @@ class TwitchAPI:
             callback=requests.get,
             url=TwitchApiURL.chat_settings.value,
             headers=self._header,
-            query_parameters={k:v for k,v in query if v is not None}
+            query_parameters={k:v for k,v in query.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -456,8 +456,8 @@ class TwitchAPI:
             callback=requests.patch,
             url=TwitchApiURL.chat_settings.value,
             headers=self._header,
-            query_parameters={k:v for k,v in query if v is not None},
-            data={k:v for k,v in data if v is not None}
+            query_parameters={k:v for k,v in query.items() if v is not None},
+            data={k:v for k,v in data.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -473,7 +473,7 @@ class TwitchAPI:
             callback=requests.post,
             url=TwitchApiURL.clips.value,
             headers=self._header,
-            query_parameters={k:v for k,v in query if v is not None}
+            query_parameters={k:v for k,v in query.items() if v is not None}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -522,7 +522,7 @@ class TwitchAPI:
             callback=requests.post,
             url=TwitchApiURL.clips.value,
             headers=self._header,
-            query_parameters={k:v for k,v in query if v is not None}
+            query_parameters={k:v for k,v in query.items() if v is not None}
         )
 
 

@@ -4,7 +4,9 @@
 # General Packages
 from __future__ import annotations
 import asyncio
+
 # Custom Library
+from AthenaColor import ForeNest
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_api.twitch_api import TwitchAPI
@@ -17,6 +19,7 @@ from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_custom_reward import BotC
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_first_time_chatter import BotFirstTimeChatter
 import AthenaTwitchBot.data.global_vars as gbl
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
@@ -24,8 +27,18 @@ class Launcher:
     _loop:asyncio.AbstractEventLoop
     started_from_all: bool = False
 
-    api:TwitchAPI
-    bot:TwitchBot
+    _api:TwitchAPI=None
+    _bot:TwitchBot=None
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # - propeties -
+    # ------------------------------------------------------------------------------------------------------------------
+    @classmethod
+    @property
+    def api(cls) -> TwitchAPI:
+        if cls._api is None:
+            raise ValueError("The APi connector was never started")
+        return cls._api
 
     @classmethod
     def get_loop(cls):
@@ -34,7 +47,7 @@ class Launcher:
     @classmethod
     def start_API_connector(cls,broadcaster_token:str,broadcaster_client_id:str):
         cls.get_loop()
-        cls.api = TwitchAPI(
+        cls._api = TwitchAPI(
             broadcaster_token=broadcaster_token,
             broadcaster_client_id=broadcaster_client_id
         )

@@ -48,7 +48,10 @@ class BotCommand:
     registered:ClassVar[dict[str,BotCommand]]=None
 
     @classmethod
-    def register(cls, name:str, *,args:bool=False,subscriber_only:bool=False, mod_only:bool=False):
+    def register(
+            cls, name:str,
+            *,
+            args:bool=False,subscriber_only:bool=False, mod_only:bool=False):
         """Registers the function to the class"""
 
         # make sure the register exists
