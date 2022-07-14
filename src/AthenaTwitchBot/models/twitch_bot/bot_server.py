@@ -30,7 +30,7 @@ class BotServer:
 
     # things that aren't normally customized, but you never know what a user might want
     chat_bot_protocol:type[TwitchBotProtocol]=TwitchBotProtocol
-    logic_output:LogicOutput=LogicOutput()
+    logic_output:LogicOutput=field(default_factory=LogicOutput)
 
     # non init stuff
     bot_transport:asyncio.Transport=field(init=False, repr=False)
@@ -97,13 +97,13 @@ class BotServer:
             *[self.output_direct(
                 output_type=t,
                 context=context
-            ) for t in OutputTypes]
+            ) for t in self.logic_output.types]
         )
 
     async def output_direct(self, output_type: OutputTypes, context:MessageContext):
         await self.logic_output[output_type].output(context, transport=self.bot_transport)
 
     async def output_twitch(self, context:MessageContext):
-        await self.logic_output[OutputTypes.twitch].output(context, transport=self.bot_transport)
+        await self.logic_output[self.logic_output.types.twitch].output(context, transport=self.bot_transport)
 
 

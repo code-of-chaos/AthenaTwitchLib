@@ -6,7 +6,6 @@ from __future__ import annotations
 import asyncio
 
 # Custom Library
-from AthenaColor import ForeNest
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_api.twitch_api import TwitchAPI
@@ -31,7 +30,7 @@ class Launcher:
     _bot:TwitchBot=None
 
     # ------------------------------------------------------------------------------------------------------------------
-    # - propeties -
+    # - Properties -
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
     @property
@@ -58,7 +57,7 @@ class Launcher:
             cls._loop.run_forever()
 
     @classmethod
-    def start_Bot(cls, bot:TwitchBot,*,sll:bool=True):
+    def start_Bot(cls, bot:TwitchBot,*,sll:bool=True,**kwargs):
         cls.get_loop()
         gbl.bot = cls.bot = bot
 
@@ -68,7 +67,7 @@ class Launcher:
         gbl.bot_custom_reward_enabled = BotCustomReward.registered is not None
         gbl.bot_first_time_chatter_enabled = BotFirstTimeChatter.registered is not None
 
-        gbl.bot_server = BotServer(ssl_enabled=sll)
+        gbl.bot_server = BotServer(ssl_enabled=sll, **kwargs)
         gbl.bot_server.launch()
 
         if not cls.started_from_all:
@@ -76,7 +75,7 @@ class Launcher:
 
 
     @classmethod
-    def start_all(cls, bot:TwitchBot,broadcaster_token:str, broadcaster_client_id:str, *,sll:bool=True):
+    def start_all(cls, bot:TwitchBot,broadcaster_token:str, broadcaster_client_id:str, *,sll:bool=True, **kwargs):
         cls.started_from_all = True
         cls.get_loop()
         cls.start_API_connector(
@@ -85,7 +84,8 @@ class Launcher:
         )
         cls.start_Bot(
             bot=bot,
-            sll=sll
+            sll=sll,
+            **kwargs
         )
 
         # run the loop forever

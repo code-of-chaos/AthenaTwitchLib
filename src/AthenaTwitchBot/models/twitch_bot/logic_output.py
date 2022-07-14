@@ -21,9 +21,13 @@ class LogicOutput:
 
     def __init__(self):
         self.mapping = {
-            OutputTypes.twitch:OutputTwitch(),
-            OutputTypes.console:OutputConsole()
+            self.types.twitch:OutputTwitch(),
+            self.types.console:OutputConsole()
         }
+
+    @property
+    def types(self) -> type[OutputTypes]:
+        return OutputTypes
 
     def __getitem__(self, item:OutputTypes):
         return self.mapping[item]

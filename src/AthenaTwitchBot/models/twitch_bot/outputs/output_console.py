@@ -17,6 +17,5 @@ from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
 class OutputConsole(Output):
     # noinspection PyMethodOverriding
     async def output(self, context:MessageContext,**_):
-        print(context.raw_input_decoded)
-        if context.rate_limited:
-            print(ForeNest.IndianRed("the user was rate_limited"))
+        if context.raw_input_decoded is not None:
+            print(context.raw_input_decoded)
