@@ -427,7 +427,7 @@ class TwitchAPI:
         )
 
     # ------------------------------------------------------------------------------------------------------------------
-    @user_has_scope(scope=TwitchApiScopes.ModeratorManageChat_settings)
+    @user_has_scope(scope=TwitchApiScopes.ModeratorManageChatSettings)
     @connected_to_twitch
     async def update_chat_settings(
             self,*, moderator_id:str|None=None,emote_mode:bool|None=None, follower_mode:bool|None=None,
@@ -519,11 +519,452 @@ class TwitchAPI:
         }
 
         return await self._request(
-            callback=requests.post,
-            url=TwitchApiURL.clips.value,
+            callback=requests.get,
+            url=TwitchApiURL.entitlements_drops.value,
             headers=self._header,
             query_parameters={k:v for k,v in query.items() if v is not None}
         )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def update_drops_entitlements(self, entitlement_ids:list[str]|None=None, fulfillment_status:str|None=None):
+        return await self._request(
+            callback=requests.patch,
+            url=TwitchApiURL.entitlements_drops.value,
+            headers=self._header_json,
+            data={
+                k:v for k,v in
+                {"entitlement_ids":entitlement_ids,"fulfillment_status":fulfillment_status }.items()
+                if v is not None
+            }
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def redeem_code(self, code:str):
+        return await self._request(
+            callback=requests.patch,
+            url=TwitchApiURL.entitlements_code.value,
+            headers=self._header_json,
+            data={"code":code,"user_id":self.user.id}
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_extension_configuration_segment(self, extension_id:str,segment:str):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.extension_configurations.value,
+            headers=self._header,
+            query_parameters={"broadcaster_id":self.user.id,"extension_id":extension_id,"segment":segment}
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def set_extension_configuration_segment(
+            self, extension_id:str,segment:str,
+            *, content:str=None,version:str=None
+    ):
+        return await self._request(
+            callback=requests.put,
+            url=TwitchApiURL.extension_configurations.value,
+            headers=self._header_json,
+            query_parameters={"extension_id":extension_id,"segment":segment},
+            data={
+                k:v for k,v in
+                {"broadcaster_id":self.user.id,"content":content,"version":version}.items()
+                if v is not None
+            }
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def set_extension_required_configuration(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def send_extension_pubsub_message(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_extension_live_channels(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_extension_secrets(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def create_extension_secret(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def send_extension_chat_message(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_extensions(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_released_extensions(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_extension_bits_products(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def update_extension_bits_product(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def create_eventsub_subscription(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def delete_eventsub_subscription(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_eventsub_subscriptions(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_top_games(self,*,after:str|None=None, before:str|None=None, first:str|None=None):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.games_top.value,
+            headers=self._header,
+            query_parameters={
+                k:v for k,v in
+                {"after":after,"before":before,"first":first}.items()
+                if v is not None
+            }
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_games(self, id_:str, name:str):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.games.value,
+            headers=self._header,
+            query_parameters={"id":id_,"name":name}
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_creator_goals(self, broadcaster_id:str|None=None):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.goals.value,
+            headers=self._header,
+            query_parameters={"broadcaster_id":broadcaster_id if broadcaster_id is not None else self.user.id}
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ChannelReadHypeTrain)
+    @connected_to_twitch
+    async def get_hype_train_events(self, first:int|None=None, cursor:str|None=None):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.hypetrain.value,
+            headers=self._header,
+            query_parameters={
+                k:v for k,v in
+                {"broadcaster_id": self.user.id, "first": first, "cursor": cursor}.items()
+                if v is not None
+            }
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ModerationRead)
+    @connected_to_twitch
+    async def check_automod_status(self,msg_id:str, msg_text:str):
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.enforcements_status.value,
+            headers=self._header_json,
+            query_parameters={
+                k:v for k,v in
+                {"broadcaster_id": self.user.id, "msg_id": msg_id, "msg_text": msg_text}.items()
+                if v is not None
+            }
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def manage_held_automod_messages(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_automod_settings(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def update_automod_settings(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_banned_users(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def ban_user(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def unban_user(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_blocked_terms(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def add_blocked_term(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def remove_blocked_term(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_moderators(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_polls(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def create_poll(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def end_poll(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_predictions(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def create_prediction(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def end_prediction(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def start_a_raid(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def cancel_a_raid(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_channel_stream_schedule(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_channel_icalendar(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def update_channel_stream_schedule(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def create_channel_stream_schedule_segment(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def update_channel_stream_schedule_segment(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def delete_channel_stream_schedule_segment(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def search_categories(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def search_channels(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_soundtrack_current_track(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_soundtrack_playlist(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_soundtrack_playlists(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_stream_key(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_streams(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_followed_streams(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def create_stream_marker(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_stream_markers(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_broadcaster_subscriptions(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def check_user_subscription(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_all_stream_tags(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_stream_tags(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def replace_stream_tags(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_channel_teams(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_teams(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_users(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def update_user(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_users_follows(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_user_block_list(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def block_user(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def unblock_user(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_user_extensions(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_user_active_extensions(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def update_user_extensions(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_videos(self):
+        return NotImplemented
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def delete_videos(self):
+        return NotImplemented
 
 
 
