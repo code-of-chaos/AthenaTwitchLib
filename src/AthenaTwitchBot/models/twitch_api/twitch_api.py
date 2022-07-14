@@ -10,8 +10,6 @@ import asyncio
 from dataclasses import dataclass, field
 from functools import wraps
 from typing import Callable
-
-# Custom Library
 import AthenaLib.HTTP.functions.requests as requests
 
 # Custom Packages
@@ -51,7 +49,7 @@ class TwitchAPI:
     broadcaster_client_id:str
 
     # set after init
-    user:TwitchApiUser=None
+    user:TwitchApiUser|None=None
 
     # non init stuff
     is_connected:bool=field(init=False, default=False)
@@ -73,7 +71,7 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     # - Methods that do all the magic -
     # ------------------------------------------------------------------------------------------------------------------
-    async def _request(self, callback:Callable, url:str, headers:dict,data:dict=None,query_parameters:dict=None):
+    async def _request(self, callback:Callable, url:str, headers:dict,data:dict|None=None,query_parameters:dict|None=None):
         try:
             response = await (callback(
                 url=url,
@@ -139,8 +137,8 @@ class TwitchAPI:
     @user_has_scope(scope=TwitchApiScopes.AnalyticsReadExtensions)
     @connected_to_twitch
     async def get_extension_analytics(
-            self, *, after:str=None, ended_at:str=None, extension_id:str=None, first:int=None, started_at:str=None,
-            type_:str=None
+            self, *, after:str|None=None, ended_at:str|None=None, extension_id:str|None=None, first:int|None=None, started_at:str|None=None,
+            type_:str|None=None
     ):
         query = {"after": after, "ended_at": ended_at, "extension_id": extension_id, "first": first,
                  "started_at": started_at, "type": type_}
@@ -158,8 +156,8 @@ class TwitchAPI:
     @user_has_scope(scope=TwitchApiScopes.AnalyticsReadGames)
     @connected_to_twitch
     async def get_game_analytics(
-            self, *, after:str=None, ended_at:str=None, game_id:str=None, first:int=None, started_at:str=None,
-            type_:str=None
+            self, *, after:str|None=None, ended_at:str|None=None, game_id:str|None=None, first:int|None=None, started_at:str|None=None,
+            type_:str|None=None
     ):
         query = {"after": after, "ended_at": ended_at, "game_id": game_id, "first": first, "started_at": started_at,
                  "type": type_}
@@ -175,7 +173,7 @@ class TwitchAPI:
     @user_has_scope(scope=TwitchApiScopes.BitsRead)
     @connected_to_twitch
     async def get_bits_leaderboard(
-            self, *, count:int = None, period:str = None, started_at:str=None, user_id:str=None
+            self, *, count:int = None, period:str = None, started_at:str|None=None, user_id:str|None=None
     ):
         query = {"count": count, "period": period, "started_at": started_at, "user_id": user_id}
 
@@ -188,7 +186,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_cheermotes(self, broadcaster_id:str=None):
+    async def get_cheermotes(self, broadcaster_id:str|None=None):
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.cheermotes.value,
@@ -198,7 +196,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_extension_transactions(self, extension_id:str, id_:str=None, after:str=None, first:int=None):
+    async def get_extension_transactions(self, extension_id:str, id_:str|None=None, after:str|None=None, first:int|None=None):
         # assemble query
         query = {"extension_id": extension_id, "id_": id_, "after": after, "first": first}
 
@@ -211,7 +209,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_channel_information(self, broadcaster_id:str=None):
+    async def get_channel_information(self, broadcaster_id:str|None=None):
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.channel_information.value,
@@ -223,8 +221,8 @@ class TwitchAPI:
     @user_has_scope(scope=TwitchApiScopes.ChannelManageBroadcast)
     @connected_to_twitch
     async def modify_channel_information(
-            self, broadcaster_id:str=None, game_id:str=None, broadcaster_language:str=None, title:str=None,
-            delay:int=None
+            self, broadcaster_id:str|None=None, game_id:str|None=None, broadcaster_language:str|None=None, title:str|None=None,
+            delay:int|None=None
     ):
         data= {"game_id": game_id, "broadcaster_language": broadcaster_language, "title": title, "delay": delay}
 
@@ -239,7 +237,7 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @user_has_scope(scope=TwitchApiScopes.ChannelReadEditors)
     @connected_to_twitch
-    async def get_channel_editors(self, broadcaster_id:str=None):
+    async def get_channel_editors(self, broadcaster_id:str|None=None):
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.channel_editors.value,
@@ -251,11 +249,11 @@ class TwitchAPI:
     @user_has_scope(scope=TwitchApiScopes.ChannelManageRedemptions)
     @connected_to_twitch
     async def create_custom_reward(
-            self, title:str, cost:int, prompt:str=None,is_enabled:bool=None,background_color:str=None,
-            is_user_input_required:bool=None, is_max_per_stream_enabled:bool=None,max_per_stream:int=None,
-            is_max_per_user_per_stream_enabled:bool=None, max_per_user_per_stream:int=None,
-            is_global_cooldown_enabled:bool=None, global_cooldown_seconds:int=None,
-            should_redemptions_skip_request_queue:bool=None
+            self, title:str, cost:int, prompt:str|None=None,is_enabled:bool|None=None,background_color:str|None=None,
+            is_user_input_required:bool|None=None, is_max_per_stream_enabled:bool|None=None,max_per_stream:int|None=None,
+            is_max_per_user_per_stream_enabled:bool|None=None, max_per_user_per_stream:int|None=None,
+            is_global_cooldown_enabled:bool|None=None, global_cooldown_seconds:int|None=None,
+            should_redemptions_skip_request_queue:bool|None=None
     ):
         data= {"title": title, "cost": cost, "prompt": prompt, "is_enabled": is_enabled,
                "background_color": background_color, "is_user_input_required": is_user_input_required,
@@ -302,7 +300,7 @@ class TwitchAPI:
     @user_has_scope(scope=TwitchApiScopes.ChannelReadRedemptions)
     @connected_to_twitch
     async def get_custom_reward_redemption(
-            self,reward_id:str,*,id_:str=None, status:str=None, sort:str=None, after:str=None, first:int=None
+            self,reward_id:str,*,id_:str|None=None, status:str|None=None, sort:str|None=None, after:str|None=None, first:int|None=None
     ):
         query = {"broadcaster_id": self.user.id, "reward_id": reward_id, "id": id_, "status": status, "sort": sort,
                  "after": after, "first": first}
@@ -317,11 +315,11 @@ class TwitchAPI:
     @user_has_scope(scope=TwitchApiScopes.ChannelManageRedemptions)
     @connected_to_twitch
     async def update_custom_reward(
-            self, id_:str,*,title:str=None, cost:int, prompt:str=None,is_enabled:bool=None,background_color:str=None,
-            is_user_input_required:bool=None, is_max_per_stream_enabled:bool=None,max_per_stream:int=None,
-            is_max_per_user_per_stream_enabled:bool=None, max_per_user_per_stream:int=None,
-            is_global_cooldown_enabled:bool=None, global_cooldown_seconds:int=None,
-            should_redemptions_skip_request_queue:bool=None
+            self, id_:str,*,title:str|None=None, cost:int, prompt:str|None=None,is_enabled:bool|None=None,background_color:str|None=None,
+            is_user_input_required:bool|None=None, is_max_per_stream_enabled:bool|None=None,max_per_stream:int|None=None,
+            is_max_per_user_per_stream_enabled:bool|None=None, max_per_user_per_stream:int|None=None,
+            is_global_cooldown_enabled:bool|None=None, global_cooldown_seconds:int|None=None,
+            should_redemptions_skip_request_queue:bool|None=None
     ):
         query = {
             "broadcaster_id": self.user.id,
@@ -415,7 +413,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_chat_settings(self, *, moderator_id:str=None):
+    async def get_chat_settings(self, *, moderator_id:str|None=None):
         query = {
             "broadcaster_id": self.user.id,
             "moderator_id":moderator_id
@@ -429,12 +427,13 @@ class TwitchAPI:
         )
 
     # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ModeratorManageChat_settings)
     @connected_to_twitch
     async def update_chat_settings(
-            self, moderator_id:str=None,*,emote_mode:bool=None, follower_mode:bool=None,
-            follower_mode_duration:int=None,non_moderator_chat_delay:bool=None,
-            non_moderator_chat_delay_duration:int=None,slow_mode:bool=None, slow_mode_wait_time:int=None,
-            subscriber_mode:bool=None,unique_chat_mode:bool=None
+            self,*, moderator_id:str|None=None,emote_mode:bool|None=None, follower_mode:bool|None=None,
+            follower_mode_duration:int|None=None,non_moderator_chat_delay:bool|None=None,
+            non_moderator_chat_delay_duration:int|None=None,slow_mode:bool|None=None, slow_mode_wait_time:int|None=None,
+            subscriber_mode:bool|None=None,unique_chat_mode:bool|None=None
 
     ):
         query = {
@@ -459,6 +458,71 @@ class TwitchAPI:
             headers=self._header,
             query_parameters={k:v for k,v in query if v is not None},
             data={k:v for k,v in data if v is not None}
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ClipsEdit)
+    @connected_to_twitch
+    async def create_clip(self, *, hash_delay:bool|None=None):
+        query = {
+            "broadcaster_id": self.user.id,
+            "hash_delay": hash_delay
+        }
+
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.clips.value,
+            headers=self._header,
+            query_parameters={k:v for k,v in query if v is not None}
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_clips(self, game_id:str, id_:str):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.clips.value,
+            headers=self._header,
+            query_parameters={
+                "broadcaster_id": self.user.id,
+                "game_id": game_id,
+                "id_": id_,
+            }
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_code_status(self, code:str, user_id:int):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.entitlements_code.value,
+            headers=self._header,
+            query_parameters={
+                "code": code,
+                "user_id": user_id,
+            }
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @connected_to_twitch
+    async def get_drop_entitlements(
+            self, id_:str|None=None, user_id:str|None=None, game_id:str|None=None, fulfillment_status:str|None=None,
+            after:str|None = None, first:int|None=None
+    ):
+        query = {
+            "id_":id_,
+            "user_id":user_id,
+            "game_id":game_id,
+            "fulfillment_status":fulfillment_status,
+            "after":after,
+            "first":first
+        }
+
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.clips.value,
+            headers=self._header,
+            query_parameters={k:v for k,v in query if v is not None}
         )
 
 

@@ -32,3 +32,6 @@ class TwitchApiURL(enum.Enum):
     badges_chat = "https://api.twitch.tv/helix/chat/badges"
     badges_global = "https://api.twitch.tv/helix/chat/badges/global"
     chat_settings = "https://api.twitch.tv/helix/chat/settings"
+    clips= "https://api.twitch.tv/helix/clips"
+    entitlements_code = "https://api.twitch.tv/helix/entitlements/codes"
+    entitlements_drops = "https://api.twitch.tv/helix/entitlements/drops"
