@@ -19,7 +19,6 @@ import AthenaTwitchBot.data.global_vars as gbl
 # ----------------------------------------------------------------------------------------------------------------------
 class Launcher:
     _loop:asyncio.AbstractEventLoop
-    started_from_all: bool = False
 
     _api:TwitchAPI=None
     _bot:TwitchBot=None
@@ -31,49 +30,34 @@ class Launcher:
     @property
     def api(cls) -> TwitchAPI:
         if cls._api is None:
-            raise ValueError("The APi connector was never started")
+            raise ValueError("The API connector was never started")
         return cls._api
 
     @classmethod
-    def get_loop(cls) -> asyncio.AbstractEventLoop:
-        cls._loop = asyncio.get_event_loop()
-        return cls._loop
-
-    @classmethod
-    def start_API_connector(cls,broadcaster_token:str,broadcaster_client_id:str):
-        cls.get_loop()
+    async def start_API_connector(cls,broadcaster_token:str,broadcaster_client_id:str):
         cls._api = TwitchAPI(
             broadcaster_token=broadcaster_token,
             broadcaster_client_id=broadcaster_client_id
         )
         # connect to the API
-        cls._loop.run_until_complete(cls.api.connect())
+        await cls.api.connect()
 
     @classmethod
-    def start_Bot(cls, bot:TwitchBot,*,sll:bool=True,**kwargs):
-        cls.get_loop()
+    async def start_Bot(cls, bot:TwitchBot,*,sll:bool=True,**kwargs):
         gbl.bot = cls.bot = bot
         gbl.bot_server = BotServer(ssl_enabled=sll, **kwargs)
-        gbl.bot_server.launch()
-
-        if not cls.started_from_all:
-            cls._loop.run_forever()
+        await gbl.bot_server.launch()
 
 
     @classmethod
-    def start_all(cls, bot:TwitchBot,broadcaster_token:str, broadcaster_client_id:str, *,sll:bool=True, **kwargs):
-        cls.started_from_all = True
-        cls.get_loop()
-        cls.start_API_connector(
+    async def start_all(cls, bot:TwitchBot,broadcaster_token:str, broadcaster_client_id:str, *,sll:bool=True, **kwargs):
+        await cls.start_API_connector(
             broadcaster_token=broadcaster_token,
             broadcaster_client_id=broadcaster_client_id
         )
 
-        cls.start_Bot(
+        await cls.start_Bot(
             bot=bot,
             sll=sll,
             **kwargs
         )
-
-        # run the loop forever
-        cls._loop.run_forever()

@@ -3,10 +3,12 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+import socket
 from dataclasses import dataclass, field
 import asyncio
 
 # Custom Library
+from AthenaColor import ForeNest
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot.twitch_bot_protocol import TwitchBotProtocol
@@ -38,30 +40,37 @@ class BotServer:
     bot_tasks:set[asyncio.Task]=field(init=False, repr=False, default_factory=set)
     loop:asyncio.AbstractEventLoop=field(init=False, repr=False)
 
-    def launch(self):
-        self.loop = asyncio.get_event_loop()
-        self.loop.run_until_complete(self.start_chat_bot(self.loop))
+    async def launch(self):
+        # self.loop.create_task(self.start_chat_bot(self.loop))
+        await self.start_chat_bot()
+        print(ForeNest.Gold("CONNECTED"))
+
         # login with the chatbot
-        self.loop.create_task(self.login_chat_bot())
+        await self.login_chat_bot()
+        print(ForeNest.Gold("LOGGED IN"))
+
         # start tasks
-        self.loop.create_task(self.start_chat_bot_tasks())
+        await self.start_chat_bot_tasks()
+        print(ForeNest.Gold("STARTED TASKS"))
+
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Launch the chat bot -
     # ------------------------------------------------------------------------------------------------------------------
-    async def start_chat_bot(self, loop:asyncio.AbstractEventLoop):
-        future = loop.create_connection(
+    async def start_chat_bot(self):
+        sock = socket.socket()
+        sock.settimeout(5.)
+        sock.connect((self.irc_host,self.irc_port_ssl if self.ssl_enabled else self.irc_port))
+
+        self.bot_transport, _ = await asyncio.get_running_loop().create_connection(
             protocol_factory=self.chat_bot_protocol,
-            host=self.irc_host,
-            port=self.irc_port_ssl if self.ssl_enabled else self.irc_port,
+            server_hostname=self.irc_host,
             ssl=self.ssl_enabled,
-            happy_eyeballs_delay=0.25,
-            ssl_handshake_timeout=5.
+            sock=sock
         )
-        try:
-            self.bot_transport, _ = await asyncio.wait_for(future, timeout=5)
-        except asyncio.TimeoutError:
-            raise TimeoutError("connection timed out")
+
+        if self.bot_transport is None:
+            raise ConnectionRefusedError
 
     async def login_chat_bot(self):
         await self.output_twitch(MessageContext(
@@ -73,18 +82,25 @@ class BotServer:
         await self.output_twitch(MessageContext(
             flag=MessageFlags.login,output=f"JOIN {str(gbl.bot.channel)}")
         )
+
+        await asyncio.gather(
+            self.set_twitch_capability_commands(),
+            self.set_twitch_capability_membership(),
+            self.set_twitch_capability_tags()
+        )
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Capabilities -
+    # ------------------------------------------------------------------------------------------------------------------
+    async def set_twitch_capability_commands(self):
         if gbl.bot.twitch_capability_commands:
-            await self.output_twitch(MessageContext(
-                flag=MessageFlags.login,output=irc_twitch.REQUEST_COMMANDS)
-            )
+            await self.output_twitch(MessageContext(flag=MessageFlags.login,output=irc_twitch.REQUEST_COMMANDS))
+    async def set_twitch_capability_membership(self):
         if gbl.bot.twitch_capability_membership:
-            await self.output_twitch(MessageContext(
-                flag=MessageFlags.login,output=irc_twitch.REQUEST_COMMANDS)
-            )
+            await self.output_twitch(MessageContext(flag=MessageFlags.login,output=irc_twitch.REQUEST_COMMANDS))
+    async def set_twitch_capability_tags(self):
         if gbl.bot.twitch_capability_tags:
-            await self.output_twitch(MessageContext(
-                flag=MessageFlags.login,output=irc_twitch.REQUEST_TAGS)
-            )
+            await self.output_twitch(MessageContext(flag=MessageFlags.login,output=irc_twitch.REQUEST_TAGS))
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Register and start up tasks to be run every interval -
