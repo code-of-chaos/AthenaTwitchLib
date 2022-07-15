@@ -16,6 +16,7 @@ from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_task import BotTask
 from AthenaTwitchBot.data.output_types import OutputTypes
 import AthenaTwitchBot.data.global_vars as gbl
 from AthenaTwitchBot.data.message_flags import MessageFlags
+import AthenaTwitchBot.data.irc_twitch as irc_twitch
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -74,15 +75,15 @@ class BotServer:
         )
         if gbl.bot.twitch_capability_commands:
             await self.output_twitch(MessageContext(
-                flag=MessageFlags.login,output="CAP REQ :twitch.tv/commands")
+                flag=MessageFlags.login,output=irc_twitch.REQUEST_COMMANDS)
             )
         if gbl.bot.twitch_capability_membership:
             await self.output_twitch(MessageContext(
-                flag=MessageFlags.login,output="CAP REQ :twitch.tv/membership")
+                flag=MessageFlags.login,output=irc_twitch.REQUEST_COMMANDS)
             )
         if gbl.bot.twitch_capability_tags:
             await self.output_twitch(MessageContext(
-                flag=MessageFlags.login,output="CAP REQ :twitch.tv/tags")
+                flag=MessageFlags.login,output=irc_twitch.REQUEST_TAGS)
             )
 
     # ------------------------------------------------------------------------------------------------------------------
