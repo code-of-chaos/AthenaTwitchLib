@@ -16,6 +16,7 @@ from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_mentioned import BotMenti
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_mentioned_start import BotMentionedStart
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_custom_reward import BotCustomReward
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_first_time_chatter import BotFirstTimeChatter
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_chat_message import BotChatMessage
 from AthenaTwitchBot.data.message_flags import MessageFlags
 from AthenaTwitchBot.data.irc_twitch import *
 import AthenaTwitchBot.data.global_vars as gbl
@@ -288,3 +289,7 @@ class LineHandler:
         # first time chatter
         if context.tags.first_msg and gbl.bot_first_time_chatter_enabled:
             await _execute_command(command=BotFirstTimeChatter.registered, context=context, text=text)
+
+        if context.flag == MessageFlags.undefined and BotChatMessage.registered is not None:
+            await _execute_command(command=BotChatMessage.registered, context=context, text=text)
+
