@@ -72,9 +72,18 @@ class BotServer:
         await self.output_twitch(MessageContext(
             flag=MessageFlags.login,output=f"JOIN {str(gbl.bot.channel)}")
         )
-        await self.output_twitch(MessageContext(
-            flag=MessageFlags.login,output="CAP REQ :twitch.tv/tags")
-        )
+        if gbl.bot.twitch_capability_commands:
+            await self.output_twitch(MessageContext(
+                flag=MessageFlags.login,output="CAP REQ :twitch.tv/commands")
+            )
+        if gbl.bot.twitch_capability_membership:
+            await self.output_twitch(MessageContext(
+                flag=MessageFlags.login,output="CAP REQ :twitch.tv/membership")
+            )
+        if gbl.bot.twitch_capability_tags:
+            await self.output_twitch(MessageContext(
+                flag=MessageFlags.login,output="CAP REQ :twitch.tv/tags")
+            )
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Register and start up tasks to be run every interval -

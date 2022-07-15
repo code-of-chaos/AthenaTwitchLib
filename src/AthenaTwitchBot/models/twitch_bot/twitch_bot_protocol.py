@@ -9,7 +9,7 @@ import asyncio
 from AthenaColor import ForeNest
 
 # Custom Packages
-from AthenaTwitchBot.functions.message_handler.line_handler import line_handler
+from AthenaTwitchBot.models.twitch_bot.line_handler import LineHandler
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
@@ -23,7 +23,7 @@ class TwitchBotProtocol(asyncio.Protocol):
     def data_received(self, data: bytearray) -> None:
         for line in data.split(b"\r\n"):
             if line:
-                asyncio.create_task(line_handler(line))
+                asyncio.create_task(LineHandler.handle(line))
 
     def connection_lost(self, exc: Exception | None) -> None:
         if exc is not None:
