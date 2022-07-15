@@ -45,6 +45,9 @@ OUTPUT_MAPPING = {
     ),
     MessageFlags.login:lambda transport,context:(
         transport.write(output_twitch_prep(context.output))
+    ),
+    MessageFlags.no_output:lambda transport,context:(
+        None
     )
 }
 

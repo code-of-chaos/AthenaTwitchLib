@@ -5,19 +5,19 @@
 from __future__ import annotations
 
 # Custom Library
+from AthenaColor import ForeNest
 
 # Custom Packages
-from AthenaTwitchBot.data.message_flags import MessageFlags
 from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-async def handle_join(context:MessageContext):
+async def handle_uncaught(context:MessageContext):
     """
-    Currently unused function to parse join messages
+    Currently unused function to parse uncaught messages
 
     Parameters:
     - context:
     """
-    context.flag = MessageFlags.no_output
+    print(f"NOT CAUGHT : {ForeNest.Maroon(context.raw_input_decoded)}")

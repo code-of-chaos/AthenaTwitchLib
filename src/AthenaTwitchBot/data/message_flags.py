@@ -22,4 +22,5 @@ class MessageFlags(enum.Enum):
     write="write"
     reply="reply"
     login="login"
+    no_output="no_output"
 

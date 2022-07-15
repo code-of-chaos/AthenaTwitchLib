@@ -16,6 +16,9 @@ import AthenaTwitchBot.data.global_vars as gbl
 from AthenaTwitchBot.functions.message_handler.handle_ping import handle_ping
 from AthenaTwitchBot.functions.message_handler.handle_chat_message import handle_chat_message
 from AthenaTwitchBot.functions.message_handler.handle_join import handle_join
+from AthenaTwitchBot.functions.message_handler.handle_capabilities import handle_capabilities
+from AthenaTwitchBot.functions.message_handler.handle_uncaught import handle_uncaught
+from AthenaTwitchBot.functions.message_handler.handle_channel import handle_channel
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -51,7 +54,7 @@ async def line_handler(line:bytearray) -> None:
             # 001
             # eva_athenabot
             # :Welcome, GLHF!
-            pass # undefined output, not needed for anything to send back to twitch
+            await handle_channel(context)
 
         case str(tags), str(user_name_str), "PRIVMSG", str(channel_str), *text if (
             gbl.bot.twitch_capability_tags
@@ -91,7 +94,7 @@ async def line_handler(line:bytearray) -> None:
             # *
             # ACK
             # :twitch.tv/tags
-            print(f"NOT CAUGHT : {ForeNest.Maroon(line)}")
+            await handle_capabilities(context)
 
         case str(bot_name_long), str(_), gbl.bot.nickname, "=", str(_), str(bot_name_short) if (
                 bot_name_long == f":{gbl.bot.nickname}.tmi.twitch.tv"
@@ -104,7 +107,7 @@ async def line_handler(line:bytearray) -> None:
             # =
             # #directiveathena
             # :eva_athenabot
-            print(f"NOT CAUGHT : {ForeNest.Maroon(line)}")
+            await handle_channel(context)
 
         case str(bot_name_long), str(_), gbl.bot.nickname, str(_), *_ \
             if bot_name_long == f":{gbl.bot.nickname}.tmi.twitch.tv":
@@ -115,11 +118,11 @@ async def line_handler(line:bytearray) -> None:
             # =
             # #directiveathena
             # :eva_athenabot
-            print(f"NOT CAUGHT : {ForeNest.Maroon(line)}")
+            await handle_channel(context)
 
         case _:
             # something wasn't caught correctly
-            print(f"NOT CAUGHT : {ForeNest.Maroon(line)}")
+            await handle_uncaught(context)
 
 
     await gbl.bot_server.output_all(context)
