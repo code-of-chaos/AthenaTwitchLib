@@ -56,7 +56,7 @@ class LineHandler:
                 # CATCHES the following pattern:
                 # PING
                 # :tmi.twitch.tv
-                await cls._handle_ping(context, NOTHING.join(ping_response))
+                await cls.handle_ping(context, NOTHING.join(ping_response))
 
             case _tmi_twitch_tv, str(_), gbl.bot.nickname, *_ if (
                     _tmi_twitch_tv == TMI_TWITCH_TV
@@ -66,7 +66,7 @@ class LineHandler:
                 # 001
                 # eva_athenabot
                 # :Welcome, GLHF!
-                await cls._handle_channel(context)
+                await cls.handle_channel(context)
 
             case str(tags), str(user_name_str), "PRIVMSG", str(channel_str), *text if (
                 gbl.bot.twitch_capability_tags
@@ -77,7 +77,7 @@ class LineHandler:
                 # PRIVMSG
                 # #directiveathena
                 # :that sentence was poggers
-                await cls._handle_chat_message(context, tags, user_name_str, channel_str, text)
+                await cls.handle_chat_message(context, tags, user_name_str, channel_str, text)
 
 
             case str(user_name_str), "PRIVMSG", str(channel_str), *text if (
@@ -88,7 +88,7 @@ class LineHandler:
                 # PRIVMSG
                 # #directiveathena
                 # :that sentence was poggers
-                await cls._handle_chat_message(context, None, user_name_str, channel_str, text)
+                await cls.handle_chat_message(context, None, user_name_str, channel_str, text)
 
             case str(bot_name_long), "JOIN", str(_) if (
                     bot_name_long == f":{gbl.bot.nickname}!{gbl.bot.nickname}@{gbl.bot.nickname}.tmi.twitch.tv"
@@ -97,7 +97,7 @@ class LineHandler:
                 # :eva_athenabot!eva_athenabot@eva_athenabot.tmi.twitch.tv
                 # JOIN
                 # #directiveathena
-                await cls._handle_bot_join(context)
+                await cls.handle_bot_join(context)
 
             case ":tmi.twitch.tv", "CAP", "*", "ACK", capability \
                 if capability in {":twitch.tv/commands", ":twitch.tv/tags", ":twitch.tv/membership"} :
@@ -107,7 +107,7 @@ class LineHandler:
                 # *
                 # ACK
                 # :twitch.tv/tags
-                await cls._handle_bot_capabilities(context)
+                await cls.handle_bot_capabilities(context)
 
             case str(bot_name_long), str(_), gbl.bot.nickname, "=", str(_), str(bot_name_short) if (
                     bot_name_long == f":{gbl.bot.nickname}.tmi.twitch.tv"
@@ -120,7 +120,7 @@ class LineHandler:
                 # =
                 # #directiveathena
                 # :eva_athenabot
-                await cls._handle_channel(context)
+                await cls.handle_channel(context)
 
             case str(bot_name_long), str(_), gbl.bot.nickname, str(_), *_ \
                 if bot_name_long == f":{gbl.bot.nickname}.tmi.twitch.tv":
@@ -131,7 +131,7 @@ class LineHandler:
                 # =
                 # #directiveathena
                 # :eva_athenabot
-                await cls._handle_channel(context)
+                await cls.handle_channel(context)
 
             case str(tags), ":tmi.twitch.tv", "USERSTATE", str(channel_str), *text:
                 # CATCHES the following pattern:
@@ -139,21 +139,21 @@ class LineHandler:
                 # :tmi.twitch.tv
                 # USERSTATE
                 # #directiveathena
-                await cls._handle_user_state(context)
+                await cls.handle_user_state(context)
 
             case str(user), "PART", str(channel_str), *text:
                 # CATCHES the following pattern:
                 # :twidi_angel!twidi_angel@twidi_angel.tmi.twitch.tv
                 # PART
                 # #directiveathena
-                await cls._handle_user_part(context)
+                await cls.handle_user_part(context)
 
             case str(user), "JOIN", str(channel_str), *text:
                 # CATCHES the following pattern:
                 # :twidi_angel!twidi_angel@twidi_angel.tmi.twitch.tv
                 # PART
                 # #directiveathena
-                await cls._handle_user_join(context)
+                await cls.handle_user_join(context)
 
             case str(tags), ":tmi.twitch.tv", "NOTICE", str(channel_str), *text:
                 # CATCHES the following pattern:
@@ -162,7 +162,7 @@ class LineHandler:
                 # NOTICE
                 # #directiveathena
                 # :Unrecognized command: /poll
-                await cls._handle_command_notice(context, text)
+                await cls.handle_command_notice(context, text)
 
             case str(tags), ":tmi.twitch.tv", "ROOMSTATE", str(channel_str):
                 # CATCHES the following pattern:
@@ -170,71 +170,71 @@ class LineHandler:
                 # :tmi.twitch.tv
                 # ROOMSTATE
                 # #directiveathena
-                await cls._handle_roomstate(context)
+                await cls.handle_roomstate(context)
 
 
             case _:
                 # something wasn't caught correctly
-                await cls._handle_uncaught(context)
+                await cls.handle_uncaught(context)
 
 
         await gbl.bot_server.output_all(context)
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_ping(cls, context:MessageContext, ping_response:str) -> None:
+    async def handle_ping(cls, context:MessageContext, ping_response:str) -> None:
         context.flag = MessageFlags.ping # use special flag to make sure the output parse knows wha to do
         context.output = " ".join(f"PONG {ping_response}")
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_bot_join(cls, context:MessageContext):
+    async def handle_bot_join(cls, context:MessageContext):
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_bot_capabilities(cls, context:MessageContext):
+    async def handle_bot_capabilities(cls, context:MessageContext):
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_uncaught(cls, context:MessageContext):
+    async def handle_uncaught(cls, context:MessageContext):
         print(f"NOT CAUGHT : {ForeNest.Maroon(context.raw_input_decoded)}")
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_channel(cls, context:MessageContext):
+    async def handle_channel(cls, context:MessageContext):
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_user_state(cls, context:MessageContext):
+    async def handle_user_state(cls, context:MessageContext):
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_user_part(cls, context:MessageContext):
+    async def handle_user_part(cls, context:MessageContext):
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_user_join(cls, context:MessageContext):
+    async def handle_user_join(cls, context:MessageContext):
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_roomstate(cls, context:MessageContext):
+    async def handle_roomstate(cls, context:MessageContext):
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_command_notice(cls, context:MessageContext, text:tuple[str]):
+    async def handle_command_notice(cls, context:MessageContext, text:tuple[str]):
         context.chat_message = text
         context.flag = MessageFlags.command_notice
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_chat_message(
+    async def handle_chat_message(
             cls, context:MessageContext,tags:str|None, user_name_str:str, channel_str:str, text:tuple[str]
     ) -> None:
         # define context attributes before it is handed off to the specific callback (or not used at all)
