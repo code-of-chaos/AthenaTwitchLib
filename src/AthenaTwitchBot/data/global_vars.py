@@ -17,9 +17,3 @@ from typing import Any
 
 bot_server:Any=None # stands for the BotServer
 bot:Any = None      # stands for the TwitchBot
-
-bot_command_enabled:bool=False              # Changed on launch. Set there to make the message parsing less heavy.
-bot_mentioned_start_enabled:bool=False      # Changed on launch. Set there to make the message parsing less heavy.
-bot_mentioned_enabled:bool=False            # Changed on launch. Set there to make the message parsing less heavy.
-bot_custom_reward_enabled:bool=False        # Changed on launch. Set there to make the message parsing less heavy.
-bot_first_time_chatter_enabled:bool=False   # Changed on launch. Set there to make the message parsing less heavy.

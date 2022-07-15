@@ -11,11 +11,6 @@ import asyncio
 from AthenaTwitchBot.models.twitch_api.twitch_api import TwitchAPI
 from AthenaTwitchBot.models.twitch_bot.twitch_bot import TwitchBot
 from AthenaTwitchBot.models.twitch_bot.bot_server import BotServer
-from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_command import BotCommand
-from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_mentioned import BotMentioned
-from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_mentioned_start import BotMentionedStart
-from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_custom_reward import BotCustomReward
-from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_first_time_chatter import BotFirstTimeChatter
 import AthenaTwitchBot.data.global_vars as gbl
 
 
@@ -58,13 +53,6 @@ class Launcher:
     def start_Bot(cls, bot:TwitchBot,*,sll:bool=True,**kwargs):
         cls.get_loop()
         gbl.bot = cls.bot = bot
-
-        gbl.bot_command_enabled = BotCommand.registered is not None
-        gbl.bot_mentioned_start_enabled = BotMentionedStart.registered is not None
-        gbl.bot_mentioned_enabled = BotMentioned.registered is not None
-        gbl.bot_custom_reward_enabled = BotCustomReward.registered is not None
-        gbl.bot_first_time_chatter_enabled = BotFirstTimeChatter.registered is not None
-
         gbl.bot_server = BotServer(ssl_enabled=sll, **kwargs)
         gbl.bot_server.launch()
 

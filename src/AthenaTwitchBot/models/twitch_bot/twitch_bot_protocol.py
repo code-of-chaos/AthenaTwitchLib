@@ -23,7 +23,7 @@ class TwitchBotProtocol(asyncio.Protocol):
     def data_received(self, data: bytearray) -> None:
         for line in data.split(b"\r\n"):
             if line:
-                asyncio.create_task(LineHandler.handle(line))
+                asyncio.create_task(LineHandler.handle_line(line))
 
     def connection_lost(self, exc: Exception | None) -> None:
         if exc is not None:

@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # Custom Library
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
@@ -33,5 +33,16 @@ class TwitchBot:
     twitch_capability_membership:bool=False
     twitch_capability_tags:bool=True # only one that has the default set to true, is required to make reply's work
 
-
     client_id:str=None # needed for the twitch API
+
+    #post init
+    nickname_at:str=field(init=False)
+    nickname_at_irc:str=field(init=False)
+    nickname_irc:str=field(init=False)
+    command_prefix_irc:str=field(init=False)
+
+    def __post_init__(self):
+        self.nickname_at = f"@{self.nickname}"
+        self.nickname_at_irc = f":@{self.nickname}"
+        self.nickname_irc = f":{self.nickname}"
+        self.command_prefix_irc = f":{self.command_prefix}"
