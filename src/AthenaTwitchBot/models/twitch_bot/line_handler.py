@@ -25,7 +25,7 @@ import AthenaTwitchBot.data.global_vars as gbl
 # ----------------------------------------------------------------------------------------------------------------------
 async def _execute_command(command:BotCommand, context:MessageContext, text:tuple[str]):
     if command.args:
-        await command(callback_self=gbl.bot, context=context, args=text[1:])
+        await command(callback_self=gbl.bot, context=context, args=text)
     else:
         await command(callback_self=gbl.bot, context=context)
 
@@ -96,7 +96,7 @@ class LineHandler:
                 # :eva_athenabot!eva_athenabot@eva_athenabot.tmi.twitch.tv
                 # JOIN
                 # #directiveathena
-                await cls._handle_join(context)
+                await cls._handle_bot_join(context)
 
             case ":tmi.twitch.tv", "CAP", "*", "ACK", capability \
                 if capability in {":twitch.tv/commands", ":twitch.tv/tags", ":twitch.tv/membership"} :
@@ -106,7 +106,7 @@ class LineHandler:
                 # *
                 # ACK
                 # :twitch.tv/tags
-                await cls._handle_capabilities(context)
+                await cls._handle_bot_capabilities(context)
 
             case str(bot_name_long), str(_), gbl.bot.nickname, "=", str(_), str(bot_name_short) if (
                     bot_name_long == f":{gbl.bot.nickname}.tmi.twitch.tv"
@@ -138,14 +138,39 @@ class LineHandler:
                 # :tmi.twitch.tv
                 # USERSTATE
                 # #directiveathena
-                await cls._handle_userstate(context)
+                await cls._handle_user_state(context)
 
             case str(user), "PART", str(channel_str), *text:
                 # CATCHES the following pattern:
                 # :twidi_angel!twidi_angel@twidi_angel.tmi.twitch.tv
                 # PART
                 # #directiveathena
-                await cls._handle_part(context)
+                await cls._handle_user_part(context)
+
+            case str(user), "JOIN", str(channel_str), *text:
+                # CATCHES the following pattern:
+                # :twidi_angel!twidi_angel@twidi_angel.tmi.twitch.tv
+                # PART
+                # #directiveathena
+                await cls._handle_user_join(context)
+
+            case str(tags), ":tmi.twitch.tv", "NOTICE", str(channel_str), *text:
+                # CATCHES the following pattern:
+                # @msg-id=unrecognized_cmd
+                # :tmi.twitch.tv
+                # NOTICE
+                # #directiveathena
+                # :Unrecognized command: /poll
+                await cls._handle_command_notice(context, text)
+
+            case str(tags), ":tmi.twitch.tv", "ROOMSTATE", str(channel_str):
+                # CATCHES the following pattern:
+                # @emote-only=0;room-id=600187263
+                # :tmi.twitch.tv
+                # ROOMSTATE
+                # #directiveathena
+                await cls._handle_roomstate(context)
+
 
             case _:
                 # something wasn't caught correctly
@@ -162,12 +187,12 @@ class LineHandler:
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_join(cls, context:MessageContext):
+    async def _handle_bot_join(cls, context:MessageContext):
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_capabilities(cls, context:MessageContext):
+    async def _handle_bot_capabilities(cls, context:MessageContext):
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -182,13 +207,29 @@ class LineHandler:
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_userstate(cls, context:MessageContext):
+    async def _handle_user_state(cls, context:MessageContext):
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def _handle_part(cls, context:MessageContext):
+    async def _handle_user_part(cls, context:MessageContext):
         context.flag = MessageFlags.no_output
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @classmethod
+    async def _handle_user_join(cls, context:MessageContext):
+        context.flag = MessageFlags.no_output
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @classmethod
+    async def _handle_roomstate(cls, context:MessageContext):
+        context.flag = MessageFlags.no_output
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @classmethod
+    async def _handle_command_notice(cls, context:MessageContext, text:tuple[str]):
+        context.chat_message = text
+        context.flag = MessageFlags.command_notice
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod

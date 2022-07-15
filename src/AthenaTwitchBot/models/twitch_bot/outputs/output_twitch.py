@@ -48,7 +48,11 @@ OUTPUT_MAPPING = {
     ),
     MessageFlags.no_output:lambda transport,context:(
         None
-    )
+    ),
+    MessageFlags.command_notice:lambda transport,context:(
+        None
+    ),
+
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
