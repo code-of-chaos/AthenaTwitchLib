@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
+import enum
 
 # Custom Library
 
@@ -12,19 +12,16 @@ from dataclasses import dataclass
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
-class TwitchChannel:
+class MessageFlags(enum.Enum):
     """
-    Simple data class that holds a single channel
-
-    Parameters:
-    - name: name of the channel
+    Collection of all Flags that can be set on a message.
+    This is purely for the output handlers and doesn't affect the MessageContext
     """
-    name:str
+    undefined="undefined"
+    ping="ping"
+    write="write"
+    reply="reply"
+    login="login"
+    no_output="no_output"
+    command_notice="command_notice"
 
-    def __post_init__(self):
-        if self.name[0] != "#":
-            self.name = f"#{self.name}"
-
-    def __str__(self) -> str:
-        return self.name

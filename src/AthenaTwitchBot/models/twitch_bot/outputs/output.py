@@ -3,28 +3,21 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
+import abc
 
 # Custom Library
 
 # Custom Packages
+from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
-class TwitchChannel:
+class Output(abc.ABC):
     """
-    Simple data class that holds a single channel
-
-    Parameters:
-    - name: name of the channel
+    An abstract class to define which structure the output classes should use
     """
-    name:str
-
-    def __post_init__(self):
-        if self.name[0] != "#":
-            self.name = f"#{self.name}"
-
-    def __str__(self) -> str:
-        return self.name
+    async def output(self, context:MessageContext,**kwargs):
+        """
+        Output a context the correct end state
+        """

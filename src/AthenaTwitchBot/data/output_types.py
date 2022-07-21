@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
+import enum
 
 # Custom Library
 
@@ -12,19 +12,9 @@ from dataclasses import dataclass
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
-class TwitchChannel:
+class OutputTypes(enum.Enum):
     """
-    Simple data class that holds a single channel
-
-    Parameters:
-    - name: name of the channel
+    Collection of stored output types which are used in the LogicOutput class
     """
-    name:str
-
-    def __post_init__(self):
-        if self.name[0] != "#":
-            self.name = f"#{self.name}"
-
-    def __str__(self) -> str:
-        return self.name
+    twitch="twitch"
+    console="console"

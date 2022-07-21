@@ -3,28 +3,21 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
 
 # Custom Library
 
 # Custom Packages
+from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
-class TwitchChannel:
+def output_twitch_prep(text:str) -> bytes:
     """
-    Simple data class that holds a single channel
+    Formats the string into the correct byte structure expected by the Twitch IRC
 
     Parameters:
-    - name: name of the channel
+    - text:
     """
-    name:str
-
-    def __post_init__(self):
-        if self.name[0] != "#":
-            self.name = f"#{self.name}"
-
-    def __str__(self) -> str:
-        return self.name
+    text_flat = text.replace('\n',' ')
+    return f"{text_flat}\r\n".encode("utf_8")

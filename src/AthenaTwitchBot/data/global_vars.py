@@ -3,28 +3,17 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
-
+from typing import Any
 # Custom Library
 
 # Custom Packages
 
 # ----------------------------------------------------------------------------------------------------------------------
-# - Code -
+# - Bot Server -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
-class TwitchChannel:
-    """
-    Simple data class that holds a single channel
 
-    Parameters:
-    - name: name of the channel
-    """
-    name:str
+# the variables stored here are to be set when the BotServer is created
+#   These variables are used by various functions and classes to call back to
 
-    def __post_init__(self):
-        if self.name[0] != "#":
-            self.name = f"#{self.name}"
-
-    def __str__(self) -> str:
-        return self.name
+bot_server:Any=None # stands for the BotServer
+bot:Any = None      # stands for the TwitchBot
