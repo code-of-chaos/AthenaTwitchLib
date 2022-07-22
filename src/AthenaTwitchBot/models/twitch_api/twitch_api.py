@@ -579,8 +579,25 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def set_extension_required_configuration(self):
-        return NotImplemented
+    async def set_extension_required_configuration(
+            self, extension_id:str,required_configuration:str=None,extension_version:str=None
+    ):
+        return await self._request(
+            callback=requests.put,
+            url=TwitchApiURL.extension_configurations.value,
+            headers=self._header_json,
+            query_parameters={"broadcaster_id": self.user.id},
+            data={
+                k:v for k,v in
+                {
+                    "broadcaster_id":self.user.id,
+                    "required_configuration":required_configuration,
+                    "extension_version":extension_version,
+                    "extension_id":extension_id
+                }.items()
+                if v is not None
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
