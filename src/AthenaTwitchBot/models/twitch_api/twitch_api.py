@@ -621,26 +621,44 @@ class TwitchAPI:
             callback=requests.post,
             url=TwitchApiURL.extension_live.value,
             headers=self._header,
-            query_parameters={k:v for k, v in {
-                "extension_id": extension_id,
-                "first":first,
-                "after":after
-            }.items()},
+            query_parameters={
+                k:v
+                for k, v in {
+                    "extension_id": extension_id,
+                    "first":first,
+                    "after":after
+                }.items()
+                if v is not None
+            },
         )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_extension_secrets(self):
         return await self._request(
-            callback=requests.post,
+            callback=requests.get,
             url=TwitchApiURL.extension_configurations.value,
             headers=self._header,
         )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def create_extension_secret(self):
-        return NotImplemented
+    async def create_extension_secret(
+            self, extension_id:str,*,delay:int=None
+    ):
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.extension_jwt_secrets.value,
+            headers=self._header,
+            query_parameters={
+                k:v
+                for k, v in {
+                    "extension_id": extension_id,
+                    "delay":delay
+                }.items()
+                if v is not None
+            },
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
