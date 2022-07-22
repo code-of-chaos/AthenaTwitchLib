@@ -734,8 +734,31 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def update_extension_bits_product(self):
-        return NotImplemented
+    async def update_extension_bits_product(
+            self, sku:str,cost_amount:int, cost_type:str,display_name:str,
+            *,in_development:bool=None,expiration:str=None,is_broadcast:bool=None
+    ):
+        return await self._request(
+            callback=requests.put,
+            url=TwitchApiURL.extension_chat.value,
+            headers=self._header_json,
+            data={
+                k:v
+                for k,v in
+                {
+                    "sku": sku,
+                    "cost": {
+                        "amount": cost_amount,
+                        "type": cost_type
+                    },
+                    "display_name": display_name,
+                    "in_development":in_development,
+                    "expiration":expiration,
+                    "is_broadcast":is_broadcast
+                 }.items()
+                if v is not None
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
