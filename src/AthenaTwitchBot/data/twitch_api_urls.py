@@ -32,6 +32,7 @@ class TwitchApiURL(enum.Enum):
     enforcements_status = "https://api.twitch.tv/helix/moderation/enforcements/status"
     entitlements_code = "https://api.twitch.tv/helix/entitlements/codes"
     entitlements_drops = "https://api.twitch.tv/helix/entitlements/drops"
+    extension = "https://api.twitch.tv/helix/extensions"
     extension_chat = "https://api.twitch.tv/helix/extensions/chat"
     extension_configurations = "https://api.twitch.tv/helix/extensions/configurations"
     extension_jwt_secrets = "https://api.twitch.tv/helix/extensions/jwt/secrets"
