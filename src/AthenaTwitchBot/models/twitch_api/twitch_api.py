@@ -662,8 +662,22 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def send_extension_chat_message(self):
-        return NotImplemented
+    async def send_extension_chat_message(
+            self, text:str,extension_id:str,extension_version:str
+    ):
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.extension_chat.value,
+            headers=self._header_json,
+            query_parameters={
+                "broadcaster_id":self.user.id
+            },
+            data={
+                "text":text,
+                "extension_id":extension_id,
+                "extension_version":extension_version
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
