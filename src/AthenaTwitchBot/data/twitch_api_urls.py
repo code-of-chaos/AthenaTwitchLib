@@ -39,6 +39,7 @@ class TwitchApiURL(enum.Enum):
     extension_live = "https://api.twitch.tv/helix/extensions/live"
     extension_pubsub = "https://api.twitch.tv/helix/extensions/pubsub"
     extension_transactions = "https://api.twitch.tv/helix/extensions/transactions"
+    extension_released = "https://api.twitch.tv/helix/extensions/released"
     games = "https://api.twitch.tv/helix/games"
     games_top = "https://api.twitch.tv/helix/games/top"
     goals = "https://api.twitch.tv/helix/goals"

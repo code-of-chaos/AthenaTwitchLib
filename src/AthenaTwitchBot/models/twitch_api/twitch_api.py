@@ -702,8 +702,24 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_released_extensions(self):
-        return NotImplemented
+    async def get_released_extensions(
+            self, extension_id:str,*,extension_version:str=None
+    ):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.extension_released.value,
+            headers=self._header,
+            query_parameters={
+                "broadcaster_id":self.user.id
+            },
+            data={
+                k:v
+                for k, v in
+                {"extension_id": extension_id,
+                 "extension_version": extension_version}
+                if v is not None
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
