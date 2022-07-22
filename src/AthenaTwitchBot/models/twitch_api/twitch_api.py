@@ -785,7 +785,7 @@ class TwitchAPI:
         return await self._request(
             callback=requests.delete,
             url=TwitchApiURL.eventsub_subscriptions.value,
-            headers=self._header_json,
+            headers=self._header,
             query_parameters={
                 "id": id_
             }
@@ -793,8 +793,25 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_eventsub_subscriptions(self):
-        return NotImplemented
+    async def get_eventsub_subscriptions(
+            self,*, status:str=None, type_:str=None, user_id:str=None, after:str
+    ):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.eventsub_subscriptions.value,
+            headers=self._header,
+            query_parameters={
+                k:v
+                for k,v in
+                {
+                    "status": status,
+                    "type":type_,
+                    "user_id":user_id,
+                    "after":after
+                }.items()
+                if v is not None
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
