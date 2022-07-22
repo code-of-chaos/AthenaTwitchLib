@@ -740,7 +740,7 @@ class TwitchAPI:
     ):
         return await self._request(
             callback=requests.put,
-            url=TwitchApiURL.extension_chat.value,
+            url=TwitchApiURL.extension.value,
             headers=self._header_json,
             data={
                 k:v
