@@ -579,68 +579,239 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def set_extension_required_configuration(self):
-        return NotImplemented
+    async def set_extension_required_configuration(
+            self, extension_id:str,required_configuration:str,extension_version:str
+    ):
+        return await self._request(
+            callback=requests.put,
+            url=TwitchApiURL.extension_configurations.value,
+            headers=self._header_json,
+            query_parameters={"broadcaster_id": self.user.id},
+            data={
+                "broadcaster_id":self.user.id,
+                "required_configuration":required_configuration,
+                "extension_version":extension_version,
+                "extension_id":extension_id
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def send_extension_pubsub_message(self):
-        return NotImplemented
+    async def send_extension_pubsub_message(
+            self, target:list,is_global_broadcast:bool,message:str
+    ):
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.extension_pubsub.value,
+            headers=self._header_json,
+            data={
+                "broadcaster_id":self.user.id,
+                "is_global_broadcast":is_global_broadcast,
+                "message":message,
+                "target":target
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_extension_live_channels(self):
-        return NotImplemented
+    async def get_extension_live_channels(
+            self, extension_id:str,*,first:int=None,after:str
+    ):
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.extension_live.value,
+            headers=self._header,
+            query_parameters={
+                k:v
+                for k, v in {
+                    "extension_id": extension_id,
+                    "first":first,
+                    "after":after
+                }.items()
+                if v is not None
+            },
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_extension_secrets(self):
-        return NotImplemented
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.extension_configurations.value,
+            headers=self._header,
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def create_extension_secret(self):
-        return NotImplemented
+    async def create_extension_secret(
+            self, extension_id:str,*,delay:int=None
+    ):
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.extension_jwt_secrets.value,
+            headers=self._header,
+            query_parameters={
+                k:v
+                for k, v in {
+                    "extension_id": extension_id,
+                    "delay":delay
+                }.items()
+                if v is not None
+            },
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def send_extension_chat_message(self):
-        return NotImplemented
+    async def send_extension_chat_message(
+            self, text:str,extension_id:str,extension_version:str
+    ):
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.extension_chat.value,
+            headers=self._header_json,
+            query_parameters={
+                "broadcaster_id":self.user.id
+            },
+            data={
+                "text":text,
+                "extension_id":extension_id,
+                "extension_version":extension_version
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_extensions(self):
-        return NotImplemented
+    async def get_extensions(
+            self, extension_id:str,*,extension_version:str=None
+    ):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.extension.value,
+            headers=self._header,
+            query_parameters={
+                k:v
+                for k, v in
+                {"extension_id": extension_id,
+                 "extension_version": extension_version}.items()
+                if v is not None
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_released_extensions(self):
-        return NotImplemented
+    async def get_released_extensions(
+            self, extension_id:str,*,extension_version:str=None
+    ):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.extension_released.value,
+            headers=self._header,
+            query_parameters={
+                k:v
+                for k, v in
+                {"extension_id": extension_id,
+                 "extension_version": extension_version}.items()
+                if v is not None
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_extension_bits_products(self):
-        return NotImplemented
+    async def get_extension_bits_products(
+            self, *,should_include_all:bool=None
+    ):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.extension.value,
+            headers=self._header,
+            query_parameters={
+                k:v
+                for k, v in
+                {"should_include_all": should_include_all}.items()
+                if v is not None
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def update_extension_bits_product(self):
-        return NotImplemented
+    async def update_extension_bits_product(
+            self, sku:str,cost_amount:int, cost_type:str,display_name:str,
+            *,in_development:bool=None,expiration:str=None,is_broadcast:bool=None
+    ):
+        return await self._request(
+            callback=requests.put,
+            url=TwitchApiURL.extension.value,
+            headers=self._header_json,
+            data={
+                k:v
+                for k,v in
+                {
+                    "sku": sku,
+                    "cost": {
+                        "amount": cost_amount,
+                        "type": cost_type
+                    },
+                    "display_name": display_name,
+                    "in_development":in_development,
+                    "expiration":expiration,
+                    "is_broadcast":is_broadcast
+                 }.items()
+                if v is not None
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def create_eventsub_subscription(self):
-        return NotImplemented
+    async def create_eventsub_subscription(
+            self, type_:str,version:str, condition:dict,transport:dict,
+    ):
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.eventsub_subscriptions.value,
+            headers=self._header_json,
+            data={
+                "type": type_,
+                "version": version,
+                "condition": condition,
+                "transport":transport
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def delete_eventsub_subscription(self):
-        return NotImplemented
+    async def delete_eventsub_subscription(
+            self, id_:str
+    ):
+        return await self._request(
+            callback=requests.delete,
+            url=TwitchApiURL.eventsub_subscriptions.value,
+            headers=self._header,
+            query_parameters={
+                "id": id_
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_eventsub_subscriptions(self):
-        return NotImplemented
+    async def get_eventsub_subscriptions(
+            self,*, status:str=None, type_:str=None, user_id:str=None, after:str
+    ):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.eventsub_subscriptions.value,
+            headers=self._header,
+            query_parameters={
+                k:v
+                for k,v in
+                {
+                    "status": status,
+                    "type":type_,
+                    "user_id":user_id,
+                    "after":after
+                }.items()
+                if v is not None
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
@@ -962,9 +1133,16 @@ class TwitchAPI:
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ChannelManageVideos)
     @connected_to_twitch
-    async def delete_videos(self):
-        return NotImplemented
+    async def delete_videos(self,id_:str):
+        return await self._request(
+            callback=requests.delete,
+            url=TwitchApiURL.videos.value,
+            headers=self._header,
+            query_parameters={"id": id_}
+
+        )
 
 
 
