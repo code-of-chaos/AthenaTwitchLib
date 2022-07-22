@@ -689,13 +689,10 @@ class TwitchAPI:
             url=TwitchApiURL.extension.value,
             headers=self._header,
             query_parameters={
-                "broadcaster_id":self.user.id
-            },
-            data={
                 k:v
                 for k, v in
                 {"extension_id": extension_id,
-                 "extension_version": extension_version}
+                 "extension_version": extension_version}.items()
                 if v is not None
             }
         )
@@ -710,21 +707,30 @@ class TwitchAPI:
             url=TwitchApiURL.extension_released.value,
             headers=self._header,
             query_parameters={
-                "broadcaster_id":self.user.id
-            },
-            data={
                 k:v
                 for k, v in
                 {"extension_id": extension_id,
-                 "extension_version": extension_version}
+                 "extension_version": extension_version}.items()
                 if v is not None
             }
         )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_extension_bits_products(self):
-        return NotImplemented
+    async def get_extension_bits_products(
+            self, *,should_include_all:bool=None
+    ):
+        return await self._request(
+            callback=requests.get,
+            url=TwitchApiURL.extension.value,
+            headers=self._header,
+            query_parameters={
+                k:v
+                for k, v in
+                {"should_include_all": should_include_all}.items()
+                if v is not None
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
