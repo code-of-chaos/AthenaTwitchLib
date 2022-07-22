@@ -779,8 +779,17 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def delete_eventsub_subscription(self):
-        return NotImplemented
+    async def delete_eventsub_subscription(
+            self, id_:str
+    ):
+        return await self._request(
+            callback=requests.delete,
+            url=TwitchApiURL.eventsub_subscriptions.value,
+            headers=self._header_json,
+            query_parameters={
+                "id": id_
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
