@@ -762,8 +762,20 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def create_eventsub_subscription(self):
-        return NotImplemented
+    async def create_eventsub_subscription(
+            self, type_:str,version:str, condition:dict,transport:dict,
+    ):
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.eventsub_subscriptions.value,
+            headers=self._header_json,
+            data={
+                "type": type_,
+                "version": version,
+                "condition": condition,
+                "transport":transport
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch

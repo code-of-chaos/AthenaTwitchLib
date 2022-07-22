@@ -46,3 +46,4 @@ class TwitchApiURL(enum.Enum):
     hypetrain = "https://api.twitch.tv/helix/hypetrain/events"
     scopes = "https://id.twitch.tv/oauth2/validate"
     users = "https://api.twitch.tv/helix/users"
+    eventsub_subscriptions ="https://api.twitch.tv/helix/eventsub/subscriptions"
