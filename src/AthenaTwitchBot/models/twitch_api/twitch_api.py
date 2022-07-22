@@ -1133,9 +1133,16 @@ class TwitchAPI:
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
+    @user_has_scope(scope=TwitchApiScopes.ChannelManageVideos)
     @connected_to_twitch
-    async def delete_videos(self):
-        return NotImplemented
+    async def delete_videos(self,id_:str):
+        return await self._request(
+            callback=requests.delete,
+            url=TwitchApiURL.videos.value,
+            headers=self._header,
+            query_parameters={"id": id_}
+
+        )
 
 
 

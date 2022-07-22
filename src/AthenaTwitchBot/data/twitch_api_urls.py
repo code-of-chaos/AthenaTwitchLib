@@ -47,3 +47,4 @@ class TwitchApiURL(enum.Enum):
     scopes = "https://id.twitch.tv/oauth2/validate"
     users = "https://api.twitch.tv/helix/users"
     eventsub_subscriptions ="https://api.twitch.tv/helix/eventsub/subscriptions"
+    videos = "https://api.twitch.tv/helix/videos"
