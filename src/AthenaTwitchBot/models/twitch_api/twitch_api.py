@@ -619,7 +619,7 @@ class TwitchAPI:
     ):
         return await self._request(
             callback=requests.post,
-            url=TwitchApiURL.extension_pubsub.value,
+            url=TwitchApiURL.extension_live.value,
             headers=self._header,
             query_parameters={k:v for k, v in {
                 "extension_id": extension_id,
@@ -631,7 +631,11 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_extension_secrets(self):
-        return NotImplemented
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.extension_configurations.value,
+            headers=self._header,
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
