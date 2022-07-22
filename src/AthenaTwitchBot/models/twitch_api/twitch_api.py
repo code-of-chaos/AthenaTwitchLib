@@ -604,7 +604,6 @@ class TwitchAPI:
             callback=requests.post,
             url=TwitchApiURL.extension_pubsub.value,
             headers=self._header_json,
-            query_parameters={"broadcaster_id": self.user.id},
             data={
                 "broadcaster_id":self.user.id,
                 "is_global_broadcast":is_global_broadcast,
@@ -615,8 +614,19 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_extension_live_channels(self):
-        return NotImplemented
+    async def get_extension_live_channels(
+            self, extension_id:str,*,first:int=None,after:str
+    ):
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.extension_pubsub.value,
+            headers=self._header,
+            query_parameters={k:v for k, v in {
+                "extension_id": extension_id,
+                "first":first,
+                "after":after
+            }.items()},
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
