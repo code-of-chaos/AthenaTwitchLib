@@ -41,3 +41,4 @@ class TwitchApiURL(enum.Enum):
     goals = "https://api.twitch.tv/helix/goals"
     hypetrain = "https://api.twitch.tv/helix/hypetrain/events"
     enforcements_status = "https://api.twitch.tv/helix/moderation/enforcements/status"
+    extension_pubsub = "https://api.twitch.tv/helix/extensions/pubsub"

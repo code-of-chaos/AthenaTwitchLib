@@ -580,7 +580,7 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def set_extension_required_configuration(
-            self, extension_id:str,required_configuration:str=None,extension_version:str=None
+            self, extension_id:str,required_configuration:str,extension_version:str
     ):
         return await self._request(
             callback=requests.put,
@@ -588,21 +588,30 @@ class TwitchAPI:
             headers=self._header_json,
             query_parameters={"broadcaster_id": self.user.id},
             data={
-                k:v for k,v in
-                {
-                    "broadcaster_id":self.user.id,
-                    "required_configuration":required_configuration,
-                    "extension_version":extension_version,
-                    "extension_id":extension_id
-                }.items()
-                if v is not None
+                "broadcaster_id":self.user.id,
+                "required_configuration":required_configuration,
+                "extension_version":extension_version,
+                "extension_id":extension_id
             }
         )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def send_extension_pubsub_message(self):
-        return NotImplemented
+    async def send_extension_pubsub_message(
+            self, target:list,is_global_broadcast:bool,message:str
+    ):
+        return await self._request(
+            callback=requests.post,
+            url=TwitchApiURL.extension_pubsub.value,
+            headers=self._header_json,
+            query_parameters={"broadcaster_id": self.user.id},
+            data={
+                "broadcaster_id":self.user.id,
+                "is_global_broadcast":is_global_broadcast,
+                "message":message,
+                "target":target
+            }
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
