@@ -3,16 +3,16 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
 
 # Custom Library
 
 # Custom Packages
+from AthenaTwitchBot.functions.athena_dataclass import _dataclass
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
+@_dataclass(slots=True)
 class TwitchUser:
     """
     Simple data class that holds a single user text

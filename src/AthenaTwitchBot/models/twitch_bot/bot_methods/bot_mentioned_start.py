@@ -3,7 +3,6 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
 from typing import ClassVar
 import datetime
 
@@ -11,11 +10,12 @@ import datetime
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_method_inheritance.rate_limit import BotMethodRateLimit
+from AthenaTwitchBot.functions.athena_dataclass import _dataclass
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
+@_dataclass(slots=True)
 class BotMentionedStart(BotMethodRateLimit):
     """
     A function the bot does when a chatter mentions at the start of their message.

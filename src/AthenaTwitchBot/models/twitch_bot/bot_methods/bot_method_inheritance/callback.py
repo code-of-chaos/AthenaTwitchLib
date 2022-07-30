@@ -3,7 +3,6 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
 from typing import Callable
 
 # Custom Library
@@ -11,11 +10,12 @@ from typing import Callable
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot.twitch_bot import TwitchBot
 from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
+from AthenaTwitchBot.functions.athena_dataclass import _dataclass
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
+@_dataclass(slots=True)
 class BotMethodCallback:
     callback:Callable=None
     args:bool=None

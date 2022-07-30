@@ -4,7 +4,7 @@
 # General Packages
 from __future__ import annotations
 import socket
-from dataclasses import dataclass, field
+from dataclasses import field
 import asyncio
 
 # Custom Library
@@ -19,11 +19,12 @@ from AthenaTwitchBot.data.output_types import OutputTypes
 import AthenaTwitchBot.data.global_vars as gbl
 from AthenaTwitchBot.data.message_flags import MessageFlags
 import AthenaTwitchBot.data.irc_twitch as irc_twitch
+from AthenaTwitchBot.functions.athena_dataclass import _dataclass
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(kw_only=True, eq=False, order=False, slots=True)
+@_dataclass(kw_only=True, eq=False, order=False, slots=True)
 class BotServer:
     # optional kwargs
     ssl_enabled:bool=True

@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Any
 from typing import Callable
 
@@ -14,6 +14,7 @@ from AthenaColor import ForeNest, HEX
 # Custom Library
 
 # Custom Packages
+from AthenaTwitchBot.functions.athena_dataclass import _dataclass
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -55,7 +56,7 @@ MESSAGE_TAG_MAPPING:dict[str:tuple[str,Callable]] = {
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True, eq=False, order=False, match_args=True, repr=True)
+@_dataclass(slots=True, eq=False, order=False, match_args=True, repr=True)
 class MessageTags:
     badge_info: str = NOTHING
     badges: list[str] = field(default_factory=list)

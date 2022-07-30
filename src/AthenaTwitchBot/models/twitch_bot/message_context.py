@@ -3,7 +3,6 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
 
 # Custom Library
 
@@ -12,11 +11,12 @@ from AthenaTwitchBot.data.message_flags import MessageFlags
 from AthenaTwitchBot.models.twitch_bot.message_tags import MessageTags
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 from AthenaTwitchBot.models.twitch_user import TwitchUser
+from AthenaTwitchBot.functions.athena_dataclass import _dataclass
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(kw_only=True, slots=True)
+@_dataclass(kw_only=True, slots=True)
 class MessageContext:
     raw_input:bytearray=None
     raw_input_decoded:str=None

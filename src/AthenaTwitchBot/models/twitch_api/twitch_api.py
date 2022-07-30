@@ -7,7 +7,7 @@ import json
 import urllib.request
 import urllib.error
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import field
 from functools import wraps
 from typing import Callable
 import AthenaLib.HTTP.functions.requests as requests
@@ -16,6 +16,7 @@ import AthenaLib.HTTP.functions.requests as requests
 from AthenaTwitchBot.models.twitch_api.twitch_api_user import TwitchApiUser
 from AthenaTwitchBot.data.twitch_api_urls import TwitchApiURL
 from AthenaTwitchBot.data.twitch_api_scopes import TwitchApiScopes
+from AthenaTwitchBot.functions.athena_dataclass import _dataclass
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -43,7 +44,7 @@ def user_has_scope(scope:TwitchApiScopes):
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True,kw_only=True)
+@_dataclass(slots=True,kw_only=True)
 class TwitchAPI:
     broadcaster_token:str
     broadcaster_client_id:str

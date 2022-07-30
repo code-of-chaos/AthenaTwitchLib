@@ -3,18 +3,19 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Callable, ClassVar
 
 # Custom Library
 from AthenaLib.models.time import TimeValue, Minute
 
 # Custom Packages
+from AthenaTwitchBot.functions.athena_dataclass import _dataclass
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
+@_dataclass(slots=True)
 class BotTask:
     """
     A function the bot executes every interval. Does not depend on chat input, but is able to write to chat.

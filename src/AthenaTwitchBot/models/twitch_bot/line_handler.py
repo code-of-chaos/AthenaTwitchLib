@@ -71,106 +71,62 @@ class LineHandler:
     async def handle_context(cls,context:MessageContext) -> None:
         # match the pattern of th line to something we can use and pas off to other "sub handlers"
         #   User "sub handlers" for ease of writing and stuff like that
-        match context.raw_input_decoded_split:
-            # ----------------------------------------------------------------------------------------------------------
-            # - Primary section -
-            # ----------------------------------------------------------------------------------------------------------
-            case ["PING", _]:
-                # catch the ping as soon as possible
-                await cls.handle_ping(context)
-                return
+        if (
+            not isinstance(context.raw_input_decoded_split, list) and 
+            any(not isinstance(s, str) for s in context.raw_input_decoded_split)
+        ):
+            print(f"NOT CORRECT TYPE : {ForeNest.Maroon(context.raw_input_decoded)}")
+            return
 
-            case [str(tags), str(user_name_str), "PRIVMSG", str(channel_str), *text]:
-                # CATCHES the following pattern:
-                # @badge-info=;badges=;client-nonce=4ac36d90556713038f596be25cc698a2;color=#1E90FF;display-name=badcop_;emotes=;first-msg=0;flag=;id=8b506bf0-517d-4ae7-9dcb-bce5c2145412;mod=0;room-id=600187263;subscriber=0;tmi-sent-ts=1655367514927;turbo=0;user-id=56931496;user-type=
-                # :badcop_!badcop_@badcop_.tmi.twitch.tv
-                # PRIVMSG
-                # #directiveathena
-                # :that sentence was poggers
-                context.tags = tags
-                context.channel = channel_str
-                context.user = user_name_str
-                context.chat_message = text
-                await cls.handle_chat_message(context)
-                return
+        tmp = context.raw_input_decoded_split
 
-            case [str(tags), ":tmi.twitch.tv", twitch_specific_irc, str(channel_str), *text] if (
-                    twitch_specific_irc in cls.TWITCH_SPECIFIC_IRC_MAPPING
-            ):
-                # CATCHES the following pattern:
-                # @badge-info=;badges=moderator/1;color=;display-name=eva_athenabot;emote-sets=0,300374282,8b453104-5c38-4b89-86b8-8c2e6373dc8a;mod=1;subscriber=0;user-type=mod
-                # :tmi.twitch.tv
-                # ...
-                # #directiveathena
-                context.tags = tags
-                context.channel = channel_str
-                context.chat_message = text
-                await cls.TWITCH_SPECIFIC_IRC_MAPPING[twitch_specific_irc](context)
-                return
-
-            case [str(user_name_str), twitch_irc, str(channel_str), *text] if (
-                    twitch_irc in cls.TWITCH_IRC_MAPPING
-            ):
-                # CATCHES the following pattern:
-                # :twidi_angel!twidi_angel@twidi_angel.tmi.twitch.tv
-                # PART
-                # #directiveathena
-                context.channel = channel_str
-                context.user = user_name_str
-                context.chat_message = text
-                await cls.TWITCH_IRC_MAPPING[twitch_irc](context,)
-                return
-
-            # ----------------------------------------------------------------------------------------------------------
-            # - Secondary section -
-            # ----------------------------------------------------------------------------------------------------------
-            case [_tmi_twitch_tv, str(_), gbl.bot.nickname, *_] if (
-                    _tmi_twitch_tv == TMI_TWITCH_TV
-            ):
-                # CATCHES the following pattern:
-                # :tmi.twitch.tv
-                # 001
-                # eva_athenabot
-                # :Welcome, GLHF!
-                await cls.handle_bot_channel(context)
-                return
-
-            case [":tmi.twitch.tv", "CAP", "*", "ACK", capability]:
-                # CATCHES the following pattern:
-                # :tmi.twitch.tv
-                # CAP
-                # *
-                # ACK
-                # :twitch.tv/tags
-                await cls.handle_bot_capabilities(context, capability)
-                return
-
-            case [str(bot_name_long), "JOIN", str(_)] if (
-                    bot_name_long == f"{gbl.bot.nickname_irc}!{gbl.bot.nickname}{gbl.bot.nickname_at}.tmi.twitch.tv"
-            ):
-                # CATCHES the following pattern:
-                # :eva_athenabot!eva_athenabot@eva_athenabot.tmi.twitch.tv
-                # JOIN
-                # #directiveathena
-                await cls.handle_bot_join(context)
-                return
-
-            case [str(bot_name_long), str(_), gbl.bot.nickname, str(_), *_] if (
-                    bot_name_long == f"{gbl.bot.nickname_irc}.tmi.twitch.tv"
-            ):
-                # CATCHES the following pattern:
-                # :eva_athenabot.tmi.twitch.tv
-                # 353
-                # eva_athenabot
-                # =
-                # #directiveathena
-                # :eva_athenabot
-                await cls.handle_bot_channel(context)
-                return
-
-            case _:
-                print(f"NOT CAUGHT : {ForeNest.Maroon(context.raw_input_decoded)}")
-                return
+        if tmp[0] == "PING":
+            await cls.handle_ping(context)
+            return
+        elif tmp[2] == "PRIVMSG":
+            context.tags = tmp[0]
+            context.user = tmp[1]
+            context.channel = tmp[3]
+            context.chat_message = tmp[4:]  # TODO think this could throw an error...
+            await cls.handle_chat_message(context)
+            return
+        elif tmp[1] == TMI_TWITCH_TV and tmp[2] in cls.TWITCH_SPECIFIC_IRC_MAPPING:
+            context.tags = tmp[0]
+            context.channel = tmp[3]
+            context.chat_message = tmp[4:]  # TODO think this could throw an error...
+            await cls.TWITCH_SPECIFIC_IRC_MAPPING[tmp[2]](context)
+            return
+        elif tmp[1] in cls.TWITCH_IRC_MAPPING:
+            context.channel = tmp[2]
+            context.user = tmp[0]
+            context.chat_message = tmp[3:]  # TODO think this could throw an error...
+            await cls.TWITCH_IRC_MAPPING[tmp[1]](context)
+            return
+        elif tmp[0] == TMI_TWITCH_TV:
+            await cls.handle_bot_channel(context)
+            return
+        elif all(
+            tmp[0] == ":tmi.twitch.tv",
+            tmp[1] == "CAP",
+            tmp[2] == "*",
+            tmp[3] == "ACK",
+            len(tmp == 4)
+        ):
+            await cls.handle_bot_capabilities(context, tmp[4])
+            return
+        elif (
+            tmp[1] == "JOIN" and
+            tmp[0] == f"{gbl.bot.nickname_irc}!{gbl.bot.nickname}{gbl.bot.nickname_at}.tmi.twitch.tv"
+        ):
+            await cls.handle_bot_join(context)
+            return
+        elif tmp[0] == f"{gbl.bot.nickname_irc}.tmi.twitch.tv":
+            await cls.handle_bot_channel(context)
+            return
+        else:
+            print(f"NOT CAUGHT : {ForeNest.Maroon(context.raw_input_decoded)}")
+            return
+                
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod

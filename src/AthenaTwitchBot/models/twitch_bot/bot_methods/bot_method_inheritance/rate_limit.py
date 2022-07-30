@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass,field
+from dataclasses import field
 import datetime
 
 # Custom Library
@@ -12,11 +12,12 @@ import datetime
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_method_inheritance.callback import BotMethodCallback
 from AthenaTwitchBot.models.twitch_bot.twitch_bot import TwitchBot
 from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
+from AthenaTwitchBot.functions.athena_dataclass import _dataclass
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
+@_dataclass(slots=True)
 class BotMethodRateLimit(BotMethodCallback):
     rate_limit:datetime.timedelta=None
     rate_limit_old_time:datetime.datetime=field(init=False)

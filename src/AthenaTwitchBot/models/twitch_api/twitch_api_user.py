@@ -3,17 +3,17 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field
 
 # Custom Library
 
 # Custom Packages
 from AthenaTwitchBot.data.twitch_api_scopes import TwitchApiScopes
+from AthenaTwitchBot.functions.athena_dataclass import _dataclass
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True, kw_only=True)
+@_dataclass(slots=True, kw_only=True)
 class TwitchApiUser:
     id:str=None
     login:str=None

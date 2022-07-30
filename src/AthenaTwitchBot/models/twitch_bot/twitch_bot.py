@@ -3,17 +3,18 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import field
 
 # Custom Library
 from AthenaTwitchBot.models.twitch_channel import TwitchChannel
+from AthenaTwitchBot.functions.athena_dataclass import _dataclass
 
 # Custom Packages
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(kw_only=True, slots=True)
+@_dataclass(kw_only=True, slots=True)
 class TwitchBot:
     """
     Simple data class that holds all data meant to create the bot
