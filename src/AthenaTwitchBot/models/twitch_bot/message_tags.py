@@ -23,33 +23,34 @@ from AthenaColor import ForeNest, HEX
 #       the key has to be mapped to the corresponding attr name and any conversion that needs to be done
 
 MESSAGE_TAG_MAPPING:dict[str:tuple[str,Callable]] = {
-    "badge-info":                   ("badge_info",                  (_return_as_is := lambda value: value),),
-    "badges":                       ("badges",                      _return_as_is,),
-    "client-nonce":                 ("client_nonce",                _return_as_is,),
-    "color":                        ("color",                       lambda value: HEX(value) if value else HEX(),),
-    "display-name":                 ("display_name",                _return_as_is,),
-    "emotes":                       ("emotes",                      _return_as_is,),
-    "first-msg":                    ("first_msg",                   (_return_as_bool:=lambda value: bool(int(value))),),
-    "flag":                         ("flag",                        _return_as_is,),
-    "flags":                        ("flags",                       _return_as_is,),
-    "id":                           ("message_id",                  _return_as_is,),
-    "mod":                          ("mod",                         _return_as_bool,),
-    "room-id":                      ("room_id",                     _return_as_is,),
-    "subscriber":                   ("subscriber",                  _return_as_bool,),
-    "tmi-sent-ts":                  ("tmi_sent_ts",                 (_return_as_int := lambda value: int(value)),),
-    "turbo":                        ("turbo",                       _return_as_bool,),
-    "user-id":                      ("user_id",                     _return_as_int,),
-    "user-type":                    ("user_type",                   _return_as_is,),
-    "reply-parent-display-name":    ("reply_parent_display_name",   _return_as_is,),
-    "reply-parent-msg-body":        ("reply_parent_msg_body",       _return_as_is,),
-    "reply-parent-msg-id":          ("reply_parent_msg_id",         _return_as_is,),
-    "reply-parent-user-id":         ("reply_parent_user_id",        _return_as_int,),
-    "reply-parent-user-login":      ("reply_parent_user_login",     _return_as_is,),
-    "emote-only":                   ("emote_only",                  _return_as_bool,),
-    "returning-chatter":            ("returning_chatter",           _return_as_bool,),
+    "badge-info":                   ("badge_info",                  (_return_as_is := lambda value: value)),
+    "badges":                       ("badges",                      _return_as_is),
+    "client-nonce":                 ("client_nonce",                _return_as_is),
+    "color":                        ("color",                       lambda value: HEX(value) if value else HEX()),
+    "display-name":                 ("display_name",                _return_as_is),
+    "emotes":                       ("emotes",                      _return_as_is),
+    "first-msg":                    ("first_msg",                   (_return_as_bool:=lambda value: bool(int(value)))),
+    "flag":                         ("flag",                        _return_as_is),
+    "flags":                        ("flags",                       _return_as_is),
+    "id":                           ("message_id",                  _return_as_is),
+    "mod":                          ("mod",                         _return_as_bool),
+    "room-id":                      ("room_id",                     _return_as_is),
+    "subscriber":                   ("subscriber",                  _return_as_bool),
+    "tmi-sent-ts":                  ("tmi_sent_ts",                 (_return_as_int := lambda value: int(value))),
+    "turbo":                        ("turbo",                       _return_as_bool),
+    "user-id":                      ("user_id",                     _return_as_int),
+    "user-type":                    ("user_type",                   _return_as_is),
+    "reply-parent-display-name":    ("reply_parent_display_name",   _return_as_is),
+    "reply-parent-msg-body":        ("reply_parent_msg_body",       _return_as_is),
+    "reply-parent-msg-id":          ("reply_parent_msg_id",         _return_as_is),
+    "reply-parent-user-id":         ("reply_parent_user_id",        _return_as_int),
+    "reply-parent-user-login":      ("reply_parent_user_login",     _return_as_is),
+    "emote-only":                   ("emote_only",                  _return_as_bool),
+    "returning-chatter":            ("returning_chatter",           _return_as_bool),
     "custom-reward-id":             ("custom_reward_id",            _return_as_is),
     "emote-sets":                   ("emote_sets",                  _return_as_is),
     "msg-id":                       ("msg_id",                      _return_as_is),
+    "vip":                          ("vip",                         _return_as_bool)
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -84,6 +85,7 @@ class MessageTags:
     custom_reward_id:str = NOTHING
     emote_sets:str =NOTHING
     msg_id:str=NOTHING
+    vip:bool=False
 
     @classmethod
     def new_from_tags_str(cls, tags_str:str) -> MessageTags:
