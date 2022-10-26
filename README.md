@@ -11,8 +11,7 @@
 
 #### Python Version
 - Supported Python versions: **3.10**
-  - Other older versions of Python are not currently supported. 
-  - These older versions will probably not be supported by [@AndreasSas](https://github.com/AndreasSas) himself, but if you want to contribute to the project and make this package compatible with older versions of Python, Pull requests are always welcome.
+  - Other older versions of Python are not gonna be supported. 
 
 ---
 ## Quick Example
