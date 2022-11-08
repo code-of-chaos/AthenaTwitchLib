@@ -39,21 +39,30 @@ async def bot_constructor(settings:BotSettings, protocol_type:type[BotConnection
         ssl=settings.ssl_enabled,
         sock=sock
     )
-    # Give the protocol the
-    bot_transport:asyncio.Transport
-    protocol_obj.transport = bot_transport
-
     if bot_transport is None:
         raise ConnectionRefusedError
 
+    # Give the protocol the transporter,
+    #   so it can easily create write calls
+    bot_transport:asyncio.Transport
+    protocol_obj.transport = bot_transport
+
+    # Login into the irc chat
     bot_transport.write(twitch_output_format(f"PASS oauth:{settings.bot_oath_token}"))
     bot_transport.write(twitch_output_format(f"NICK {settings.bot_name}"))
-    bot_transport.write(twitch_output_format(f"JOIN #{settings.bot_join_channel}"))
-    bot_transport.write(twitch_output_format(f"CAP REQ :twitch.tv/commands"))
-    bot_transport.write(twitch_output_format(f"CAP REQ :twitch.tv/membership"))
-    bot_transport.write(twitch_output_format(f"CAP REQ :twitch.tv/tags"))
+    for channel in settings.bot_join_channel:
+        bot_transport.write(twitch_output_format(f"JOIN #{channel}"))
 
-    if settings.bot_join_message is not None:
+    # Request correct capabilities
+    if settings.bot_capability_tags:
+        bot_transport.write(twitch_output_format(f"CAP REQ :twitch.tv/tags"))
+    if settings.bot_capability_commands:
+        bot_transport.write(twitch_output_format(f"CAP REQ :twitch.tv/commands"))
+    if settings.bot_capability_membership:
+        bot_transport.write(twitch_output_format(f"CAP REQ :twitch.tv/membership"))
+
+    # will catch all those that are Falsy ("", None, False, ...)
+    if settings.bot_join_message:
         bot_transport.write(
             twitch_output_format(
                 f":{settings.bot_name}!{settings.bot_name}@{settings.bot_name}.tmi.twitch.tv PRIVMSG #{settings.bot_join_channel} :{settings.bot_join_message}"
