@@ -18,6 +18,7 @@ class BotSettings:
     bot_oath_token:str
     bot_join_channel:list[str] = field(default_factory=list)
     bot_join_message:str = None
+    bot_prefix:str = "!"
 
     bot_capability_tags:bool=True,
     bot_capability_commands:bool=False,

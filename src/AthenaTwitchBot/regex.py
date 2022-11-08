@@ -36,6 +36,6 @@ class RegexPatterns:
         self.join = re.compile(fr"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv JOIN (#.*)")
         self.part = re.compile(fr"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv PART (#.*)")
 
-        self.message = re.compile(r"^([^ ]*) ([^ ]*) PRIVMSG (#[^:]*) :(.*)")
-        self.user_notice = re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE (#[^:]*) :(.*)")
-        self.user_state = re.compile(r"^([^ ]*) :tmi\.twitch\.tv USERSTATE (#[^:]*)")
+        self.message = re.compile(r"^([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :(.*)")
+        self.user_notice = re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE #([^:]*) :(.*)")
+        self.user_state = re.compile(r"^([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")

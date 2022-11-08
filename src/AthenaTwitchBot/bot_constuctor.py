@@ -14,11 +14,12 @@ from AthenaTwitchBot.string_formatting import twitch_output_format
 from AthenaTwitchBot.bot_protocol import BotConnectionProtocol
 from AthenaTwitchBot.regex import RegexPatterns
 from AthenaTwitchBot.bot_settings import BotSettings
+from AthenaTwitchBot.bot_logic import BotLogic
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-async def bot_constructor(settings:BotSettings, protocol_type:type[BotConnectionProtocol]=BotConnectionProtocol):
+async def bot_constructor(settings:BotSettings, bot_logic:BotLogic=None, protocol_type:type[BotConnectionProtocol]=BotConnectionProtocol):
     sock = socket.socket()
     sock.settimeout(5.)
     sock.connect(
@@ -33,7 +34,8 @@ async def bot_constructor(settings:BotSettings, protocol_type:type[BotConnection
             settings=settings,
             regex_patterns = RegexPatterns(
                 bot_name=settings.bot_name
-            )
+            ),
+            bot_logic=bot_logic
         ),
         server_hostname=settings.irc_host,
         ssl=settings.ssl_enabled,
