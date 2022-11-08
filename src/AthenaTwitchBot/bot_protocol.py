@@ -8,11 +8,12 @@ import re
 from dataclasses import dataclass
 
 # Athena Packages
+from AthenaColor import ForeNest as Fore
 
 # Local Imports
 from AthenaTwitchBot.regex import RegexPatterns
 from AthenaTwitchBot.bot_settings import BotSettings
-from AthenaColor import ForeNest as Fore
+from AthenaTwitchBot.protocol_handler_tracker import track_handler
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -68,10 +69,15 @@ class BotConnectionProtocol(asyncio.Protocol):
     # - Protocol Calls (aka, calls made by asyncio.Protocol) -
     # ------------------------------------------------------------------------------------------------------------------
     def data_received(self, data: bytearray) -> None:
+
+        # TODO sort on most used messages
         for line in data.decode().split("\r\n"):
             # An Empty line
             if not line:
                 continue
+
+            elif message := self.regex_patterns.message.match(line):
+                self.handle_message(message, line=line)
 
             elif line == "PING :tmi.twitch.tv":
                 self.handle_ping(line=line)
@@ -94,9 +100,6 @@ class BotConnectionProtocol(asyncio.Protocol):
             elif server_cap := self.regex_patterns.server_cap.match(line):
                 self.handle_server_cap(server_cap, line=line)
 
-            elif message := self.regex_patterns.message.match(line):
-                self.handle_message(message, line=line)
-
             elif user_notice := self.regex_patterns.user_notice.match(line):
                 self.handle_user_notice(user_notice, line=line)
 
@@ -112,6 +115,7 @@ class BotConnectionProtocol(asyncio.Protocol):
     # ------------------------------------------------------------------------------------------------------------------
     # - Line handlers -
     # ------------------------------------------------------------------------------------------------------------------
+    @track_handler
     def handle_ping(self,*, line):
         """
         Method is called when the Twitch server sends a keep alive PING message
@@ -122,42 +126,49 @@ class BotConnectionProtocol(asyncio.Protocol):
         # Need to keep alive
         self.transport.write("PONG :tmi.twitch.tv\r\n".encode())
 
+    @track_handler
     def handle_server_message(self, server_message:re.Match, *, line:str):
         """
         Method is called when the Twitch server sends a message that isn't related to any user or room messages
         """
         print(f"{Fore.Blue('SERVER_MESSAGE')} | {line}")
 
+    @track_handler
     def handle_server_353(self, server_353: re.Match, *, line: str):
         """
         Method is called when twitch sends a 353 message
         """
         print(f"{Fore.AliceBlue('SERVER_353')} | {line}")
 
+    @track_handler
     def handle_server_366(self, server_366: re.Match, *, line: str):
         """
         Method is called when twitch sends a 353 message
         """
         print(f"{Fore.Ivory('SERVER_366')} | {line}")
 
+    @track_handler
     def handle_server_cap(self, server_cap: re.Match, *, line: str):
         """
         Method is called when twitch sends a CAP message
         """
         print(f"{Fore.Khaki('SERVER_CAP')} | {line}")
 
+    @track_handler
     def handle_join(self, join:re.Match,*, line:str):
         """
         Method is called when any user (bot or viewer) joins the channel
         """
         print(f"{Fore.Red('JOIN')} | {line}")
 
+    @track_handler
     def handle_part(self, part:re.Match, *, line:str):
         """
         Method is called when any user (bot or viewer) parts the channel
         """
         print(f"{Fore.DeepPink('PART')} | {line}")
 
+    @track_handler
     def handle_message(self, message:re.Match, *, line:str):
         """
         Method is called when any user (bot or viewer) sends a message in the channel
@@ -165,18 +176,21 @@ class BotConnectionProtocol(asyncio.Protocol):
         # print(message.groups())
         print(f"{Fore.Orchid('MESSAGE')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
 
+    @track_handler
     def handle_user_notice(self, user_notice:re.Match, *, line:str):
         """
         Method is called when twitch sends a USERNOTICE message
         """
         print(f"{Fore.Plum('USERNOTICE')} | {line}")
 
+    @track_handler
     def handle_user_state(self, user_state:re.Match, *, line:str):
         """
         Method is called when twitch sends a USERSTATE message
         """
         print(f"{Fore.Plum('USERSTATE')} | {line}")
 
+    @track_handler
     def handle_UNKNOWN(self, line:str):
         """
         Method is called when the protocol can't find an appropriate match for the given string
