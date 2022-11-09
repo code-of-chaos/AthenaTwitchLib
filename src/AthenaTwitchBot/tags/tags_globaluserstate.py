@@ -4,8 +4,7 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
-import datetime
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 # Athena Packages
 
@@ -17,6 +16,9 @@ from AthenaTwitchBot.tags._tags import Conversion, Tags, TAG_TYPES
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True)
 class TagsGLOBALUSERSTATE(Tags):
+    """
+    Class for Twitch IRC Tags, that are from the GLOBALUSERSTATE message
+    """
     badge_info:str=None
     badges:str=None
     color:str=None

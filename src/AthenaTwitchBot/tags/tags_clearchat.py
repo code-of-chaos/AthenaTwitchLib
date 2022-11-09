@@ -17,6 +17,9 @@ from AthenaTwitchBot.tags._tags import Conversion, Tags, TAG_TYPES
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True)
 class TagsCLEARCHAT(Tags):
+    """
+    Class for Twitch IRC Tags, that are from the CLEARCHAT message
+    """
     ban_duration:int=None
     room_id:str=None
     target_user_id:str=None

@@ -17,6 +17,9 @@ from AthenaTwitchBot.tags._tags import Conversion, Tags, TAG_TYPES
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True)
 class TagsPRIVMSG(Tags):
+    """
+    Class for Twitch IRC Tags, that are from the PRIVMSG message
+    """
     badge_info:str=None
     badges:str=None
     bits:str=None

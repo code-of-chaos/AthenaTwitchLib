@@ -16,11 +16,14 @@ from AthenaTwitchBot.tags._tags import Conversion, Tags, TAG_TYPES
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True)
 class TagsUSERSTATE(Tags):
+    """
+    Class for Twitch IRC Tags, that are from the USERSTATE message
+    """
     badge_info:str=None
     badges:str=None
     color:str=None
     display_name:str=None
-    emote_set: str = None
+    emote_sets: str = None
     id:str=None
     mod:bool=None
     subscriber:bool=None
@@ -34,7 +37,7 @@ class TagsUSERSTATE(Tags):
         "bits": Conversion("bits",str),
         "color": Conversion("color",str),
         "display-name": Conversion("display_name",str),
-        "emote-set": Conversion("emote_set",str),
+        "emote-sets": Conversion("emote_sets",str),
         "id": Conversion("id",str),
         "mod": Conversion("mod",bool),
         "subscriber":Conversion("subscriber", bool),

@@ -16,6 +16,9 @@ from AthenaTwitchBot.tags._tags import Conversion, Tags, TAG_TYPES
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True)
 class TagsUSERNOTICE(Tags):
+    """
+    Class for Twitch IRC Tags, that are from the USERNOTICE message
+    """
     badge_info:str=None
     badges:str=None
     color:str=None

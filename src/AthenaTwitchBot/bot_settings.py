@@ -14,6 +14,9 @@ from dataclasses import dataclass, field
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True)
 class BotSettings:
+    """
+    Instance of this class is used as the global settings system
+    """
     bot_name:str
     bot_oath_token:str
     bot_join_channel:list[str] = field(default_factory=list)

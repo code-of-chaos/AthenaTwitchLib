@@ -6,6 +6,8 @@ from __future__ import annotations
 import asyncio
 import re
 from dataclasses import dataclass, field
+import functools
+from typing import Any, Callable
 
 # Athena Packages
 from AthenaColor import ForeNest as Fore
@@ -13,25 +15,50 @@ from AthenaColor import ForeNest as Fore
 # Local Imports
 from AthenaTwitchBot.regex import RegexPatterns
 from AthenaTwitchBot.bot_settings import BotSettings
-from AthenaTwitchBot.protocol_handler_tracker import track_handler
 from AthenaTwitchBot.bot_logic import BotLogic
-from AthenaTwitchBot.tags import TagsPRIVMSG
+from AthenaTwitchBot.tags import TagsPRIVMSG, TagsUSERSTATE
+from AthenaTwitchBot.bot_logger import BotLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class _TransportBuffer:
+    """
+    Simple class to be used by the `BotConnectionProtocol`, before the transporter object is actually set.
+    It keeps the to be sent message into a small buffer, for it to then be parsed and deleted once the
+    actual transporter is present in the `BotConnectionProtocol`
+    """
     buffer: list[bytes] = []
 
     @classmethod
     def write(cls, data:bytes):
         cls.buffer.append(data)
 
+def track_handler(fnc:Callable) -> Any:
+    """
+    Simple decorator to keep track of how many calls are made to handlers
+    """
+
+    @functools.wraps(fnc)
+    async def wrapper(*args, **kwargs):
+        result, _ = await asyncio.gather(
+            fnc(*args, **kwargs),
+            BotLogger.logger.log_handler_called(fnc.__name__)
+        )
+        return result
+
+    return wrapper
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class BotConnectionProtocol(asyncio.Protocol):
+    """
+    Asyncio.Protocol child class,
+    Holds all logic to convert the incoming Twitch IRC messages to useful calls/data
+    """
     settings: BotSettings
     regex_patterns: RegexPatterns
     bot_logic: BotLogic
@@ -76,7 +103,11 @@ class BotConnectionProtocol(asyncio.Protocol):
     # - Protocol Calls (aka, calls made by asyncio.Protocol) -
     # ------------------------------------------------------------------------------------------------------------------
     def data_received(self, data: bytearray) -> None:
-
+        """
+        First hit of the protocol when it receives data from Twitch IRC
+        Because twitch sends in this data in bytes, and sometimes multiple different message,
+        the function has to decode and split the data on every new line
+        """
         # TODO sort on most used messages
         for line in data.decode().split("\r\n"):
             # An Empty line
@@ -117,6 +148,7 @@ class BotConnectionProtocol(asyncio.Protocol):
                 self._loop.create_task(self.handle_UNKNOWN(line))
 
     def connection_lost(self, exc: Exception | None) -> None:
+        # TODO, something here
         print(exc)
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -181,7 +213,6 @@ class BotConnectionProtocol(asyncio.Protocol):
         """
         Method is called when any user (bot or viewer) sends a message in the channel
         """
-        # print(message.groups())
         print(f"{Fore.Orchid('MESSAGE')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
 
         tags_group_str,user,channel,text = message.groups()
@@ -201,13 +232,16 @@ class BotConnectionProtocol(asyncio.Protocol):
         Method is called when twitch sends a USERNOTICE message
         """
         print(f"{Fore.Plum('USERNOTICE')} | {line}")
+        await BotLogger.logger.log_unknown_message(line)
 
     @track_handler
     async def handle_user_state(self, user_state:re.Match, *, line:str):
         """
         Method is called when twitch sends a USERSTATE message
         """
-        print(f"{Fore.Plum('USERSTATE')} | {line}")
+        tags_group_str,channel = user_state.groups()
+        tags = await TagsUSERSTATE.import_from_group_as_str(tags_group_str)
+        print(f"{Fore.Plum('USERSTATE')} | {line} | {tags}")
 
     @track_handler
     async def handle_UNKNOWN(self, line:str):
@@ -215,3 +249,4 @@ class BotConnectionProtocol(asyncio.Protocol):
         Method is called when the protocol can't find an appropriate match for the given string
         """
         print(Fore.SlateGray(f"NOT CAUGHT | {line}"))
+        await BotLogger.logger.log_unknown_message(line)

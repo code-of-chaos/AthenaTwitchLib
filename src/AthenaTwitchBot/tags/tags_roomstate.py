@@ -16,6 +16,9 @@ from AthenaTwitchBot.tags._tags import Conversion, Tags, TAG_TYPES
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True)
 class TagsROOMSTATE(Tags):
+    """
+    Class for Twitch IRC Tags, that are from the ROOMSTATE message
+    """
     emote_only:bool=None
     followers_only:bool=None
     r9k:bool=None

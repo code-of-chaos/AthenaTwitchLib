@@ -16,6 +16,9 @@ from AthenaTwitchBot.tags._tags import Conversion, Tags, TAG_TYPES
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True)
 class TagsNOTICE(Tags):
+    """
+    Class for Twitch IRC Tags, that are from the NOTICE message
+    """
     msg_id:str=None
     target_user_id:str=None
 
