@@ -5,7 +5,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import datetime
-from typing import Literal
+from typing import ClassVar
 
 # Athena Packages
 
@@ -22,8 +22,8 @@ class TagsCLEARCHAT(Tags):
     target_user_id:str=None
     tmi_sent_ts: datetime.datetime=None
 
-    _tag_type:TAG_TYPES = TAG_TYPES.CLEARCHAT
-    _CONVERSION_MAPPING = {
+    _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.CLEARCHAT
+    _CONVERSION_MAPPING:ClassVar[dict] = {
         "ban-duration": Conversion("ban_duration",int),
         "room-id": Conversion("room_id",int),
         "target-user-id": Conversion("target_user_id",str),

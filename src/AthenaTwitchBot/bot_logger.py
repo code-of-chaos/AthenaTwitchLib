@@ -8,6 +8,7 @@ import aiosqlite
 import pathlib
 from typing import Optional
 import contextlib
+import enum
 
 # Athena Packages
 
@@ -72,9 +73,9 @@ class BotLogger:
                 VALUES ('{handler_name}');
             """)
 
-    async def log_unknown_tag(self, tag_name:str, tag_value:str):
+    async def log_unknown_tag(self, tag_type:str, tag_name:str, tag_value:str):
         async with self._db_connect() as db:
             await db.execute(f"""
-                INSERT INTO unknown_tags (tag_name, tag_value)
-                VALUES ('{tag_name}', '{tag_value}');
+                INSERT INTO unknown_tags (tag_type,tag_name, tag_value)
+                VALUES ('{tag_type}','{tag_name}', '{tag_value}');
             """)

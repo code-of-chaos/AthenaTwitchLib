@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 # Athena Packages
 
 # Local Imports
+from AthenaTwitchBot.tags import Tags, TagsPRIVMSG
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -28,7 +29,7 @@ class CommandSettings:
 class BotLogic:
     mapped_commands:ClassVar[dict] = {}
 
-    async def handle(self, tags,user,channel:str,text:str):
+    async def handle(self, tags:Tags,user,channel:str,text:str):
         cmd_with_prefix, *args = text.split(" ")
         cmd = cmd_with_prefix[1:] # removes the prefix
 

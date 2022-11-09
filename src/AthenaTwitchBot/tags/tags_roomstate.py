@@ -4,8 +4,7 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
-import datetime
-from typing import Literal
+from typing import ClassVar
 
 # Athena Packages
 
@@ -24,8 +23,8 @@ class TagsROOMSTATE(Tags):
     slow:int=None
     subs_only:bool=None
 
-    _tag_type:TAG_TYPES = TAG_TYPES.ROOMSTATE
-    _CONVERSION_MAPPING = {
+    _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.ROOMSTATE
+    _CONVERSION_MAPPING:ClassVar[dict] = {
         "emote-only": Conversion("emote_only",bool),
         "followers-only": Conversion("followers_only",bool),
         "r9k": Conversion("r9k",bool),

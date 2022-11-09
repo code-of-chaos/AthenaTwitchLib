@@ -15,6 +15,7 @@ from AthenaTwitchBot.regex import RegexPatterns
 from AthenaTwitchBot.bot_settings import BotSettings
 from AthenaTwitchBot.protocol_handler_tracker import track_handler
 from AthenaTwitchBot.bot_logic import BotLogic
+from AthenaTwitchBot.tags import TagsPRIVMSG
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -183,9 +184,16 @@ class BotConnectionProtocol(asyncio.Protocol):
         # print(message.groups())
         print(f"{Fore.Orchid('MESSAGE')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
 
-        tags,user,channel,text = message.groups()
+        tags_group_str,user,channel,text = message.groups()
+        tags = await TagsPRIVMSG.import_from_group_as_str(tags_group_str)
+
         if text.startswith(self.settings.bot_prefix):
-            await self.bot_logic.handle(tags,user,channel,text)
+            await self.bot_logic.handle(
+                tags=tags,
+                user=user,
+                channel=channel,
+                text=text
+            )
 
     @track_handler
     async def handle_user_notice(self, user_notice:re.Match, *, line:str):

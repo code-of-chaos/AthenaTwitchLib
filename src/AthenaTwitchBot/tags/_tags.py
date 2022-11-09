@@ -4,7 +4,7 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Callable, ClassVar
+from typing import Callable, ClassVar, Any
 import enum
 
 # Athena Packages
@@ -39,23 +39,24 @@ class TAG_TYPES(enum.StrEnum):
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True)
 class Tags:
-    _tag_type:TAG_TYPES = TAG_TYPES.UNKNOWN
-    _CONVERSION_MAPPING:ClassVar[dict] = {}
+    _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.UNKNOWN
+    _CONVERSION_MAPPING:ClassVar[dict[str:Conversion]] = {}
 
     @classmethod
-    def import_from_group(cls, tags:str) -> Tags:
-        tags_privmsg:Tags = cls()
+    async def import_from_group_as_str(cls, tags:str) -> Tags:
+        bot_logger = get_bot_logger()
+        converted_tags:dict[str:Any] = {}
 
         # don't parse the `@` -> [1:]
         for tag in tags[1:].split(";"):
             attr_name, value = tag.split("=",1)
 
-            if not (conversion := cls._CONVERSION_MAPPING.get(attr_name, False)):
-                conversion:Conversion
-                setattr(tags_privmsg, conversion.new_attr_name, conversion.callback(value))
+            if conversion := cls._CONVERSION_MAPPING.get(attr_name, False):
+                converted_tags[conversion.new_attr_name] = conversion.callback(value)
 
             else:
-                get_bot_logger().log_unknown_tag(attr_name, value)
-                print(Fore.Maroon(f"TAG NAME NOT FOUND IN {cls.__name__}"))
+                print(Fore.Maroon(f"TAG NAME '{attr_name}={value}' NOT FOUND IN {cls.__name__}"))
+                await bot_logger.log_unknown_tag(cls._tag_type, attr_name, value)
 
-        return tags_privmsg
+        # noinspection PyArgumentList
+        return cls(**converted_tags)

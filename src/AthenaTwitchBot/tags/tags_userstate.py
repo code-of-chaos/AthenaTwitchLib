@@ -4,7 +4,7 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, ClassVar
 
 # Athena Packages
 
@@ -27,8 +27,8 @@ class TagsUSERSTATE(Tags):
     turbo:bool=None
     user_type:Literal["", "admin", "global_mod", "staff"]=None
 
-    _tag_type:TAG_TYPES = TAG_TYPES.USERSTATE
-    _CONVERSION_MAPPING = {
+    _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.USERSTATE
+    _CONVERSION_MAPPING:ClassVar[dict] = {
         "badge-info": Conversion("badge_info",str),
         "badges": Conversion("badges",lambda obj: obj.split(",")),
         "bits": Conversion("bits",str),

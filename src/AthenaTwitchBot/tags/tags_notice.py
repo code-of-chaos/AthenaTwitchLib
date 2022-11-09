@@ -4,8 +4,7 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
-import datetime
-from typing import Literal
+from typing import ClassVar
 
 # Athena Packages
 
@@ -20,8 +19,8 @@ class TagsNOTICE(Tags):
     msg_id:str=None
     target_user_id:str=None
 
-    _tag_type:TAG_TYPES = TAG_TYPES.NOTICE
-    _CONVERSION_MAPPING = {
+    _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.NOTICE
+    _CONVERSION_MAPPING:ClassVar[dict] = {
         "msg-id": Conversion("room_id",int),
         "target-user-id": Conversion("target_user_id",str)
     }
