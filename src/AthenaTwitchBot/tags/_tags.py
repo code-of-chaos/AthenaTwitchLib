@@ -47,8 +47,7 @@ class Tags:
         bot_logger = get_bot_logger()
         converted_tags:dict[str:Any] = {}
 
-        # don't parse the `@` -> [1:]
-        for tag in tags[1:].split(";"):
+        for tag in tags.split(";"):
             attr_name, value = tag.split("=",1)
 
             if conversion := cls._CONVERSION_MAPPING.get(attr_name, False):

@@ -187,7 +187,7 @@ class BotConnectionProtocol(asyncio.Protocol):
         tags_group_str,user,channel,text = message.groups()
         tags = await TagsPRIVMSG.import_from_group_as_str(tags_group_str)
 
-        if text.startswith(self.settings.bot_prefix):
+        if text.lower().startswith(self.settings.bot_prefix):
             await self.bot_logic.handle(
                 tags=tags,
                 user=user,
