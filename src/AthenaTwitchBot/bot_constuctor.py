@@ -3,9 +3,9 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field
 import socket
 import asyncio
+import pathlib
 
 # Athena Packages
 
@@ -15,11 +15,18 @@ from AthenaTwitchBot.bot_protocol import BotConnectionProtocol
 from AthenaTwitchBot.regex import RegexPatterns
 from AthenaTwitchBot.bot_settings import BotSettings
 from AthenaTwitchBot.bot_logic import BotLogic
+from AthenaTwitchBot.bot_logger import BotLogger, set_bot_logger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-async def bot_constructor(settings:BotSettings, bot_logic:BotLogic=None, protocol_type:type[BotConnectionProtocol]=BotConnectionProtocol):
+async def bot_constructor(settings:BotSettings, bot_logic:BotLogic=None, protocol_type:type[BotConnectionProtocol]=BotConnectionProtocol, logging:bool=False):
+
+    logger = set_bot_logger(
+        BotLogger(path=pathlib.Path("data/logger.sqlite"))
+    )
+    await logger.connect()
+
     sock = socket.socket()
     sock.settimeout(5.)
     sock.connect(
