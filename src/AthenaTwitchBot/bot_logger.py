@@ -130,7 +130,7 @@ class BotLogger:
         async with self._db_connect() as db:
             await db.execute(f"""
                 INSERT INTO unknown_message (text)
-                VALUES ('{base64.b64encode(message.encode()).decode()}');
+                VALUES ('{message.replace("'", "''")}');
             """)
 
     @output_if_enabled
@@ -141,5 +141,5 @@ class BotLogger:
         async with self._db_connect() as db:
             await db.execute(f"""
                 INSERT INTO handled_message (text)
-                VALUES ('{line}');
+                VALUES ('{line.replace("'", "''")}');
             """)
