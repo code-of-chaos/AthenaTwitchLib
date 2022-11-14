@@ -126,7 +126,18 @@ class BotConnectionProtocol(asyncio.Protocol):
                 continue
 
             elif message := self.regex_patterns.message.match(line):
-                self._loop.create_task(self.handle_message(message, line=line))
+                if cmd_match:=self.regex_patterns.message_command_with_args.match(text := message.groups()[-1]): # cmd with args
+                    self._loop.create_task(self.handle_message_command_with_args(message, cmd_match, line=line))
+                elif cmd_match:=self.regex_patterns.message_command_without_args.match(text):
+                    self._loop.create_task(self.handle_message_command_without_args(message, cmd_match, line=line))
+                else:
+                    self._loop.create_task(self.handle_message(message, line=line))
+
+            elif command_without_args := self.regex_patterns.message_command_without_args.match(line):
+                self._loop.create_task(self.handle_message_command_without_args(command_without_args, line=line))
+
+            elif command_with_args := self.regex_patterns.message_command_with_args.match(line):
+                self._loop.create_task(self.handle_message_command_with_args(command_with_args, line=line))
 
             elif line == "PING :tmi.twitch.tv":
                 self._loop.create_task(self.handle_ping(line=line))
@@ -222,11 +233,20 @@ class BotConnectionProtocol(asyncio.Protocol):
     @track_handler
     async def handle_message(self, message:re.Match, *, line:str):
         """
-        Method is called when any user (bot or viewer) sends a message in the channel
+        Method is called when any user (bot or viewer) sends a regular message in the channel
         """
         print(f"{Fore.Orchid('MESSAGE')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
 
+        # Extract data from matched message
+        #   Easily done due to regex groups
         tags_group_str,user,channel,text = message.groups()
+
+        # extract the logic
+        #   If no logic can be found, not further actions need to be taken
+        if (msg_logic := LogicMemory.get_normal_message_logic(channel)) is None:
+            return
+
+        # Create the context and run more checks
         message_context = MessageContext(
             tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
             user=user,
@@ -235,22 +255,68 @@ class BotConnectionProtocol(asyncio.Protocol):
             transport=self.transport
         )
 
+        if check_if_user_has_correct_level(msg_logic, message_context):
+            await msg_logic.coroutine(message_context=message_context)
+
+    @track_handler
+    async def handle_message_command_with_args(self, message:re.Match, cmd_match:re.Match, *, line:str):
+        """
+        Method is called when any user (bot or viewer) sends a message in the channel,
+        which is presumed to be a bot command
+        """
+        print(f"{Fore.Orchid('MESSAGE_COMMAND_WITH_ARGS')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
+
+        # Extract data from matched message
+        #   Easily done due to regex groups
+        tags_group_str,user,channel,text = message.groups()
+        command, args = cmd_match.groups()
+
+        # extract the logic
+        #   If no logic can be found, not further actions need to be taken
+        if (cmd_logic:= LogicMemory.get_command_logic(channel, command)) is None:
+            return
+
+        message_context = MessageContext(
+            tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
+            user=user,
+            channel=channel,
+            text=f"!{command} {args}",
+            transport=self.transport
+        )
+
         # String is a command
-        if text.lower().startswith(self.settings.bot_prefix):
-            cmd_name, *_ = text.split(" ")
-            if (cmd_logic:= LogicMemory.get_command_logic(channel, cmd_name.replace(self.settings.bot_prefix, ""))) is not None:
+        if check_if_user_has_correct_level(cmd_logic, message_context):
+            await cmd_logic.coroutine(message_context=message_context)
 
-                # Run some checks if the command can be accessed by the actual user
-                if check_if_user_has_correct_level(cmd_logic, message_context):
-                    await cmd_logic.coroutine(message_context=message_context)
+    @track_handler
+    async def handle_message_command_without_args(self, message: re.Match, cmd_match:re.Match, *, line: str):
+        """
+        Method is called when any user (bot or viewer) sends a message in the channel,
+        which is presumed to be a bot command
+        """
+        print(f"{Fore.Orchid('MESSAGE_COMMAND_WITHOUT_ARGS')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
 
-        # String is not a command
-        #   Is always run, even if it is a command string
-        if (msg_logic := LogicMemory.get_normal_message_logic(channel)) is not None:
+        # Extract data from matched message
+        #   Easily done due to regex groups
+        tags_group_str, user, channel, command = message.groups()
+        command, = cmd_match.groups()
 
-            # Run some checks if the command can be accessed by the actual user
-            if check_if_user_has_correct_level(msg_logic, message_context):
-                await msg_logic.coroutine(message_context=message_context)
+        # extract the logic
+        #   If no logic can be found, not further actions need to be taken
+        if (cmd_logic := LogicMemory.get_command_logic(channel, command)) is None:
+            return
+
+        message_context = MessageContext(
+            tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
+            user=user,
+            channel=channel,
+            text=f"!{command}",
+            transport=self.transport
+        )
+
+        # String is a command
+        if check_if_user_has_correct_level(cmd_logic, message_context):
+            await cmd_logic.coroutine(message_context=message_context)
 
     @track_handler
     async def handle_user_notice(self, user_notice:re.Match, *, line:str):

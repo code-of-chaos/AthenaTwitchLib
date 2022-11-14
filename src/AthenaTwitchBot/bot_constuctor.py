@@ -52,7 +52,8 @@ async def bot_constructor(settings:BotSettings, logic_bot:LogicBot=None, protoco
         protocol_factory=lambda:protocol_type(
             settings=settings,
             regex_patterns = RegexPatterns(
-                bot_name=settings.bot_name
+                bot_name=settings.bot_name,
+                bot_prefix=settings.bot_prefix
             ),
             bot_logic=logic_bot
         ),
