@@ -36,7 +36,7 @@ class TagsGLOBALUSERSTATE(Tags):
         "color": Conversion("color",str),
         "display-name": Conversion("display_name",str),
         "emote-set": Conversion("emote_set",str),
-        "turbo": Conversion("turbo",bool),
+        "turbo": Conversion("turbo",lambda obj: bool(int(obj))),
         "user-id": Conversion("user_id",str),
         "user-type": Conversion("user_type",str)
     }

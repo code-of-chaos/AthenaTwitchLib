@@ -28,10 +28,10 @@ class TagsROOMSTATE(Tags):
 
     _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.ROOMSTATE
     _CONVERSION_MAPPING:ClassVar[dict] = {
-        "emote-only": Conversion("emote_only",bool),
-        "followers-only": Conversion("followers_only",bool),
-        "r9k": Conversion("r9k",bool),
+        "emote-only": Conversion("emote_only",lambda obj: bool(int(obj))),
+        "followers-only": Conversion("followers_only",lambda obj: bool(int(obj))),
+        "r9k": Conversion("r9k",lambda obj: bool(int(obj))),
         "room-id": Conversion("room_id",int),
         "slow": Conversion("slow",int),
-        "subs-only": Conversion("subs_only",bool),
+        "subs-only": Conversion("subs_only",lambda obj: bool(int(obj))),
     }

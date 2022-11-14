@@ -65,11 +65,11 @@ class TagsUSERNOTICE(Tags):
         "emotes": Conversion("emotes",str),
         "id": Conversion("id",str),
         "login": Conversion("login",str),
-        "mod": Conversion("mod",bool),
+        "mod": Conversion("mod",lambda obj: bool(int(obj))),
         "msg-id": Conversion("msg_id",str),
         "room-id": Conversion("room_id",str),
         "system-msg": Conversion("system_msg",str),
-        "turbo": Conversion("turbo",bool),
+        "turbo": Conversion("turbo",lambda obj: bool(int(obj))),
         "user-id": Conversion("user_id",str),
         "user-type": Conversion("user_type",str),
 

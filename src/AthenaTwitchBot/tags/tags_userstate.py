@@ -39,8 +39,8 @@ class TagsUSERSTATE(Tags):
         "display-name": Conversion("display_name",str),
         "emote-sets": Conversion("emote_sets",str),
         "id": Conversion("id",str),
-        "mod": Conversion("mod",bool),
-        "subscriber":Conversion("subscriber", bool),
-        "turbo": Conversion("turbo",bool),
+        "mod": Conversion("mod",lambda obj: bool(int(obj))),
+        "subscriber":Conversion("subscriber", lambda obj: bool(int(obj))),
+        "turbo": Conversion("turbo",lambda obj: bool(int(obj))),
         "user-type": Conversion("user_type",str),
     }
