@@ -20,6 +20,7 @@ from AthenaTwitchBot.tags import TagsPRIVMSG, TagsUSERSTATE
 from AthenaTwitchBot.bot_logger import BotLogger
 from AthenaTwitchBot.logic import LogicMemory, MessageLogic
 from AthenaTwitchBot.message_context import MessageContext
+from AthenaTwitchBot.bot_event_types import BotEvent, BotEventException
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -53,12 +54,19 @@ def track_handler(fnc:Callable) -> Any:
     return wrapper
 
 def check_if_user_has_correct_level(logic:MessageLogic, context:MessageContext) -> bool:
-    return (
-        (logic.mod and context.tags.mod) or
-        (logic.sub and context.tags.subscriber) or
-        (logic.vip and context.tags.vip) or
-        logic.user
-    )
+
+    print(logic, context, context.tags, sep="\n")
+
+    if logic.mod and context.tags.moderator:
+        return True
+    elif logic.sub and context.tags.subscriber:
+        return True
+    elif logic.vip and context.tags.vip:
+        return True
+    elif logic.user:
+        return True
+    else:
+        return False
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -73,6 +81,7 @@ class BotConnectionProtocol(asyncio.Protocol):
     settings: BotSettings
     regex_patterns: RegexPatterns
     bot_logic: LogicBot
+    bot_event_future: asyncio.Future
 
     _transport: asyncio.transports.Transport = None  # delayed as it has to be set after the connection has been made
     _loop :asyncio.AbstractEventLoop = field(init=False)
@@ -119,7 +128,9 @@ class BotConnectionProtocol(asyncio.Protocol):
         Because twitch sends in this data in bytes, and sometimes multiple different message,
         the function has to decode and split the data on every new line
         """
+
         # TODO sort on most used messages
+
         for line in data.decode().split("\r\n"):
             # An Empty line
             if not line:
@@ -172,6 +183,8 @@ class BotConnectionProtocol(asyncio.Protocol):
     def connection_lost(self, exc: Exception | None) -> None:
         # TODO, something here
         print(exc)
+        if not self.bot_event_future.done():
+            self.bot_event_future.set_result(BotEvent.RESTART)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Line handlers -
@@ -254,9 +267,11 @@ class BotConnectionProtocol(asyncio.Protocol):
             text=text,
             transport=self.transport
         )
-
-        if check_if_user_has_correct_level(msg_logic, message_context):
-            await msg_logic.coroutine(message_context=message_context)
+        try:
+            if check_if_user_has_correct_level(msg_logic, message_context):
+                await msg_logic.coroutine(message_context=message_context)
+        except BotEventException as event_exception:
+            self.bot_event_future.set_result(event_exception.event)
 
     @track_handler
     async def handle_message_command_with_args(self, message:re.Match, cmd_match:re.Match, *, line:str):
@@ -285,8 +300,11 @@ class BotConnectionProtocol(asyncio.Protocol):
         )
 
         # String is a command
-        if check_if_user_has_correct_level(cmd_logic, message_context):
-            await cmd_logic.coroutine(message_context=message_context)
+        try:
+            if check_if_user_has_correct_level(cmd_logic, message_context):
+                await cmd_logic.coroutine(message_context=message_context)
+        except BotEventException as event_exception:
+            self.bot_event_future.set_result(event_exception.event)
 
     @track_handler
     async def handle_message_command_without_args(self, message: re.Match, cmd_match:re.Match, *, line: str):
@@ -315,8 +333,12 @@ class BotConnectionProtocol(asyncio.Protocol):
         )
 
         # String is a command
-        if check_if_user_has_correct_level(cmd_logic, message_context):
-            await cmd_logic.coroutine(message_context=message_context)
+        try:
+            if check_if_user_has_correct_level(cmd_logic, message_context):
+                await cmd_logic.coroutine(message_context=message_context)
+
+        except BotEventException as event_exception:
+            self.bot_event_future.set_result(event_exception.event)
 
     @track_handler
     async def handle_user_notice(self, user_notice:re.Match, *, line:str):
