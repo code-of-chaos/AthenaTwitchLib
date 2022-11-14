@@ -25,6 +25,7 @@ class TagsPRIVMSG(Tags):
     bits:str=None
     color:str=None
     client_nonce:str=None
+    custom_reward_id:str=None
     display_name:str=None
     emotes:str=None
     emote_only:bool=None
@@ -54,6 +55,7 @@ class TagsPRIVMSG(Tags):
         "bits": Conversion("bits", str),
         "color": Conversion("color", str),
         "client-nonce":Conversion("client_nonce", str),
+        "custom-reward-id":Conversion("custom-reward-id", str),
         "display-name": Conversion("display_name", str),
         "emotes": Conversion("emotes", str),
         "emote-only": Conversion("emote_only", bool),
