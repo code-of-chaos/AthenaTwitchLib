@@ -9,7 +9,6 @@ import aiosqlite
 import pathlib
 from typing import ClassVar
 import contextlib
-import base64
 
 # Athena Packages
 
@@ -33,6 +32,12 @@ def output_if_enabled(fnc):
             return None
         return await fnc(*args, **kwargs)
     return wrapper
+
+def sanitize_sql(txt:str) -> str:
+    """
+    Simple function to sanitize the sql input
+    """
+    return txt.replace("'", "''")
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -108,7 +113,7 @@ class BotLogger:
         async with self._db_connect() as db:
             await db.execute(f"""
                 INSERT INTO called_handlers (handler_name)
-                VALUES ('{handler_name}');
+                VALUES ('{sanitize_sql(handler_name)}');
             """)
 
     @output_if_enabled
@@ -119,7 +124,7 @@ class BotLogger:
         async with self._db_connect() as db:
             await db.execute(f"""
                 INSERT INTO unknown_tags (tag_type,tag_name, tag_value)
-                VALUES ('{tag_type}','{tag_name}', '{tag_value}');
+                VALUES ('{sanitize_sql(tag_type)}','{sanitize_sql(tag_name)}', '{sanitize_sql(tag_value)}');
             """)
 
     @output_if_enabled
@@ -130,7 +135,7 @@ class BotLogger:
         async with self._db_connect() as db:
             await db.execute(f"""
                 INSERT INTO unknown_message (text)
-                VALUES ('{message.replace("'", "''")}');
+                VALUES ('{sanitize_sql(message)}');
             """)
 
     @output_if_enabled
@@ -141,5 +146,5 @@ class BotLogger:
         async with self._db_connect() as db:
             await db.execute(f"""
                 INSERT INTO handled_message (text)
-                VALUES ('{line.replace("'", "''")}');
+                VALUES ('{sanitize_sql(line)}');
             """)
