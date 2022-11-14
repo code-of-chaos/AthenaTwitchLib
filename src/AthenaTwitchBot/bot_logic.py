@@ -3,49 +3,57 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from typing import Callable, ClassVar
-import functools
-from dataclasses import dataclass, field
+import inspect
 
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.tags import TagsPRIVMSG
-
-# ----------------------------------------------------------------------------------------------------------------------
-# - Code -
-# ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
-class CommandSettings:
-    name:str
-    channels:list[str] = field(default_factory=list)
-
-    # non init
-    callback:Callable = field(init=False)
+from AthenaTwitchBot.commands import CommandMemory, CommandLogic
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class BotLogic:
-    mapped_commands:ClassVar[dict] = {}
+    def __new__(cls, *args, **kwargs) -> BotLogic:
+        # Actually create the object
+        #   Else you can't link the object with the correct functions
+        #   This entire section solves the issue of calling functions that were still a part of the class,
+        #       and not the instance
+        obj:BotLogic = object.__new__(cls)
 
-    async def handle(self, tags:TagsPRIVMSG,user,channel:str,text:str):
-        cmd_with_prefix, *args = text.split(" ")
-        cmd = cmd_with_prefix[1:] # removes the prefix
+        for item_name in obj.__dir__():
+            # This way we can get all the functions tied to the bot instance,
+            #   and not only the `BotLogic` class
+            if not callable(coroutine_callback := getattr(obj, item_name)) or not hasattr(coroutine_callback, "_command_logic"):
+                continue
 
-        print(self.mapped_commands, cmd)
+            # We need to test if it is a coroutine
+            #   If not, raise a big old error but only in debug and not production
+            #   In production, this is meant to not fail anymore,
+            #       Therefor no check is needed in production (AKA: assert)
+            assert inspect.iscoroutinefunction(coroutine_callback), f"The function `{coroutine_callback}` was not a coroutine when the Bot is being assembled"
+            cmd_logic:CommandLogic = coroutine_callback._command_logic
 
-        if cmd in self.mapped_commands and (not (channels := self.mapped_commands[cmd].channels) or channel in channels):
-            await self.mapped_commands[cmd].callback(self)
+            # if no channels are set,
+            #   the command can be executed on all channels
+            if not cmd_logic.channels:
+                CommandMemory.assign_global_cmd(
+                    cmd_logic=cmd_logic,
+                    coroutine_callback=coroutine_callback
+                )
+                # Go to next item on the obj.__dir__()
+                continue
 
-    @classmethod
-    def command(cls, settings:CommandSettings):
-        def decorator(fnc:Callable):
-            settings.callback = fnc
-            cls.mapped_commands[settings.name] = settings
+            # Else, go over all channels
+            for channel in cmd_logic.channels:
+                CommandMemory.assign_channel_cmd(
+                    cmd_logic=cmd_logic,
+                    channel=channel,
+                    coroutine_callback=coroutine_callback
+                )
 
-            @functools.wraps(fnc)
-            async def wrapper(*args, **kwargs):
-                return await fnc(*args, **kwargs)
-            return wrapper
-        return decorator
+        # Run the init, as the user might do certain things there
+        #   Only useful for the class that inherits from BotLogic
+        # noinspection PyArgumentList
+        obj.__init__(*args, **kwargs)
+        return obj

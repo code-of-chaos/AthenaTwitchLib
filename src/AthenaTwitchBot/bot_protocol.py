@@ -18,6 +18,7 @@ from AthenaTwitchBot.bot_settings import BotSettings
 from AthenaTwitchBot.bot_logic import BotLogic
 from AthenaTwitchBot.tags import TagsPRIVMSG, TagsUSERSTATE
 from AthenaTwitchBot.bot_logger import BotLogger
+from AthenaTwitchBot.commands import CommandMemory
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -220,12 +221,13 @@ class BotConnectionProtocol(asyncio.Protocol):
         tags = await TagsPRIVMSG.import_from_group_as_str(tags_group_str)
 
         if text.lower().startswith(self.settings.bot_prefix):
-            await self.bot_logic.handle(
-                tags=tags,
-                user=user,
-                channel=channel,
-                text=text
-            )
+            cmd_name, *args = text.split(" ")
+            if (coroutine:=CommandMemory.get_coroutine(channel, cmd_name.replace(self.settings.bot_prefix, ""))) is None:
+                # No handler was found
+                return
+            # Only after a possible coroutine was found,
+            #   Create the context object, else we loose precious calculation time
+            await coroutine()
 
     @track_handler
     async def handle_user_notice(self, user_notice:re.Match, *, line:str):
