@@ -18,7 +18,7 @@ from AthenaTwitchBot.string_formatting import twitch_output_format
 @dataclass(slots=True, frozen=True)
 class MessageContext:
     """
-    Frozen Dataclass which holds the context that will be used by the BotLogic to handle an incomming message
+    Frozen Dataclass which holds the context that will be used by the LogicBot to handle an incomming message
     """
     tags:TagsPRIVMSG
     user:str

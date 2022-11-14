@@ -14,13 +14,13 @@ from AthenaTwitchBot.string_formatting import twitch_output_format
 from AthenaTwitchBot.bot_protocol import BotConnectionProtocol
 from AthenaTwitchBot.regex import RegexPatterns
 from AthenaTwitchBot.bot_settings import BotSettings
-from AthenaTwitchBot.bot_logic import BotLogic
+from AthenaTwitchBot.logic.logic_bot import LogicBot
 from AthenaTwitchBot.bot_logger import BotLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-async def bot_constructor(settings:BotSettings, bot_logic:BotLogic=None, protocol_type:type[BotConnectionProtocol]=BotConnectionProtocol, logging:bool=False):
+async def bot_constructor(settings:BotSettings, logic_bot:LogicBot=None, protocol_type:type[BotConnectionProtocol]=BotConnectionProtocol, logging:bool=False):
     """
     Constructor function for the Bot and all its logical systems like the asyncio.Protocol handler.
     It also logs the bot in onto the Twitch IRC server
@@ -54,7 +54,7 @@ async def bot_constructor(settings:BotSettings, bot_logic:BotLogic=None, protoco
             regex_patterns = RegexPatterns(
                 bot_name=settings.bot_name
             ),
-            bot_logic=bot_logic
+            bot_logic=logic_bot
         ),
         server_hostname=settings.irc_host,
         ssl=settings.ssl_enabled,

@@ -15,10 +15,10 @@ from AthenaColor import ForeNest as Fore
 # Local Imports
 from AthenaTwitchBot.regex import RegexPatterns
 from AthenaTwitchBot.bot_settings import BotSettings
-from AthenaTwitchBot.bot_logic import BotLogic
+from AthenaTwitchBot.logic.logic_bot import LogicBot
 from AthenaTwitchBot.tags import TagsPRIVMSG, TagsUSERSTATE
 from AthenaTwitchBot.bot_logger import BotLogger
-from AthenaTwitchBot.commands import CommandMemory
+from AthenaTwitchBot.logic import LogicMemory, MessageLogic
 from AthenaTwitchBot.message_context import MessageContext
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -52,6 +52,14 @@ def track_handler(fnc:Callable) -> Any:
 
     return wrapper
 
+def check_if_user_has_correct_level(logic:MessageLogic, context:MessageContext) -> bool:
+    return (
+        (logic.mod and context.tags.mod) or
+        (logic.sub and context.tags.subscriber) or
+        (logic.vip and context.tags.vip) or
+        logic.user
+    )
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -64,7 +72,7 @@ class BotConnectionProtocol(asyncio.Protocol):
     """
     settings: BotSettings
     regex_patterns: RegexPatterns
-    bot_logic: BotLogic
+    bot_logic: LogicBot
 
     _transport: asyncio.transports.Transport = None  # delayed as it has to be set after the connection has been made
     _loop :asyncio.AbstractEventLoop = field(init=False)
@@ -219,35 +227,30 @@ class BotConnectionProtocol(asyncio.Protocol):
         print(f"{Fore.Orchid('MESSAGE')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
 
         tags_group_str,user,channel,text = message.groups()
+        message_context = MessageContext(
+            tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
+            user=user,
+            channel=channel,
+            text=text,
+            transport=self.transport
+        )
 
+        # String is a command
         if text.lower().startswith(self.settings.bot_prefix):
-            cmd_name, *args = text.split(" ")
-            if (cmd_logic:= CommandMemory.get_command_logic(channel, cmd_name.replace(self.settings.bot_prefix, ""))) is None:
-                # No handler was found
-                return
+            cmd_name, *_ = text.split(" ")
+            if (cmd_logic:= LogicMemory.get_command_logic(channel, cmd_name.replace(self.settings.bot_prefix, ""))) is not None:
 
-            # Only after a possible coroutine was found,
-            #   Create the context object, else we loose precious calculation time
-            message_context = MessageContext(
-                tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
-                user=user,
-                channel=channel,
-                text=text,
-                transport=self.transport
-            )
+                # Run some checks if the command can be accessed by the actual user
+                if check_if_user_has_correct_level(cmd_logic, message_context):
+                    await cmd_logic.coroutine(message_context=message_context)
+
+        # String is not a command
+        #   Is always run, even if it is a command string
+        if (msg_logic := LogicMemory.get_normal_message_logic(channel)) is not None:
 
             # Run some checks if the command can be accessed by the actual user
-            if not (
-                (cmd_logic.mod and message_context.tags.mod) or
-                (cmd_logic.sub and message_context.tags.subscriber) or
-                (cmd_logic.vip and message_context.tags.vip) or
-                cmd_logic.user
-            ):
-                print("Couldn't be matched")
-                return
-            else:
-                await cmd_logic.coroutine(message_context=message_context)
-
+            if check_if_user_has_correct_level(msg_logic, message_context):
+                await msg_logic.coroutine(message_context=message_context)
 
     @track_handler
     async def handle_user_notice(self, user_notice:re.Match, *, line:str):

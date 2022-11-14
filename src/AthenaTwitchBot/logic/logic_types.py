@@ -3,8 +3,9 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field, KW_ONLY
+from dataclasses import dataclass, field
 from typing import Coroutine
+import enum
 
 # Athena Packages
 
@@ -14,11 +15,7 @@ from typing import Coroutine
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True, unsafe_hash=True)
-class CommandLogic:
-    name:str # without the prefix (!,?,...)
-
-    # All below this are keyword only
-    _: KW_ONLY
+class MessageLogic:
     coroutine: Coroutine
     user:bool=True
     vip:bool=False
@@ -26,3 +23,13 @@ class CommandLogic:
     mod:bool=False
 
     channels:set[str] = field(default_factory=set)
+
+# ----------------------------------------------------------------------------------------------------------------------
+@dataclass(slots=True, frozen=True, unsafe_hash=True)
+class CommandLogic(MessageLogic):
+    cmd_name:str=None # without the prefix (!,?,...)
+
+# ----------------------------------------------------------------------------------------------------------------------
+class LogicTypes(enum.Enum):
+    MESSAGE = enum.auto()
+    COMMAND = enum.auto()
