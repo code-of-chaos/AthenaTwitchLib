@@ -18,7 +18,8 @@ import base64
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
-_output_enabled:bool=True
+_logging_enabled:bool=True
+_log_all_messages:bool=False
 
 def output_if_enabled(fnc):
     """
@@ -27,8 +28,8 @@ def output_if_enabled(fnc):
     """
     @functools.wraps(fnc)
     async def wrapper(*args, **kwargs):
-        global _output_enabled
-        if not _output_enabled:
+        global _logging_enabled
+        if not _logging_enabled:
             return None
         return await fnc(*args, **kwargs)
     return wrapper
@@ -42,19 +43,15 @@ class BotLogger:
     Master class to handle all logging calls to the sqlite database file.
     """
     path:pathlib.Path
+    logging_enabled:bool=False
+    log_all_messages:bool=False
 
     # Non Init stuff
     logger:ClassVar[BotLogger] = None
 
     @classmethod
-    def set_logger(cls, /,*,output_enabled:bool=True, **kwargs):
-        """
-        Simple class-method to define the .logger attribute of the BotLogger class
-        """
-        global _output_enabled
-        _output_enabled = output_enabled
-
-        cls.logger = cls(**kwargs)
+    def set_logger(cls, **kwargs):
+        cls.logger = BotLogger(**kwargs)
 
     @contextlib.asynccontextmanager
     async def _db_connect(self) -> aiosqlite.Connection:
@@ -96,6 +93,13 @@ class BotLogger:
                 );
             """)
 
+            await db.execute(f"""
+                CREATE TABLE IF NOT EXISTS `handled_message`  (
+                    `id` INTEGER PRIMARY KEY,
+                    `text` TEXT NOT NULL
+                );
+            """)
+
     @output_if_enabled
     async def log_handler_called(self, handler_name:str):
         """
@@ -127,4 +131,15 @@ class BotLogger:
             await db.execute(f"""
                 INSERT INTO unknown_message (text)
                 VALUES ('{base64.b64encode(message.encode()).decode()}');
+            """)
+
+    @output_if_enabled
+    async def log_handled_message(self, line:str):
+        """
+        Logs that an unknown irc tag to the AthenaTwitchBot was found
+        """
+        async with self._db_connect() as db:
+            await db.execute(f"""
+                INSERT INTO handled_message (text)
+                VALUES ('{line}');
             """)

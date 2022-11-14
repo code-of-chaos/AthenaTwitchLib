@@ -27,7 +27,11 @@ async def bot_constructor(settings:BotSettings, bot_logic:BotLogic=None, protoco
     """
     # Define the logger as soon as possible,
     #   As it is called by a lot of different systems
-    BotLogger.set_logger(path=pathlib.Path("data/logger.sqlite"))
+    BotLogger.set_logger(
+        path=pathlib.Path("data/logger.sqlite"),
+        logging_enabled=True,
+        log_all_messages=True,
+    )
     await BotLogger.logger.create_tables()
 
     # Create a custom socket object

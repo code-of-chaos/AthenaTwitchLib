@@ -41,9 +41,10 @@ def track_handler(fnc:Callable) -> Any:
 
     @functools.wraps(fnc)
     async def wrapper(*args, **kwargs):
-        result, _ = await asyncio.gather(
+        result, *_ = await asyncio.gather(
             fnc(*args, **kwargs),
-            BotLogger.logger.log_handler_called(fnc.__name__)
+            BotLogger.logger.log_handler_called(fnc.__name__),
+            BotLogger.logger.log_handled_message(line=kwargs.get("line",None))
         )
         return result
 
@@ -232,7 +233,6 @@ class BotConnectionProtocol(asyncio.Protocol):
         Method is called when twitch sends a USERNOTICE message
         """
         print(f"{Fore.Plum('USERNOTICE')} | {line}")
-        await BotLogger.logger.log_unknown_message(line)
 
     @track_handler
     async def handle_user_state(self, user_state:re.Match, *, line:str):
