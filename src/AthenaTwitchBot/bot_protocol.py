@@ -19,6 +19,7 @@ from AthenaTwitchBot.bot_logic import BotLogic
 from AthenaTwitchBot.tags import TagsPRIVMSG, TagsUSERSTATE
 from AthenaTwitchBot.bot_logger import BotLogger
 from AthenaTwitchBot.commands import CommandMemory
+from AthenaTwitchBot.message_context import MessageContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -218,16 +219,35 @@ class BotConnectionProtocol(asyncio.Protocol):
         print(f"{Fore.Orchid('MESSAGE')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
 
         tags_group_str,user,channel,text = message.groups()
-        tags = await TagsPRIVMSG.import_from_group_as_str(tags_group_str)
 
         if text.lower().startswith(self.settings.bot_prefix):
             cmd_name, *args = text.split(" ")
-            if (coroutine:=CommandMemory.get_coroutine(channel, cmd_name.replace(self.settings.bot_prefix, ""))) is None:
+            if (cmd_logic:= CommandMemory.get_command_logic(channel, cmd_name.replace(self.settings.bot_prefix, ""))) is None:
                 # No handler was found
                 return
+
             # Only after a possible coroutine was found,
             #   Create the context object, else we loose precious calculation time
-            await coroutine()
+            message_context = MessageContext(
+                tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
+                user=user,
+                channel=channel,
+                text=text,
+                transport=self.transport
+            )
+
+            # Run some checks if the command can be accessed by the actual user
+            if not (
+                (cmd_logic.mod and message_context.tags.mod) or
+                (cmd_logic.sub and message_context.tags.subscriber) or
+                (cmd_logic.vip and message_context.tags.vip) or
+                cmd_logic.user
+            ):
+                print("Couldn't be matched")
+                return
+            else:
+                await cmd_logic.coroutine(message_context=message_context)
+
 
     @track_handler
     async def handle_user_notice(self, user_notice:re.Match, *, line:str):
