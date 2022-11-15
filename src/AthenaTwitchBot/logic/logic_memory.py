@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from typing import Callable, Coroutine, Optional
+from typing import Any
 
 # Athena Packages
 
@@ -38,8 +38,8 @@ class _LogicMemory:
         # Else:
         self.msg_command[cmd_key] = logic
 
-    def get_command_logic(self, channel:str, cmd_name:str) -> CommandLogic|None:
-        return self.msg_command.get((channel, cmd_name), None)
+    def get_command_logic(self, channel:str, cmd_name:str, default:Any=None) -> CommandLogic|Any:
+        return self.msg_command.get((channel, cmd_name), default)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Logic for normal user messages -
@@ -52,8 +52,8 @@ class _LogicMemory:
         # Else:
         self.msg_normal[channel] = logic
 
-    def get_normal_message_logic(self, channel: str) -> MessageLogic | None:
-        return self.msg_normal.get(channel, None)
+    def get_normal_message_logic(self, channel: str, default:Any=False) -> MessageLogic | Any:
+        return self.msg_normal.get(channel, default)
 
 
 # ----------------------------------------------------------------------------------------------------------------------

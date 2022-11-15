@@ -6,6 +6,7 @@ from __future__ import annotations
 import socket
 import asyncio
 import pathlib
+import sys
 
 # Athena Packages
 
@@ -25,15 +26,13 @@ async def bot_constructor(
     settings:BotSettings,
     logic_bot:LogicBot=None,
     protocol_type:type[BotConnectionProtocol]=BotConnectionProtocol,
-    logging_enabled:bool=False,
-    loop:asyncio.AbstractEventLoop=None
+    logging_enabled:bool=False
 ):
     """
     Constructor function for the Bot and all its logical systems like the asyncio.Protocol handler.
     It also logs the bot in onto the Twitch IRC server
     """
-    if loop is None:
-        loop = asyncio.get_running_loop()
+    loop = asyncio.get_running_loop()
 
     # Define the logger as soon as possible,
     #   As it is called by a lot of different systems
@@ -113,9 +112,8 @@ async def bot_constructor(
                     continue # restarts it all
 
                 case BotEvent.EXIT:
-                    print("EXIT")
-                    bot_transport.close()
-                    _keep_restarting = False
+                    loop.stop()
+                    break
 
                 case _ :
                     print(result)
@@ -124,3 +122,4 @@ async def bot_constructor(
             raise
 
     # NOTHING AFTER THIS !
+    print("killed")

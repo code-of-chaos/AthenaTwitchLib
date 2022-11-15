@@ -71,7 +71,6 @@ class Tags:
                 await BotLogger.logger.log_unknown_tag(cls._tag_type, attr_name, value)
                 continue
 
-
             # When everything goes as normal
             converted_tags[conversion.new_attr_name] = conversion.callback(value)
 

@@ -26,6 +26,7 @@ class MessageContext:
     text:str
 
     transport:asyncio.Transport
+    bot_event_future:asyncio.Future
 
     async def reply(self, reply_msg:str):
         """

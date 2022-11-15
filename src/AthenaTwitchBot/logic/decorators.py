@@ -20,6 +20,19 @@ def chat_command(**kwargs):
         return fnc
     return decorator
 
+def broadcaster_only_command(**kwargs):
+    def decorator(fnc:Callable):
+        # Overwrites if the kwarg was already set
+        kwargs["user"] = False
+        kwargs["vip"] = False
+        kwargs["sub"] = False
+        kwargs["mod"] = False
+        kwargs["broadcaster"] = True
+        fnc._type = LogicTypes.COMMAND
+        fnc._kwargs = kwargs
+        return fnc
+    return decorator
+
 def mod_only_command(**kwargs):
     def decorator(fnc:Callable):
         # Overwrites if the kwarg was already set

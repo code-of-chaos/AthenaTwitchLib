@@ -23,8 +23,7 @@ class RegexPatterns:
     join:re.Pattern
     part:re.Pattern
 
-    message_command_with_args:re.Pattern
-    message_command_without_args:re.Pattern
+    message_command:re.Pattern
     message:re.Pattern
     user_notice:re.Pattern
     user_state:re.Pattern
@@ -39,7 +38,6 @@ class RegexPatterns:
         self.part = re.compile(fr"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv PART (#.*)")
 
         self.message = re.compile(fr"^@([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :(.*)")
-        self.message_command_with_args = re.compile(fr"^{bot_prefix}([^ ]*) (.*)")
-        self.message_command_without_args = re.compile(fr"^{bot_prefix}([^ ]*)")
+        self.message_command = re.compile(fr"^{bot_prefix}(.*)")
         self.user_notice = re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE #([^:]*) :(.*)")
         self.user_state = re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")

@@ -28,6 +28,7 @@ class MessageLogic:
 @dataclass(slots=True, frozen=True, unsafe_hash=True)
 class CommandLogic(MessageLogic):
     cmd_name:str=None # without the prefix (!,?,...)
+    broadcaster:bool=None
 
 # ----------------------------------------------------------------------------------------------------------------------
 class LogicTypes(enum.Enum):

@@ -20,7 +20,7 @@ from AthenaTwitchBot.tags import TagsPRIVMSG, TagsUSERSTATE
 from AthenaTwitchBot.bot_logger import BotLogger
 from AthenaTwitchBot.logic import LogicMemory, MessageLogic
 from AthenaTwitchBot.message_context import MessageContext
-from AthenaTwitchBot.bot_event_types import BotEvent, BotEventException
+from AthenaTwitchBot.bot_event_types import BotEvent
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -52,22 +52,6 @@ def track_handler(fnc:Callable) -> Any:
         return result
 
     return wrapper
-
-def check_if_user_has_correct_level(logic:MessageLogic, context:MessageContext) -> bool:
-
-    print(logic, context, context.tags, sep="\n")
-
-    if logic.mod and context.tags.moderator:
-        return True
-    elif logic.sub and context.tags.subscriber:
-        return True
-    elif logic.vip and context.tags.vip:
-        return True
-    elif logic.user:
-        return True
-    else:
-        return False
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -137,18 +121,10 @@ class BotConnectionProtocol(asyncio.Protocol):
                 continue
 
             elif message := self.regex_patterns.message.match(line):
-                if cmd_match:=self.regex_patterns.message_command_with_args.match(text := message.groups()[-1]): # cmd with args
-                    self._loop.create_task(self.handle_message_command_with_args(message, cmd_match, line=line))
-                elif cmd_match:=self.regex_patterns.message_command_without_args.match(text):
-                    self._loop.create_task(self.handle_message_command_without_args(message, cmd_match, line=line))
+                if cmd_match := self.regex_patterns.message_command.match(message.groups()[-1]):
+                    self._loop.create_task(self.handle_message_command(message,cmd_match,line=line))
                 else:
                     self._loop.create_task(self.handle_message(message, line=line))
-
-            elif command_without_args := self.regex_patterns.message_command_without_args.match(line):
-                self._loop.create_task(self.handle_message_command_without_args(command_without_args, line=line))
-
-            elif command_with_args := self.regex_patterns.message_command_with_args.match(line):
-                self._loop.create_task(self.handle_message_command_with_args(command_with_args, line=line))
 
             elif line == "PING :tmi.twitch.tv":
                 self._loop.create_task(self.handle_ping(line=line))
@@ -182,7 +158,9 @@ class BotConnectionProtocol(asyncio.Protocol):
 
     def connection_lost(self, exc: Exception | None) -> None:
         # TODO, something here
-        print(exc)
+        if exc is not None:
+            print(exc)
+
         if not self.bot_event_future.done():
             self.bot_event_future.set_result(BotEvent.RESTART)
 
@@ -256,7 +234,7 @@ class BotConnectionProtocol(asyncio.Protocol):
 
         # extract the logic
         #   If no logic can be found, not further actions need to be taken
-        if (msg_logic := LogicMemory.get_normal_message_logic(channel)) is None:
+        if not (msg_logic := LogicMemory.get_normal_message_logic(channel, default=False)):
             return
 
         # Create the context and run more checks
@@ -265,16 +243,13 @@ class BotConnectionProtocol(asyncio.Protocol):
             user=user,
             channel=channel,
             text=text,
-            transport=self.transport
+            transport=self.transport,
+            bot_event_future=self.bot_event_future
         )
-        try:
-            if check_if_user_has_correct_level(msg_logic, message_context):
-                await msg_logic.coroutine(message_context=message_context)
-        except BotEventException as event_exception:
-            self.bot_event_future.set_result(event_exception.event)
+        await msg_logic.coroutine(message_context=message_context)
 
     @track_handler
-    async def handle_message_command_with_args(self, message:re.Match, cmd_match:re.Match, *, line:str):
+    async def handle_message_command(self, message:re.Match, cmd_match:re.Match, *, line:str):
         """
         Method is called when any user (bot or viewer) sends a message in the channel,
         which is presumed to be a bot command
@@ -284,11 +259,11 @@ class BotConnectionProtocol(asyncio.Protocol):
         # Extract data from matched message
         #   Easily done due to regex groups
         tags_group_str,user,channel,text = message.groups()
-        command, args = cmd_match.groups()
+        command, *args = cmd_match.groups()
 
         # extract the logic
         #   If no logic can be found, not further actions need to be taken
-        if (cmd_logic:= LogicMemory.get_command_logic(channel, command)) is None:
+        if not (cmd_logic := LogicMemory.get_command_logic(channel, command, default=False)):
             return
 
         message_context = MessageContext(
@@ -296,15 +271,12 @@ class BotConnectionProtocol(asyncio.Protocol):
             user=user,
             channel=channel,
             text=f"!{command} {args}",
-            transport=self.transport
+            transport=self.transport,
+            bot_event_future=self.bot_event_future
         )
 
-        # String is a command
-        try:
-            if check_if_user_has_correct_level(cmd_logic, message_context):
-                await cmd_logic.coroutine(message_context=message_context)
-        except BotEventException as event_exception:
-            self.bot_event_future.set_result(event_exception.event)
+        # actually call the command
+        await cmd_logic.coroutine(message_context=message_context)
 
     @track_handler
     async def handle_message_command_without_args(self, message: re.Match, cmd_match:re.Match, *, line: str):
@@ -321,7 +293,7 @@ class BotConnectionProtocol(asyncio.Protocol):
 
         # extract the logic
         #   If no logic can be found, not further actions need to be taken
-        if (cmd_logic := LogicMemory.get_command_logic(channel, command)) is None:
+        if cmd_logic := LogicMemory.get_command_logic(channel, default=False):
             return
 
         message_context = MessageContext(
@@ -329,16 +301,12 @@ class BotConnectionProtocol(asyncio.Protocol):
             user=user,
             channel=channel,
             text=f"!{command}",
-            transport=self.transport
+            transport=self.transport,
+            bot_event_future=self.bot_event_future
         )
 
         # String is a command
-        try:
-            if check_if_user_has_correct_level(cmd_logic, message_context):
-                await cmd_logic.coroutine(message_context=message_context)
-
-        except BotEventException as event_exception:
-            self.bot_event_future.set_result(event_exception.event)
+        await cmd_logic.coroutine(message_context=message_context)
 
     @track_handler
     async def handle_user_notice(self, user_notice:re.Match, *, line:str):
