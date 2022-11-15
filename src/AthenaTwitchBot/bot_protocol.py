@@ -14,11 +14,10 @@ from AthenaColor import ForeNest as Fore
 
 # Local Imports
 from AthenaTwitchBot.regex import RegexPatterns
-from AthenaTwitchBot.bot_settings import BotSettings
 from AthenaTwitchBot.logic.logic_bot import LogicBot
 from AthenaTwitchBot.tags import TagsPRIVMSG, TagsUSERSTATE
 from AthenaTwitchBot.bot_logger import BotLogger
-from AthenaTwitchBot.logic import LogicMemory, MessageLogic
+from AthenaTwitchBot.logic import LogicMemory
 from AthenaTwitchBot.message_context import MessageContext
 from AthenaTwitchBot.bot_event_types import BotEvent
 
@@ -62,7 +61,6 @@ class BotConnectionProtocol(asyncio.Protocol):
     Asyncio.Protocol child class,
     Holds all logic to convert the incoming Twitch IRC messages to useful calls/data
     """
-    settings: BotSettings
     regex_patterns: RegexPatterns
     bot_logic: LogicBot
     bot_event_future: asyncio.Future
@@ -157,7 +155,6 @@ class BotConnectionProtocol(asyncio.Protocol):
                 self._loop.create_task(self.handle_UNKNOWN(line))
 
     def connection_lost(self, exc: Exception | None) -> None:
-        # TODO, something here
         if exc is not None:
             print(exc)
 
