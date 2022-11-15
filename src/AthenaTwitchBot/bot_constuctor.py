@@ -19,7 +19,6 @@ from AthenaTwitchBot.string_formatting import twitch_output_format
 from AthenaTwitchBot.bot_protocol import BotConnectionProtocol
 from AthenaTwitchBot.regex import RegexPatterns
 from AthenaTwitchBot.bot_settings import BotSettings
-from AthenaTwitchBot.logic.logic_bot import LogicBot
 from AthenaTwitchBot.bot_logger import BotLogger
 from AthenaTwitchBot.bot_event_types import BotEvent
 
@@ -29,7 +28,6 @@ from AthenaTwitchBot.bot_event_types import BotEvent
 @dataclass(slots=True, kw_only=True)
 class BotConstructor:
     settings: BotSettings
-    logic_bot:LogicBot=None
     protocol_cls:type[BotConnectionProtocol]=BotConnectionProtocol
 
     logging_enabled:bool=False
