@@ -242,7 +242,8 @@ class IrcConnectionProtocol(asyncio.Protocol):
             channel=channel,
             text=text,
             transport=self.transport,
-            bot_event_future=self.bot_event_future
+            bot_event_future=self.bot_event_future,
+            original_line=line
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -267,6 +268,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
                 text=f"!{command}",
                 transport=self.transport,
                 bot_event_future=self.bot_event_future,
+                original_line=line,
                 command=command,
                 args=args.strip().split(" ")
             )

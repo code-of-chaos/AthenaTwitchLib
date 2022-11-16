@@ -19,11 +19,11 @@ from AthenaTwitchBot.irc.tags import TagsPRIVMSG
 @dataclass(slots=True)
 class CommandData:
     cmd_names:list[str]|str
-    allow_user:bool=field(default=True, kw_only=True)
-    allow_sub:bool=field(default=False, kw_only=True)
-    allow_vip:bool=field(default=False, kw_only=True)
-    allow_mod:bool=field(default=False, kw_only=True)
-    allow_broadcaster:bool=field(default=False, kw_only=True)
+    allow_user:bool=field(kw_only=True, default=True)
+    allow_sub:bool=field(kw_only=True, default=False)
+    allow_vip:bool=field(kw_only=True, default=False)
+    allow_mod:bool=field(kw_only=True, default=False)
+    allow_broadcaster:bool=field(kw_only=True, default=False)
 
     def __post_init__(self):
         if isinstance(self.cmd_names, str):
@@ -49,8 +49,7 @@ class CommandLogic(BaseLogic):
 
     async def execute_command(self, context:MessageCommandContext):
         if not (fnc := self._commands.get(context.command, False)):
-            print(self._commands)
-            print(context.command)
+            await self._logger.log_unknown_message(context.original_line)
             return
 
         match fnc._data, context:
@@ -79,19 +78,12 @@ class CommandLogic(BaseLogic):
             # in any other cases
             #   This should never happen
             case _,_:
-                print("UNKNOWN", fnc._data, context, sep="\n")
-                await self._logger.log_unknown_message(context.text)
+                await self._logger.log_unknown_message(context.original_line)
 
 
 
     @staticmethod
     def command(command_data:CommandData):
-        command_data.allow_user = True
-        command_data.allow_sub = True
-        command_data.allow_vip = True
-        command_data.allow_mod = True
-        command_data.allow_broadcaster = True
-
         def decorator(fnc):
             register_callback_as_logical_component(fnc)
             fnc._data = command_data

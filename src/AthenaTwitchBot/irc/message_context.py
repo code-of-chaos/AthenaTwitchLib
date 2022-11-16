@@ -15,7 +15,7 @@ from AthenaTwitchBot.string_formatting import twitch_output_format
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True, kw_only=True, frozen=True)
 class MessageContext:
     """
     Frozen Dataclass which holds the context that will be used by the LogicBot to handle an incomming message
@@ -27,6 +27,7 @@ class MessageContext:
 
     transport:asyncio.Transport
     bot_event_future:asyncio.Future
+    original_line:str
 
     async def reply(self, reply_msg:str):
         """
@@ -49,7 +50,7 @@ class MessageContext:
         )
 
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True,kw_only=True, frozen=True)
 class MessageCommandContext(MessageContext):
     command:str
     args:list[str]
