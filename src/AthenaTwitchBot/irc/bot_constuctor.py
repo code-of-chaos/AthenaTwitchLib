@@ -8,19 +8,19 @@ import functools
 import socket
 import asyncio
 import pathlib
-from dataclasses import dataclass, field, KW_ONLY
+from dataclasses import dataclass, field
 from typing import Callable
 
 # Athena Packages
 from AthenaLib.constants.text import NEW_LINE
 
 # Local Imports
-from AthenaTwitchBot.string_formatting import twitch_output_format
-from AthenaTwitchBot.bot_protocol import BotConnectionProtocol
-from AthenaTwitchBot.regex import RegexPatterns
-from AthenaTwitchBot.bot_settings import BotSettings
-from AthenaTwitchBot.bot_logger import BotLogger
-from AthenaTwitchBot.bot_event_types import BotEvent
+from AthenaTwitchBot.irc.string_formatting import twitch_output_format
+from AthenaTwitchBot.irc.bot_protocol import BotConnectionProtocol
+from AthenaTwitchBot.irc.regex import RegexPatterns
+from AthenaTwitchBot.irc.bot_settings import BotSettings
+from AthenaTwitchBot.logger import IrcLogger, TwitchLoggerType
+from AthenaTwitchBot.irc.bot_event_types import BotEvent
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -42,18 +42,20 @@ class BotConstructor:
         # Define the logger as soon as possible,
         #   As it is called by a lot of different systems
         #   Will create tables if need be
-        BotLogger.set_logger(
-            path=pathlib.Path("data/logger.sqlite"),
-            logging_enabled=self.logging_enabled,
-            log_all_messages=True,
+        IrcLogger.set_logger(
+            logger_type=TwitchLoggerType.IRC,
+            logger=IrcLogger(
+                path=pathlib.Path("data/logger.sqlite"),
+                enabled=self.logging_enabled,
+            )
         )
 
-        self.loop.create_task(BotLogger.logger.create_tables())
+        self.loop.create_task(IrcLogger.get_logger(TwitchLoggerType.IRC).create_tables())
 
     async def construct(self):
         """
         Constructor function for the Bot and all its logical systems like the asyncio.Protocol handler.
-        It also logs the bot in onto the Twitch IRC server
+        It also logs the irc in onto the Twitch IRC server
         """
         while self.restart_attempts != 0:
 
@@ -75,11 +77,11 @@ class BotConstructor:
             # bot_transport: asyncio.Transport
             protocol_obj.transport = bot_transport
 
-            # Log the bot in on the IRC server
+            # Log the irc in on the IRC server
             await self._login_bot(bot_transport)
 
             # Waiting portion of the BotConstructor,
-            #   This regulates the bot starting back up and restarting
+            #   This regulates the irc starting back up and restarting
             match result := await bot_event :
                 case BotEvent.RESTART:
                     self.current_restart_attempt +=1

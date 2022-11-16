@@ -11,7 +11,7 @@ import enum
 from AthenaColor import ForeNest as Fore
 
 # Local Imports
-from AthenaTwitchBot.bot_logger import BotLogger
+from AthenaTwitchBot.irc.bot_logger import BotLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -

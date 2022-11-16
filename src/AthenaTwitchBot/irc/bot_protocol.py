@@ -13,13 +13,10 @@ from typing import Any, Callable
 from AthenaColor import ForeNest as Fore
 
 # Local Imports
-from AthenaTwitchBot.regex import RegexPatterns
-from AthenaTwitchBot.logic.logic_bot import LogicBot
-from AthenaTwitchBot.tags import TagsPRIVMSG, TagsUSERSTATE
-from AthenaTwitchBot.bot_logger import BotLogger
-from AthenaTwitchBot.logic import LogicMemory
-from AthenaTwitchBot.message_context import MessageContext
-from AthenaTwitchBot.bot_event_types import BotEvent
+from AthenaTwitchBot.irc.regex import RegexPatterns
+from AthenaTwitchBot.irc.tags import TagsPRIVMSG, TagsUSERSTATE
+from AthenaTwitchBot.irc.bot_logger import BotLogger
+from AthenaTwitchBot.irc.message_context import MessageContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -175,6 +172,7 @@ class BotConnectionProtocol(asyncio.Protocol):
         # Need to keep alive
         self.transport.write("PONG :tmi.twitch.tv\r\n".encode())
 
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_server_message(self, server_message:re.Match, *, line:str):
         """
@@ -182,7 +180,7 @@ class BotConnectionProtocol(asyncio.Protocol):
         """
         print(f"{Fore.Blue('SERVER_MESSAGE')} | {line}")
 
-
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_server_353(self, server_353: re.Match, *, line: str):
         """
@@ -190,6 +188,7 @@ class BotConnectionProtocol(asyncio.Protocol):
         """
         print(f"{Fore.AliceBlue('SERVER_353')} | {line}")
 
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_server_366(self, server_366: re.Match, *, line: str):
         """
@@ -197,6 +196,7 @@ class BotConnectionProtocol(asyncio.Protocol):
         """
         print(f"{Fore.Ivory('SERVER_366')} | {line}")
 
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_server_cap(self, server_cap: re.Match, *, line: str):
         """
@@ -204,35 +204,33 @@ class BotConnectionProtocol(asyncio.Protocol):
         """
         print(f"{Fore.Khaki('SERVER_CAP')} | {line}")
 
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_join(self, join:re.Match,*, line:str):
         """
-        Method is called when any user (bot or viewer) joins the channel
+        Method is called when any user (irc or viewer) joins the channel
         """
         print(f"{Fore.Red('JOIN')} | {line}")
 
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_part(self, part:re.Match, *, line:str):
         """
-        Method is called when any user (bot or viewer) parts the channel
+        Method is called when any user (irc or viewer) parts the channel
         """
         print(f"{Fore.DeepPink('PART')} | {line}")
 
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_message(self, message:re.Match, *, line:str):
         """
-        Method is called when any user (bot or viewer) sends a regular message in the channel
+        Method is called when any user (irc or viewer) sends a regular message in the channel
         """
         print(f"{Fore.Orchid('MESSAGE')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
 
         # Extract data from matched message
         #   Easily done due to regex groups
         tags_group_str,user,channel,text = message.groups()
-
-        # extract the logic
-        #   If no logic can be found, not further actions need to be taken
-        if not (msg_logic := LogicMemory.get_normal_message_logic(channel, default=False)):
-            return
 
         # Create the context and run more checks
         message_context = MessageContext(
@@ -243,13 +241,13 @@ class BotConnectionProtocol(asyncio.Protocol):
             transport=self.transport,
             bot_event_future=self.bot_event_future
         )
-        await msg_logic.coroutine(message_context=message_context)
 
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_message_command(self, message:re.Match, cmd_match:re.Match, *, line:str):
         """
-        Method is called when any user (bot or viewer) sends a message in the channel,
-        which is presumed to be a bot command
+        Method is called when any user (irc or viewer) sends a message in the channel,
+        which is presumed to be a irc command
         """
         print(f"{Fore.Orchid('MESSAGE_COMMAND_WITH_ARGS')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
 
@@ -257,11 +255,6 @@ class BotConnectionProtocol(asyncio.Protocol):
         #   Easily done due to regex groups
         tags_group_str,user,channel,text = message.groups()
         command, *args = cmd_match.groups()
-
-        # extract the logic
-        #   If no logic can be found, not further actions need to be taken
-        if not (cmd_logic := LogicMemory.get_command_logic(channel, command, default=False)):
-            return
 
         message_context = MessageContext(
             tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
@@ -272,14 +265,12 @@ class BotConnectionProtocol(asyncio.Protocol):
             bot_event_future=self.bot_event_future
         )
 
-        # actually call the command
-        await cmd_logic.coroutine(message_context=message_context)
-
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_message_command_without_args(self, message: re.Match, cmd_match:re.Match, *, line: str):
         """
-        Method is called when any user (bot or viewer) sends a message in the channel,
-        which is presumed to be a bot command
+        Method is called when any user (irc or viewer) sends a message in the channel,
+        which is presumed to be a irc command
         """
         print(f"{Fore.Orchid('MESSAGE_COMMAND_WITHOUT_ARGS')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
 
@@ -287,11 +278,6 @@ class BotConnectionProtocol(asyncio.Protocol):
         #   Easily done due to regex groups
         tags_group_str, user, channel, command = message.groups()
         command, = cmd_match.groups()
-
-        # extract the logic
-        #   If no logic can be found, not further actions need to be taken
-        if cmd_logic := LogicMemory.get_command_logic(channel, default=False):
-            return
 
         message_context = MessageContext(
             tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
@@ -302,9 +288,7 @@ class BotConnectionProtocol(asyncio.Protocol):
             bot_event_future=self.bot_event_future
         )
 
-        # String is a command
-        await cmd_logic.coroutine(message_context=message_context)
-
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_user_notice(self, user_notice:re.Match, *, line:str):
         """
@@ -312,6 +296,7 @@ class BotConnectionProtocol(asyncio.Protocol):
         """
         print(f"{Fore.Plum('USERNOTICE')} | {line}")
 
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_user_state(self, user_state:re.Match, *, line:str):
         """
@@ -321,6 +306,7 @@ class BotConnectionProtocol(asyncio.Protocol):
         tags = await TagsUSERSTATE.import_from_group_as_str(tags_group_str)
         print(f"{Fore.Plum('USERSTATE')} | {line} | {tags}")
 
+    # ------------------------------------------------------------------------------------------------------------------
     @track_handler
     async def handle_UNKNOWN(self, line:str):
         """

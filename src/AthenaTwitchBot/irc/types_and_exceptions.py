@@ -26,3 +26,11 @@ class LineHandlerType(enum.StrEnum):
     USER_NOTICE : enum.auto()
     USER_STATE : enum.auto()
     UNKNOWN : enum.auto()
+
+class BotEvent(enum.Enum):
+    RESTART = enum.auto()
+    EXIT = enum.auto()
+
+class BotEventException(Exception):
+    def __init__(self, event:BotEvent):
+        self.event = event

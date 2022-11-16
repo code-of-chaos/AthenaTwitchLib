@@ -9,8 +9,8 @@ import asyncio
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.tags import TagsPRIVMSG
-from AthenaTwitchBot.string_formatting import twitch_output_format
+from AthenaTwitchBot.irc.tags import TagsPRIVMSG
+from AthenaTwitchBot.irc.string_formatting import twitch_output_format
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
