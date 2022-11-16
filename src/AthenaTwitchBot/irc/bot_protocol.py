@@ -15,8 +15,9 @@ from AthenaColor import ForeNest as Fore
 # Local Imports
 from AthenaTwitchBot.irc.regex import RegexPatterns
 from AthenaTwitchBot.irc.tags import TagsPRIVMSG, TagsUSERSTATE
-from AthenaTwitchBot.irc.bot_logger import BotLogger
+from AthenaTwitchBot.logger import IrcLogger, TwitchLoggerType
 from AthenaTwitchBot.irc.message_context import MessageContext
+from AthenaTwitchBot.irc.types_and_exceptions import BotEvent
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -37,13 +38,13 @@ def track_handler(fnc:Callable) -> Any:
     """
     Simple decorator to keep track of how many calls are made to handlers
     """
-
     @functools.wraps(fnc)
     async def wrapper(*args, **kwargs):
+        logger = IrcLogger.get_logger(TwitchLoggerType.IRC)
         result, *_ = await asyncio.gather(
             fnc(*args, **kwargs),
-            BotLogger.logger.log_handler_called(fnc.__name__),
-            BotLogger.logger.log_handled_message(line=kwargs.get("line",None))
+            logger.log_handler_called(fnc.__name__),
+            logger.log_handled_message(line=kwargs.get("line",None))
         )
         return result
 
@@ -59,11 +60,11 @@ class BotConnectionProtocol(asyncio.Protocol):
     Holds all logic to convert the incoming Twitch IRC messages to useful calls/data
     """
     regex_patterns: RegexPatterns
-    bot_logic: LogicBot
     bot_event_future: asyncio.Future
 
     _transport: asyncio.transports.Transport = None  # delayed as it has to be set after the connection has been made
     _loop :asyncio.AbstractEventLoop = field(init=False)
+    _logger:IrcLogger = field(init=False, default_factory=lambda: IrcLogger.get_logger(TwitchLoggerType.IRC))
 
     def __post_init__(self):
         self._loop = asyncio.get_running_loop()
@@ -313,4 +314,4 @@ class BotConnectionProtocol(asyncio.Protocol):
         Method is called when the protocol can't find an appropriate match for the given string
         """
         print(Fore.SlateGray(f"NOT CAUGHT | {line}"))
-        await BotLogger.logger.log_unknown_message(line)
+        await self._logger.log_unknown_message(line)

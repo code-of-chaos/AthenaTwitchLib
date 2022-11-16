@@ -3,11 +3,9 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-
 import functools
 import socket
 import asyncio
-import pathlib
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -19,8 +17,7 @@ from AthenaTwitchBot.irc.string_formatting import twitch_output_format
 from AthenaTwitchBot.irc.bot_protocol import BotConnectionProtocol
 from AthenaTwitchBot.irc.regex import RegexPatterns
 from AthenaTwitchBot.irc.bot_settings import BotSettings
-from AthenaTwitchBot.logger import IrcLogger, TwitchLoggerType
-from AthenaTwitchBot.irc.bot_event_types import BotEvent
+from AthenaTwitchBot.irc.types_and_exceptions import BotEvent
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -30,27 +27,12 @@ class BotConstructor:
     settings: BotSettings
     protocol_cls:type[BotConnectionProtocol]=BotConnectionProtocol
 
-    logging_enabled:bool=False
     restart_attempts:int=5 # if set to -1, will run forever
     current_restart_attempt:int=0
 
     # Non init
     loop: asyncio.AbstractEventLoop = field(init=False,default_factory=asyncio.get_running_loop)
     bot_event_future: asyncio.Future = field(init=False)
-
-    def __post_init__(self):
-        # Define the logger as soon as possible,
-        #   As it is called by a lot of different systems
-        #   Will create tables if need be
-        IrcLogger.set_logger(
-            logger_type=TwitchLoggerType.IRC,
-            logger=IrcLogger(
-                path=pathlib.Path("data/logger.sqlite"),
-                enabled=self.logging_enabled,
-            )
-        )
-
-        self.loop.create_task(IrcLogger.get_logger(TwitchLoggerType.IRC).create_tables())
 
     async def construct(self):
         """
@@ -126,7 +108,7 @@ class BotConstructor:
 
             # Assign the logic
             #   If this isn't defined, the protocol can't handle anything correctly
-            bot_logic=self.logic_bot,
+            # bot_logic=self.logic_bot,
 
             # For restarts, exits and other special events
             bot_event_future=bot_event

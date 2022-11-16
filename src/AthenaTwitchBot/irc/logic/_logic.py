@@ -11,18 +11,20 @@ from typing import Coroutine, Callable, Tuple, Any, Dict
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.line_handler_type import LineHandlerType
-from AthenaTwitchBot.bot_logger import BotLogger
+from AthenaTwitchBot.irc.types_and_exceptions import LineHandlerType
+from AthenaTwitchBot.logger import IrcLogger, TwitchLoggerType
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class BaseLogic:
     _logic_components: list[Coroutine]
+    _logger:IrcLogger
 
     def __new__(cls, *args, **kwargs):
         obj = super().__new__(cls)
         obj._logic_components = []
+        obj._logger = IrcLogger.get_logger(TwitchLoggerType.IRC)
 
         for item_name in obj.__dir__():
             # Get the item all items from the system that are logical components
@@ -40,8 +42,7 @@ class BaseLogic:
 
 
     async def _logging(self, line:str, line_handler_type:LineHandlerType):
-        logger = BotLogger.logger
         await asyncio.gather(
-            logger.log_handler_called(str(line_handler_type)),
-            logger.log_handled_message(line)
+            self._logger.log_handler_called(str(line_handler_type)),
+            self._logger.log_handled_message(line)
         )

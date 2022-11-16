@@ -10,7 +10,7 @@ from typing import ClassVar
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.tags._tags import Conversion, Tags, TAG_TYPES
+from AthenaTwitchBot.irc.tags._tags import Conversion, Tags, TAG_TYPES
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

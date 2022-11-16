@@ -9,10 +9,10 @@ from typing import Callable
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.logic._logic import BaseLogic
-from AthenaTwitchBot.message_context import MessageContext
-from AthenaTwitchBot.tags import TagsPRIVMSG
-from AthenaTwitchBot.bot_logger import BotLogger
+from AthenaTwitchBot.irc.logic._logic import BaseLogic
+from AthenaTwitchBot.irc.message_context import MessageContext
+from AthenaTwitchBot.irc.tags import TagsPRIVMSG
+from AthenaTwitchBot.logger import IrcLogger, TwitchLoggerType
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
