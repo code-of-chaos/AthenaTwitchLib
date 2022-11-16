@@ -9,20 +9,44 @@ import enum
 from AthenaLib.logging import AthenaSqliteLogger
 
 # Local Imports
+from AthenaTwitchBot.string_formatting import sanitize_sql
 
 # ----------------------------------------------------------------------------------------------------------------------
-# - Code -
+# - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class TwitchLoggerType(enum.StrEnum):
     IRC = enum.auto()
     API = enum.auto()
 
-def sanitize_sql(txt:str) -> str:
-    """
-    Simple function to sanitize the sql input
-    """
-    return txt.replace("'", "''")
+SQL_CREATE_TABLES:list[str] = [
+f"""
+CREATE TABLE IF NOT EXISTS `called_handlers`  (
+    `id` INTEGER PRIMARY KEY,
+    `handler_name` TEXT NOT NULL
+);
+""", f"""
+CREATE TABLE IF NOT EXISTS `unknown_tags`  (
+    `id` INTEGER PRIMARY KEY,
+    `tag_type` TEXT NOT NULL,
+    `tag_name` TEXT NOT NULL,
+    `tag_value` TEXT NOT NULL
+);
+""", f"""
+CREATE TABLE IF NOT EXISTS `unknown_message`  (
+    `id` INTEGER PRIMARY KEY,
+    `text` TEXT NOT NULL
+);
+""", f"""
+CREATE TABLE IF NOT EXISTS `handled_message`  (
+    `id` INTEGER PRIMARY KEY,
+    `text` TEXT NOT NULL
+);
+"""
+]
 
+# ----------------------------------------------------------------------------------------------------------------------
+# - Code -
+# ----------------------------------------------------------------------------------------------------------------------
 class IrcLogger(AthenaSqliteLogger):
 
     async def create_tables(self):
@@ -32,35 +56,8 @@ class IrcLogger(AthenaSqliteLogger):
         """
         with self.if_enabled():
             async with self._db_connect() as db:
-                await db.execute(f"""
-                    CREATE TABLE IF NOT EXISTS `called_handlers`  (
-                        `id` INTEGER PRIMARY KEY,
-                        `handler_name` TEXT NOT NULL
-                    );
-                """)
-
-                await db.execute(f"""
-                    CREATE TABLE IF NOT EXISTS `unknown_tags`  (
-                        `id` INTEGER PRIMARY KEY,
-                        `tag_type` TEXT NOT NULL,
-                        `tag_name` TEXT NOT NULL,
-                        `tag_value` TEXT NOT NULL
-                    );
-                """)
-
-                await db.execute(f"""
-                    CREATE TABLE IF NOT EXISTS `unknown_message`  (
-                        `id` INTEGER PRIMARY KEY,
-                        `text` TEXT NOT NULL
-                    );
-                """)
-
-                await db.execute(f"""
-                    CREATE TABLE IF NOT EXISTS `handled_message`  (
-                        `id` INTEGER PRIMARY KEY,
-                        `text` TEXT NOT NULL
-                    );
-                """)
+                for sql in SQL_CREATE_TABLES:
+                    await db.execute(sql)
 
     async def log_handler_called(self, handler_name:str):
         """

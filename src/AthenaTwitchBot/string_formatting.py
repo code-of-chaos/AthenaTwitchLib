@@ -17,3 +17,9 @@ def twitch_output_format(text:str) -> bytes:
     """
     text_flat:str = text.replace('\r\n',' ').replace('\n',' ')
     return f"{text_flat}\r\n".encode("utf_8")
+
+def sanitize_sql(txt:str) -> str:
+    """
+    Simple function to sanitize the sql input
+    """
+    return txt.replace("'", "''")

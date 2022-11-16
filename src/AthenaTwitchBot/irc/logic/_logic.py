@@ -5,14 +5,20 @@
 from __future__ import annotations
 import inspect
 import asyncio
-import functools
-from typing import Coroutine, Callable, Tuple, Any, Dict
+from typing import Coroutine, Callable
 
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.irc.types_and_exceptions import LineHandlerType
+from AthenaTwitchBot.irc.data.enums import LineHandlerType
 from AthenaTwitchBot.logger import IrcLogger, TwitchLoggerType
+
+# ----------------------------------------------------------------------------------------------------------------------
+# - Support Code -
+# ----------------------------------------------------------------------------------------------------------------------
+def register_callback_as_logical_component(fnc: Callable):
+    assert inspect.iscoroutinefunction(fnc), f"{fnc} was not a asyncio coroutine"
+    fnc._logic_component = True
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -34,12 +40,6 @@ class BaseLogic:
             obj._logic_components.append(item)
 
         return obj
-
-    @classmethod
-    def register_callback_as_logical_component(cls, fnc:Callable):
-        assert inspect.iscoroutinefunction(fnc), f"{fnc} was not a asyncio coroutine"
-        fnc._logic_component = True
-
 
     async def _logging(self, line:str, line_handler_type:LineHandlerType):
         await asyncio.gather(

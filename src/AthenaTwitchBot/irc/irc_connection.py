@@ -13,20 +13,24 @@ from typing import Callable
 from AthenaLib.constants.text import NEW_LINE
 
 # Local Imports
-from AthenaTwitchBot.irc.string_formatting import twitch_output_format
-from AthenaTwitchBot.irc.bot_protocol import BotConnectionProtocol
+from AthenaTwitchBot.irc.irc_connection_protocol import IrcConnectionProtocol
 from AthenaTwitchBot.irc.regex import RegexPatterns
-from AthenaTwitchBot.irc.bot_settings import BotSettings
-from AthenaTwitchBot.irc.types_and_exceptions import BotEvent
+from AthenaTwitchBot.irc.data.enums import BotEvent
+from AthenaTwitchBot.irc.bot import Bot
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, kw_only=True)
-class BotConstructor:
-    settings: BotSettings
-    protocol_cls:type[BotConnectionProtocol]=BotConnectionProtocol
+class IrcConnection:
+    bot_obj:Bot
 
+    ssl_enabled: bool = True
+    irc_host: str = 'irc.chat.twitch.tv'
+    irc_port: int = 6667
+    irc_port_ssl: int = 6697
+
+    protocol_cls:type[IrcConnectionProtocol]=IrcConnectionProtocol
     restart_attempts:int=5 # if set to -1, will run forever
     current_restart_attempt:int=0
 
@@ -47,8 +51,8 @@ class BotConstructor:
 
             bot_transport, protocol_obj = await self.loop.create_connection( # type: asyncio.BaseTransport, object
                 protocol_factory=self._protocol_constructor(bot_event),
-                server_hostname=self.settings.irc_host,
-                ssl=self.settings.ssl_enabled,
+                server_hostname=self.irc_host,
+                ssl=self.ssl_enabled,
                 sock=self._assemble_socket()
             )
             if bot_transport is None:
@@ -57,12 +61,12 @@ class BotConstructor:
             # Give the protocol the transporter,
             #   so it can easily create write calls to the connection
             # bot_transport: asyncio.Transport
-            protocol_obj.transport = bot_transport
+            protocol_obj.transport = self.bot_obj.transport = bot_transport
 
             # Log the irc in on the IRC server
-            await self._login_bot(bot_transport)
+            await self.bot_obj.login()
 
-            # Waiting portion of the BotConstructor,
+            # Waiting portion of the IrcConnection,
             #   This regulates the irc starting back up and restarting
             match result := await bot_event :
                 case BotEvent.RESTART:
@@ -85,8 +89,8 @@ class BotConstructor:
         sock.settimeout(5.)
         sock.connect(
             (
-                self.settings.irc_host,
-                self.settings.irc_port_ssl if self.settings.ssl_enabled else self.settings.irc_port
+                self.irc_host,
+                self.irc_port_ssl if self.ssl_enabled else self.irc_port
             )
         )
         return sock
@@ -102,39 +106,14 @@ class BotConstructor:
             # Creates a new regex pattern
             #   in the event that it's matches must change during a restart
             regex_patterns=RegexPatterns(
-                bot_name=self.settings.bot_name,
-                bot_prefix=self.settings.bot_prefix
+                bot_name=self.bot_obj.name,
+                bot_prefix=self.bot_obj.prefix
             ),
 
             # Assign the logic
             #   If this isn't defined, the protocol can't handle anything correctly
-            # bot_logic=self.logic_bot,
+            bot_obj=self.bot_obj,
 
             # For restarts, exits and other special events
             bot_event_future=bot_event
         )
-
-    async def _login_bot(self, bot_transport:asyncio.BaseTransport|asyncio.Transport):
-        """
-        Steps that need to be taken for the Bot to be logged into the Twitch IRC chat
-        """
-        # Login into the irc chat
-        #   Not handled by the protocol,
-        #   as it is a direct write only feature and doesn't need to respond to anything
-        bot_transport.write(twitch_output_format(f"PASS oauth:{self.settings.bot_oath_token}"))
-        bot_transport.write(twitch_output_format(f"NICK {self.settings.bot_name}"))
-        for channel in self.settings.bot_join_channel:
-            bot_transport.write(twitch_output_format(f"JOIN #{channel}"))
-
-        # Request correct capabilities
-        if self.settings.bot_capability_tags:  # this should always be requested, else answering to chat is not possible
-            bot_transport.write(twitch_output_format(f"CAP REQ :twitch.tv/tags"))
-        if self.settings.bot_capability_commands:
-            bot_transport.write(twitch_output_format(f"CAP REQ :twitch.tv/commands"))
-        if self.settings.bot_capability_membership:
-            bot_transport.write(twitch_output_format(f"CAP REQ :twitch.tv/membership"))
-
-        # will catch all those that are Truthy (not: "", None, False, ...)
-        if self.settings.bot_join_message:
-            for channel in self.settings.bot_join_channel:
-                bot_transport.write(twitch_output_format(f"PRIVMSG #{channel} :{self.settings.bot_join_message}"))

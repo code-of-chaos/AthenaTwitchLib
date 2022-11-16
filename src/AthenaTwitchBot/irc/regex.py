@@ -38,6 +38,6 @@ class RegexPatterns:
         self.part = re.compile(fr"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv PART (#.*)")
 
         self.message = re.compile(fr"^@([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :(.*)")
-        self.message_command = re.compile(fr"^{bot_prefix}(.*)")
+        self.message_command = re.compile(fr"^{bot_prefix}([^ ]*)(.*)")
         self.user_notice = re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE #([^:]*) :(.*)")
         self.user_state = re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")

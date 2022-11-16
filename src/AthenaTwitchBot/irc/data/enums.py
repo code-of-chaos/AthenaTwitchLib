@@ -28,9 +28,8 @@ class LineHandlerType(enum.StrEnum):
     UNKNOWN : enum.auto()
 
 class BotEvent(enum.Enum):
+    """
+    Types of Events that can be raised inside of the Bot
+    """
     RESTART = enum.auto()
     EXIT = enum.auto()
-
-class BotEventException(Exception):
-    def __init__(self, event:BotEvent):
-        self.event = event

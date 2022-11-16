@@ -10,7 +10,7 @@ import asyncio
 
 # Local Imports
 from AthenaTwitchBot.irc.tags import TagsPRIVMSG
-from AthenaTwitchBot.irc.string_formatting import twitch_output_format
+from AthenaTwitchBot.string_formatting import twitch_output_format
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -47,3 +47,9 @@ class MessageContext:
                 f"PRIVMSG #{self.channel} :{write_msg}"
             )
         )
+
+# ----------------------------------------------------------------------------------------------------------------------
+@dataclass(slots=True, frozen=True)
+class MessageCommandContext(MessageContext):
+    command:str
+    args:list[str]

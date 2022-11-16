@@ -16,17 +16,18 @@ from AthenaColor import ForeNest as Fore
 from AthenaTwitchBot.irc.regex import RegexPatterns
 from AthenaTwitchBot.irc.tags import TagsPRIVMSG, TagsUSERSTATE
 from AthenaTwitchBot.logger import IrcLogger, TwitchLoggerType
-from AthenaTwitchBot.irc.message_context import MessageContext
-from AthenaTwitchBot.irc.types_and_exceptions import BotEvent
+from AthenaTwitchBot.irc.message_context import MessageContext,MessageCommandContext
+from AthenaTwitchBot.irc.data.enums import BotEvent
+from AthenaTwitchBot.irc.bot import Bot
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class _TransportBuffer:
     """
-    Simple class to be used by the `BotConnectionProtocol`, before the transporter object is actually set.
+    Simple class to be used by the `IrcConnectionProtocol`, before the transporter object is actually set.
     It keeps the to be sent message into a small buffer, for it to then be parsed and deleted once the
-    actual transporter is present in the `BotConnectionProtocol`
+    actual transporter is present in the `IrcConnectionProtocol`
     """
     buffer: list[bytes] = []
 
@@ -54,13 +55,14 @@ def track_handler(fnc:Callable) -> Any:
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
-class BotConnectionProtocol(asyncio.Protocol):
+class IrcConnectionProtocol(asyncio.Protocol):
     """
     Asyncio.Protocol child class,
     Holds all logic to convert the incoming Twitch IRC messages to useful calls/data
     """
     regex_patterns: RegexPatterns
     bot_event_future: asyncio.Future
+    bot_obj:Bot
 
     _transport: asyncio.transports.Transport = None  # delayed as it has to be set after the connection has been made
     _loop :asyncio.AbstractEventLoop = field(init=False)
@@ -248,45 +250,26 @@ class BotConnectionProtocol(asyncio.Protocol):
     async def handle_message_command(self, message:re.Match, cmd_match:re.Match, *, line:str):
         """
         Method is called when any user (irc or viewer) sends a message in the channel,
-        which is presumed to be a irc command
+        which is presumed to be an irc command
         """
-        print(f"{Fore.Orchid('MESSAGE_COMMAND_WITH_ARGS')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
+        print(f"{Fore.Orchid('MESSAGE_COMMAND')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
 
         # Extract data from matched message
         #   Easily done due to regex groups
         tags_group_str,user,channel,text = message.groups()
-        command, *args = cmd_match.groups()
+        command, args = cmd_match.groups()
 
-        message_context = MessageContext(
-            tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
-            user=user,
-            channel=channel,
-            text=f"!{command} {args}",
-            transport=self.transport,
-            bot_event_future=self.bot_event_future
-        )
-
-    # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
-    async def handle_message_command_without_args(self, message: re.Match, cmd_match:re.Match, *, line: str):
-        """
-        Method is called when any user (irc or viewer) sends a message in the channel,
-        which is presumed to be a irc command
-        """
-        print(f"{Fore.Orchid('MESSAGE_COMMAND_WITHOUT_ARGS')} | {message.groups()[-1]} | {Fore.SlateGray(line)}")
-
-        # Extract data from matched message
-        #   Easily done due to regex groups
-        tags_group_str, user, channel, command = message.groups()
-        command, = cmd_match.groups()
-
-        message_context = MessageContext(
-            tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
-            user=user,
-            channel=channel,
-            text=f"!{command}",
-            transport=self.transport,
-            bot_event_future=self.bot_event_future
+        await self.bot_obj.command_logic.execute_command(
+            context=MessageCommandContext(
+                tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
+                user=user,
+                channel=channel,
+                text=f"!{command}",
+                transport=self.transport,
+                bot_event_future=self.bot_event_future,
+                command=command,
+                args=args.strip().split(" ")
+            )
         )
 
     # ------------------------------------------------------------------------------------------------------------------
