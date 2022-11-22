@@ -50,3 +50,7 @@ class MessageContext:
 class MessageCommandContext(MessageContext):
     command:str
     args:list[str]
+
+    def __post_init__(self):
+        if self.args == ['']:
+            self.args.clear()
