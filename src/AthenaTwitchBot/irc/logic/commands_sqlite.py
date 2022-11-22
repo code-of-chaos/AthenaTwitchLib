@@ -4,12 +4,12 @@
 # General Packages
 from __future__ import annotations
 import pathlib
-from typing import AsyncContextManager, Coroutine
+from typing import AsyncContextManager
 import contextlib
 import aiosqlite
 import enum
 import asyncio
-from dataclasses import field, dataclass
+from dataclasses import dataclass
 
 # Athena Packages
 from AthenaLib.constants.types import PATHLIKE
@@ -74,13 +74,17 @@ class OutputTypes(enum.StrEnum):
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class CommandLogicSqlite(BaseLogic):
+    """
+    Logic system for commands that are retrieved from a database.
+    The database in this case, is an SQLite db file.
+    """
     db_path:pathlib.Path
 
     def __new__(cls, *args, db_path:PATHLIKE, **kwargs):
         obj = super().__new__(cls, *args, *kwargs)
         obj.db_path = pathlib.Path(db_path)
 
-        asyncio.get_running_loop().create_task(obj._db_create_tables())
+        asyncio.get_running_loop().create_task(cls._db_create_tables(obj))
 
         return obj
 
@@ -101,11 +105,20 @@ class CommandLogicSqlite(BaseLogic):
                 await db.commit()
 
     async def _db_create_tables(self):
+        """
+        Method which is run at the start of the bot.
+        Executes SQL lines, which need to ensure that the correct tables are present on the Database, without overriding
+        them if they are already present.
+        """
         async with self._db_connect() as db:
             for sql in SQL_CREATE_TABLES:
                 await db.execute(sql)
 
     async def get_command(self, context:MessageCommandContext) -> CommandData|False:
+        """
+        Method which retrieves the command from the database, if present.
+        Otherwise, will  return False.
+        """
         async with self._db_connect(auto_commit=False) as db:
             db: aiosqlite.Connection
 
@@ -122,12 +135,15 @@ class CommandLogicSqlite(BaseLogic):
                             return data
                         case _,_:
                             continue
-
         return False
 
 
 
     async def execute_command(self, context:MessageCommandContext):
+        """
+        Main entry point from the Async Protocol, will first try and find a corresponding command within the database
+        Afterwards it executes the command, following the correct format
+        """
         if not (data := await self.get_command(context)): #type: CommandData
             return
 
@@ -135,35 +151,3 @@ class CommandLogicSqlite(BaseLogic):
             await context.write(data.output_text)
         elif data.output_type == OutputTypes.REPLY:
             await context.reply(data.output_text)
-
-        # if not (fnc := self._commands.get(context.command, False)):
-        #     await self._logger.log_unknown_message(context.original_line)
-        #     return
-        #
-        # match fnc._data, context:
-        #
-        #     # a command that all users can access
-        #     case CommandData(allow_user=True), _:
-        #         print("NORMAL")
-        #         await fnc(context)
-        #
-        #     case CommandData(allow_broadcaster=True), MessageCommandContext(user=user, channel=channel) if user == f":{channel}!{channel}@{channel}.tmi.twitch.tv":
-        #         print("BROADCASTER")
-        #         await fnc(context)
-        #
-        #     case CommandData(allow_mod=True), MessageCommandContext(tags=TagsPRIVMSG(moderator=True)):
-        #         print("MOD")
-        #         await fnc(context)
-        #
-        #     case CommandData(allow_sub=True), MessageCommandContext(tags=TagsPRIVMSG(subscriber=True)):
-        #         print("SUB")
-        #         await fnc(context)
-        #
-        #     case CommandData(allow_vip=True), MessageCommandContext(tags=TagsPRIVMSG(vip=True)):
-        #         print("VIP")
-        #         await fnc(context)
-        #
-        #     # in any other cases
-        #     #   This should never happen
-        #     case _,_:
-        #         await self._logger.log_unknown_message(context.original_line)
