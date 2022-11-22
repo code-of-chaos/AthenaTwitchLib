@@ -105,7 +105,7 @@ class CommandLogicSqlite(BaseLogic):
             for sql in SQL_CREATE_TABLES:
                 await db.execute(sql)
 
-    async def get_command(self, context:MessageCommandContext) -> Coroutine|False:
+    async def get_command(self, context:MessageCommandContext) -> CommandData|False:
         async with self._db_connect(auto_commit=False) as db:
             db: aiosqlite.Connection
 
@@ -116,16 +116,26 @@ class CommandLogicSqlite(BaseLogic):
                     match context, data:
                         case MessageCommandContext(args=['']), CommandData(command_arg=None):
                             print("no arg", data)
+                            return data
                         case MessageCommandContext(args=args), CommandData(command_arg=stored_arg) if args[0] == stored_arg:
                             print("with arg", data)
+                            return data
                         case _,_:
-                            print("not found", data)
+                            continue
+
+        return False
 
 
 
     async def execute_command(self, context:MessageCommandContext):
-        if not (coroutine := await self.get_command(context)):
+        if not (data := await self.get_command(context)): #type: CommandData
             return
+
+        if data.output_type == OutputTypes.WRITE:
+            await context.write(data.output_text)
+        elif data.output_type == OutputTypes.REPLY:
+            await context.reply(data.output_text)
+
         # if not (fnc := self._commands.get(context.command, False)):
         #     await self._logger.log_unknown_message(context.original_line)
         #     return
