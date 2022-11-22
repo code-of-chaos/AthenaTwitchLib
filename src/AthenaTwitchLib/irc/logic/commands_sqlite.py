@@ -81,6 +81,7 @@ class OutputTypes(enum.StrEnum):
     WRITE = enum.auto()
     REPLY = enum.auto()
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
@@ -125,6 +126,9 @@ class CommandLogicSqlite(BaseLogic):
             for sql in SQL_CREATE_TABLES:
                 await db.execute(sql)
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Command execution -
+    # ------------------------------------------------------------------------------------------------------------------
     async def execute_command(self, context:MessageCommandContext) -> None:
         """
         Main entry point from the Async Protocol, will first try and find a corresponding command within the database
@@ -138,8 +142,18 @@ class CommandLogicSqlite(BaseLogic):
         if not self.validate_user(context, data):
             return
 
-        # stage 3: execute command
+        # stage 3: Execute command
         await self.parse_command_type(context, data)
+
+
+    @staticmethod
+    async def output(context: MessageCommandContext, data: CommandData, msg: str):
+        if data.output_type == OutputTypes.WRITE:
+            await context.write(msg)
+        elif data.output_type == OutputTypes.REPLY:
+            await context.reply(msg)
+        else:
+            raise ValueError(data.output_type)
 
     async def get_command(self, context:MessageCommandContext) -> CommandData|False:
         """
@@ -152,15 +166,13 @@ class CommandLogicSqlite(BaseLogic):
             # noinspection SqlType
             async with db.execute(f"SELECT * FROM commands WHERE `command_name` == '{context.command}'") as cursor:
                 for row in await cursor.fetchall(): #type: aiosqlite.Row
-                    data = CommandData(**dict(row))
+                    match context, data := CommandData(**dict(row)):
+                        case MessageCommandContext(args=_), CommandData(command_arg=None|"*"):
+                            return data
 
-                    match context, data:
-                        case MessageCommandContext(args=['']), CommandData(command_arg=None):
-                            print("no arg", data)
+                        case MessageCommandContext(args=args), CommandData(command_arg=stored_arg) if stored_arg == args[0]:
                             return data
-                        case MessageCommandContext(args=args), CommandData(command_arg=stored_arg) if args[0] == stored_arg:
-                            print("with arg", data)
-                            return data
+
                         case _,_:
                             continue
         return False
@@ -181,20 +193,29 @@ class CommandLogicSqlite(BaseLogic):
             return True
         elif data.allow_vip and context.tags.vip:
             return True
-        else:
-            return False
 
-    @staticmethod
-    async def parse_command_type(context:MessageCommandContext, data:CommandData) -> None:
+        return False
+
+    async def parse_command_type(self, context:MessageCommandContext, data:CommandData) -> None:
         match data:
             case CommandData(command_type=CommandTypes.PLAIN):
-                if data.output_type == OutputTypes.WRITE:
-                    await context.write(data.output_text)
-                elif data.output_type == OutputTypes.REPLY:
-                    await context.reply(data.output_text)
+                await self.output(context, data, data.output_text)
 
             case CommandData(command_type=CommandTypes.EXIT):
                 context.bot_event_future.set_result(BotEvent.EXIT)
 
             case CommandData(command_type=CommandTypes.RESTART):
+                # restart has a deferred argument parsing
+                #   Meaning that the first argument can be interpreted as a delay integer, in seconds
+                if context.args:
+                    try:
+                        await asyncio.gather(
+                            self.output(context, data, data.output_text.format(delay=(delay:=int(context.args[0])))),
+                            asyncio.sleep(delay)
+                        )
+                    # delay couldn't be cast into a string
+                    except ValueError:
+                        pass
+                    
+                # Even if there are args, we still need to trigger the restart
                 context.bot_event_future.set_result(BotEvent.RESTART)
