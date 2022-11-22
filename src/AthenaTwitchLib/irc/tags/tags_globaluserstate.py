@@ -9,7 +9,7 @@ from typing import ClassVar, Literal
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.irc.tags._tags import Conversion, Tags, TAG_TYPES
+from AthenaTwitchLib.irc.tags._tags import Conversion, Tags, TAG_TYPES
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

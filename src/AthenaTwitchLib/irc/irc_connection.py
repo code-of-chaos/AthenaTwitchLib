@@ -13,10 +13,10 @@ from typing import Callable
 from AthenaLib.constants.text import NEW_LINE
 
 # Local Imports
-from AthenaTwitchBot.irc.irc_connection_protocol import IrcConnectionProtocol
-from AthenaTwitchBot.irc.regex import RegexPatterns
-from AthenaTwitchBot.irc.data.enums import BotEvent
-from AthenaTwitchBot.irc.bot import Bot
+from AthenaTwitchLib.irc.irc_connection_protocol import IrcConnectionProtocol
+from AthenaTwitchLib.irc.regex import RegexPatterns
+from AthenaTwitchLib.irc.data.enums import BotEvent
+from AthenaTwitchLib.irc.bot import Bot
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

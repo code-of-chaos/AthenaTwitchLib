@@ -3,27 +3,18 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import ClassVar
 
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.irc.tags._tags import Conversion, Tags, TAG_TYPES
+from AthenaTwitchLib.irc.data.enums import BotEvent
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True, frozen=True)
-class TagsNOTICE(Tags):
+class BotEventException(Exception):
     """
-    Class for Twitch IRC Tags, that are from the NOTICE message
+    Simple exception to be raised by a bot, and caught by the constructor.
     """
-    msg_id:str=None
-    target_user_id:str=None
-
-    _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.NOTICE
-    _CONVERSION_MAPPING:ClassVar[dict] = {
-        "msg-id": Conversion("room_id",int),
-        "target-user-id": Conversion("target_user_id",str)
-    }
+    def __init__(self, event:BotEvent):
+        self.event = event

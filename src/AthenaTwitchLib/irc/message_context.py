@@ -9,8 +9,8 @@ import asyncio
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.irc.tags import TagsPRIVMSG
-from AthenaTwitchBot.string_formatting import twitch_output_format
+from AthenaTwitchLib.irc.tags import TagsPRIVMSG
+from AthenaTwitchLib.string_formatting import twitch_irc_output_format
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -34,9 +34,7 @@ class MessageContext:
         Replies to the given message of the channel where it came from:
         """
         self.transport.write(
-            twitch_output_format(
-                f"@reply-parent-msg-id={self.tags.id} PRIVMSG #{self.channel} :{reply_msg}"
-            )
+            twitch_irc_output_format(f"@reply-parent-msg-id={self.tags.id} PRIVMSG #{self.channel} :{reply_msg}")
         )
 
     async def write(self, write_msg:str):
@@ -44,9 +42,7 @@ class MessageContext:
         Writes a message to the channel it came from:
         """
         self.transport.write(
-            twitch_output_format(
-                f"PRIVMSG #{self.channel} :{write_msg}"
-            )
+            twitch_irc_output_format(f"PRIVMSG #{self.channel} :{write_msg}")
         )
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -9,9 +9,9 @@ from typing import Callable
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.irc.logic._logic import BaseLogic,register_callback_as_logical_component
-from AthenaTwitchBot.irc.message_context import MessageCommandContext
-from AthenaTwitchBot.irc.tags import TagsPRIVMSG
+from AthenaTwitchLib.irc.logic._logic import BaseLogic,register_callback_as_logical_component
+from AthenaTwitchLib.irc.message_context import MessageCommandContext
+from AthenaTwitchLib.irc.tags import TagsPRIVMSG
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

@@ -23,11 +23,11 @@ Stay tuned for updates while we work on this on [stream](https://www.twitch.tv/d
 # --- Imports ---
 import os
 
-from AthenaTwitchBot.models.twitch_bot.twitch_bot import TwitchBot
-from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_command import BotCommand
-from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
-from AthenaTwitchBot.models.launcher import Launcher
-from AthenaTwitchBot.models.twitch_channel import TwitchChannel
+from AthenaTwitchLib.models.twitch_bot.twitch_bot import TwitchBot
+from AthenaTwitchLib.models.twitch_bot.bot_methods.bot_command import BotCommand
+from AthenaTwitchLib.models.twitch_bot.message_context import MessageContext
+from AthenaTwitchLib.models.launcher import Launcher
+from AthenaTwitchLib.models.twitch_channel import TwitchChannel
 
 # --- Code ---
 class SomeBot(TwitchBot):

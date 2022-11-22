@@ -4,31 +4,26 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
-import datetime
 from typing import ClassVar
 
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.irc.tags._tags import Conversion, Tags, TAG_TYPES
+from AthenaTwitchLib.irc.tags._tags import Conversion, Tags, TAG_TYPES
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True)
-class TagsCLEARCHAT(Tags):
+class TagsNOTICE(Tags):
     """
-    Class for Twitch IRC Tags, that are from the CLEARCHAT message
+    Class for Twitch IRC Tags, that are from the NOTICE message
     """
-    ban_duration:int=None
-    room_id:str=None
+    msg_id:str=None
     target_user_id:str=None
-    tmi_sent_ts: datetime.datetime=None
 
-    _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.CLEARCHAT
+    _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.NOTICE
     _CONVERSION_MAPPING:ClassVar[dict] = {
-        "ban-duration": Conversion("ban_duration",int),
-        "room-id": Conversion("room_id",int),
-        "target-user-id": Conversion("target_user_id",str),
-        "tmi-sent-ts": Conversion("tmi_sent_ts",datetime.datetime.fromtimestamp),
+        "msg-id": Conversion("room_id",int),
+        "target-user-id": Conversion("target_user_id",str)
     }

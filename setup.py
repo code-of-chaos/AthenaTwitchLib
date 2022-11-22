@@ -23,7 +23,7 @@ def version_handler() -> str:
     return ".".join(str(i) for i in version)
 
 setuptools.setup(
-    name="AthenaTwitchBot",
+    name="AthenaTwitchLib",
     version=version_handler(),
     author="Andreas Sas",
     author_email="",

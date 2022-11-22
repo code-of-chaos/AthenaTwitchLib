@@ -10,8 +10,8 @@ from abc import ABC, abstractmethod
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.logger import IrcLogger, TwitchLoggerType
-from AthenaTwitchBot.irc.message_context import MessageCommandContext
+from AthenaTwitchLib.logger import IrcLogger, TwitchLoggerType
+from AthenaTwitchLib.irc.message_context import MessageCommandContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -

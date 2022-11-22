@@ -9,7 +9,7 @@ import enum
 from AthenaLib.logging import AthenaSqliteLogger
 
 # Local Imports
-from AthenaTwitchBot.string_formatting import sanitize_sql
+from AthenaTwitchLib.string_formatting import sanitize_sql
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -72,7 +72,7 @@ class IrcLogger(AthenaSqliteLogger):
 
     async def log_unknown_tag(self, tag_type:str, tag_name:str, tag_value:str):
         """
-        Logs that an unknown irc tag to the AthenaTwitchBot was found
+        Logs that an unknown irc tag to the AthenaTwitchLib was found
         """
         with self.if_enabled():
             async with self._db_connect() as db:
@@ -83,7 +83,7 @@ class IrcLogger(AthenaSqliteLogger):
 
     async def log_unknown_message(self, message:str):
         """
-        Logs that an unknown irc tag to the AthenaTwitchBot was found
+        Logs that an unknown irc tag to the AthenaTwitchLib was found
         """
         with self.if_enabled():
             async with self._db_connect() as db:
@@ -94,7 +94,7 @@ class IrcLogger(AthenaSqliteLogger):
 
     async def log_handled_message(self, line:str):
         """
-        Logs that an unknown irc tag to the AthenaTwitchBot was found
+        Logs that an unknown irc tag to the AthenaTwitchLib was found
         """
         with self.if_enabled():
             async with self._db_connect() as db:

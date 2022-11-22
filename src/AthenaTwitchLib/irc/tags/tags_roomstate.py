@@ -4,31 +4,34 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
-import datetime
 from typing import ClassVar
 
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchBot.irc.tags._tags import Conversion, Tags, TAG_TYPES
+from AthenaTwitchLib.irc.tags._tags import Conversion, Tags, TAG_TYPES
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, frozen=True)
-class TagsCLEARMSG(Tags):
+class TagsROOMSTATE(Tags):
     """
-    Class for Twitch IRC Tags, that are from the CLEARMSG message
+    Class for Twitch IRC Tags, that are from the ROOMSTATE message
     """
-    login:str=None
-    room_id:str=None
-    target_user_id:str=None
-    tmi_sent_ts: datetime.datetime=None
+    emote_only:bool=None
+    followers_only:bool=None
+    r9k:bool=None
+    room_id:int=None
+    slow:int=None
+    subs_only:bool=None
 
-    _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.CLEARMSG
+    _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.ROOMSTATE
     _CONVERSION_MAPPING:ClassVar[dict] = {
-        "login": Conversion("login",str),
+        "emote-only": Conversion("emote_only",lambda obj: bool(int(obj))),
+        "followers-only": Conversion("followers_only",lambda obj: bool(int(obj))),
+        "r9k": Conversion("r9k",lambda obj: bool(int(obj))),
         "room-id": Conversion("room_id",int),
-        "target-user-id": Conversion("target_user_id",str),
-        "tmi-sent-ts": Conversion("tmi_sent_ts",datetime.datetime.fromtimestamp),
+        "slow": Conversion("slow",int),
+        "subs-only": Conversion("subs_only",lambda obj: bool(int(obj))),
     }

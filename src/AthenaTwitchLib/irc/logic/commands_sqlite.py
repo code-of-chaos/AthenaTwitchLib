@@ -15,8 +15,8 @@ from dataclasses import dataclass
 from AthenaLib.constants.types import PATHLIKE
 
 # Local Imports
-from AthenaTwitchBot.irc.logic._logic import BaseLogic
-from AthenaTwitchBot.irc.message_context import MessageCommandContext
+from AthenaTwitchLib.irc.logic._logic import BaseLogic
+from AthenaTwitchLib.irc.message_context import MessageCommandContext
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -

@@ -13,12 +13,12 @@ from typing import Any, Callable
 from AthenaColor import ForeNest as Fore
 
 # Local Imports
-from AthenaTwitchBot.irc.regex import RegexPatterns
-from AthenaTwitchBot.irc.tags import TagsPRIVMSG, TagsUSERSTATE
-from AthenaTwitchBot.logger import IrcLogger, TwitchLoggerType
-from AthenaTwitchBot.irc.message_context import MessageContext,MessageCommandContext
-from AthenaTwitchBot.irc.data.enums import BotEvent
-from AthenaTwitchBot.irc.bot import Bot
+from AthenaTwitchLib.irc.regex import RegexPatterns
+from AthenaTwitchLib.irc.tags import TagsPRIVMSG, TagsUSERSTATE
+from AthenaTwitchLib.logger import IrcLogger, TwitchLoggerType
+from AthenaTwitchLib.irc.message_context import MessageContext,MessageCommandContext
+from AthenaTwitchLib.irc.data.enums import BotEvent
+from AthenaTwitchLib.irc.bot import Bot
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
