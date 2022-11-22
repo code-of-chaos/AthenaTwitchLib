@@ -239,6 +239,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         message_context = MessageContext(
             tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
             user=user,
+            username=self.regex_patterns.username.findall(user)[0],
             channel=channel,
             text=text,
             transport=self.transport,
@@ -264,6 +265,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
             context=MessageCommandContext(
                 tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
                 user=user,
+                username=self.regex_patterns.username.findall(user)[0],
                 channel=channel,
                 text=f"!{command}",
                 transport=self.transport,

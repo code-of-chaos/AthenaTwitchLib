@@ -74,6 +74,7 @@ class CommandTypes(enum.StrEnum):
     """
 
     PLAIN = enum.auto()
+    FORMAT = enum.auto()
     EXIT = enum.auto()
     RESTART = enum.auto()
 
@@ -148,10 +149,16 @@ class CommandLogicSqlite(BaseLogic):
 
     @staticmethod
     async def output(context: MessageCommandContext, data: CommandData, msg: str):
+
+        msg_formatted = msg.format(
+            username=context.username,
+            channel=context.channel,
+        )
+
         if data.output_type == OutputTypes.WRITE:
-            await context.write(msg)
+            await context.write(msg_formatted)
         elif data.output_type == OutputTypes.REPLY:
-            await context.reply(msg)
+            await context.reply(msg_formatted)
         else:
             raise ValueError(data.output_type)
 
@@ -197,9 +204,20 @@ class CommandLogicSqlite(BaseLogic):
         return False
 
     async def parse_command_type(self, context:MessageCommandContext, data:CommandData) -> None:
+        """
+        If a command has been found, parse it's args and text corresponding to the CommandType
+        """
         match data:
             case CommandData(command_type=CommandTypes.PLAIN):
                 await self.output(context, data, data.output_text)
+
+            case CommandData(command_type=CommandTypes.FORMAT):
+                await self.output( context, data, data.output_text.format(
+                    **{
+                        f"args_{i}":a
+                        for i, a in enumerate(context.args)
+                    }
+                ))
 
             case CommandData(command_type=CommandTypes.EXIT):
                 context.bot_event_future.set_result(BotEvent.EXIT)
@@ -216,6 +234,6 @@ class CommandLogicSqlite(BaseLogic):
                     # delay couldn't be cast into a string
                     except ValueError:
                         pass
-                    
+
                 # Even if there are args, we still need to trigger the restart
                 context.bot_event_future.set_result(BotEvent.RESTART)

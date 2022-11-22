@@ -27,6 +27,7 @@ class RegexPatterns:
     message:re.Pattern
     user_notice:re.Pattern
     user_state:re.Pattern
+    username:re.Pattern
 
     def __init__(self, bot_name:str, bot_prefix:str):
         self.server_message = re.compile(fr"^((:tmi.twitch.tv) \d\d\d ({bot_name}) :)")
@@ -41,3 +42,5 @@ class RegexPatterns:
         self.message_command = re.compile(fr"^{bot_prefix}([^ ]*)(.*)")
         self.user_notice = re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE #([^:]*) :(.*)")
         self.user_state = re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")
+        self.user_state = re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")
+        self.username = re.compile(r":([^!]*)!\1@\1.tmi.twitch.tv")

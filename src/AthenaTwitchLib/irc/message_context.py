@@ -3,6 +3,8 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+
+import re
 from dataclasses import dataclass
 import asyncio
 
@@ -18,16 +20,18 @@ from AthenaTwitchLib.string_formatting import twitch_irc_output_format
 @dataclass(slots=True, kw_only=True, frozen=True)
 class MessageContext:
     """
-    Frozen Dataclass which holds the context that will be used by the LogicBot to handle an incomming message
+    Frozen Dataclass which holds the context that will be used by the LogicBot to handle an incoming message
     """
     tags:TagsPRIVMSG
     user:str
+    username:str
     channel:str
     text:str
 
     transport:asyncio.Transport
     bot_event_future:asyncio.Future
     original_line:str
+
 
     async def reply(self, reply_msg:str):
         """
