@@ -24,12 +24,8 @@ def register_callback_as_logical_component(fnc: Callable):
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class BaseLogic(ABC):
-    """
-    Logic system for commands that need to be executed.
-    This is simply a base class and needs to be extended to fully work.
-    """
     _logic_components: list[Coroutine]
-    _logger:IrcLogger
+    _logger: IrcLogger
 
     def __new__(cls, *args, **kwargs):
         obj = super().__new__(cls)
@@ -37,7 +33,7 @@ class BaseLogic(ABC):
         # Retrieve all items that are marked as a '_logic_component'
         obj._logic_components = list(
             filter(
-                lambda i : hasattr(i, "_logic_component"),
+                lambda i: hasattr(i, "_logic_component"),
                 (getattr(obj, i) for i in obj.__dir__())
             )
         )
@@ -45,6 +41,11 @@ class BaseLogic(ABC):
 
         return obj
 
+class BaseCommandLogic(BaseLogic, ABC):
+    """
+    Logic system for commands that need to be executed.
+    This is simply a base class and needs to be extended to fully work.
+    """
     @abstractmethod
     async def execute_command(self, context: MessageCommandContext):
         """

@@ -9,7 +9,7 @@ import asyncio
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchLib.irc.logic import CommandLogic
+from AthenaTwitchLib.irc.logic import CommandLogic, TaskLogic
 from AthenaTwitchLib.string_formatting import twitch_irc_output_format
 from AthenaTwitchLib.logger import IrcLogger, TwitchLoggerType
 
@@ -33,6 +33,7 @@ class Bot:
 
     # KW only
     command_logic:CommandLogic = field(kw_only=True, default_factory=CommandLogic)
+    task_logic:TaskLogic = field(kw_only=True, default_factory=TaskLogic)
 
     # non init
     transport:asyncio.BaseTransport|asyncio.Transport = field(init=False)

@@ -9,7 +9,7 @@ from typing import Callable
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchLib.irc.logic._logic import BaseLogic,register_callback_as_logical_component
+from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic,register_callback_as_logical_component
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG
 
@@ -34,7 +34,7 @@ class CommandData:
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class CommandLogic(BaseLogic):
+class CommandLogic(BaseCommandLogic):
     _commands: dict[str: Callable]
 
     def __new__(cls, *args, **kwargs):

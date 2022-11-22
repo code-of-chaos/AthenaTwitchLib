@@ -16,7 +16,7 @@ from AthenaLib.constants.types import PATHLIKE
 
 from AthenaTwitchLib.irc.data.enums import BotEvent
 # Local Imports
-from AthenaTwitchLib.irc.logic._logic import BaseLogic
+from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ class OutputTypes(enum.StrEnum):
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class CommandLogicSqlite(BaseLogic):
+class CommandLogicSqlite(BaseCommandLogic):
     """
     Logic system for commands that are retrieved from a database.
     The database in this case, is an SQLite db file.
