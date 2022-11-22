@@ -13,6 +13,10 @@ import enum
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class LineHandlerType(enum.StrEnum):
+    """
+    Types of calls that are caught by the Protocol system.
+    Used for logging.
+    """
     PING : enum.auto()
     SERVER_MESSAGE : enum.auto()
     SERVER_353 : enum.auto()
@@ -29,7 +33,7 @@ class LineHandlerType(enum.StrEnum):
 
 class BotEvent(enum.Enum):
     """
-    Types of Events that can be raised inside of the Bot
+    Types of Events that can be raised inside the Bot
     """
     RESTART = enum.auto()
     EXIT = enum.auto()
