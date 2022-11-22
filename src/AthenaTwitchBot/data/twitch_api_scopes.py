@@ -3,7 +3,10 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+
 import enum
+from collections.abc import Mapping
+from typing import Self
 
 # Custom Library
 
@@ -59,5 +62,5 @@ class TwitchApiScopes(enum.Enum):
     WhispersEdit = "whispers:edit"
 
     @classmethod
-    def string_mapping(cls) -> dict[str:enum.Enum]:
+    def string_mapping(cls) -> Mapping[str, Self]:  # type: ignore [valid-type]
         return {v.value:v for v in cls._member_map_.values()}

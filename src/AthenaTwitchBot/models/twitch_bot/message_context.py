@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # Custom Library
 
@@ -18,18 +18,18 @@ from AthenaTwitchBot.models.twitch_user import TwitchUser
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(kw_only=True, slots=True)
 class MessageContext:
-    raw_input:bytearray=None
-    raw_input_decoded:str=None
-    raw_input_decoded_split:list[str]=None
-    chat_message:tuple[str]=None
+    raw_input:bytes | None=None
+    raw_input_decoded:str | None=None
+    raw_input_decoded_split:list[str] = field(default_factory=list)
+    chat_message:tuple[str, ...] = ()
     flag:MessageFlags=MessageFlags.undefined
-    output:str=None
-    _tags:MessageTags=None
-    _channel:TwitchChannel=None
-    _user:TwitchUser=None
+    output:str | None=None
+    _tags:MessageTags = MessageTags()
+    _channel:TwitchChannel=TwitchChannel('')
+    _user:TwitchUser=TwitchUser('')
     rate_limited:bool=False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.raw_input is not None:
             self.raw_input_decoded = self.raw_input.decode("utf_8")
             self.raw_input_decoded_split = self.raw_input_decoded.split(" ")
@@ -38,36 +38,36 @@ class MessageContext:
     # - Properties -
     # ------------------------------------------------------------------------------------------------------------------
     @property
-    def tags(self):
+    def tags(self) -> MessageTags:
         return self._tags
     @tags.setter
-    def tags(self, value:str):
+    def tags(self, value:str) -> None:
         if value is not None:
             self._tags = MessageTags.new_from_tags_str(value)
 
     # ------------------------------------------------------------------------------------------------------------------
     @property
-    def channel(self):
+    def channel(self) -> TwitchChannel:
         return self._channel
     @channel.setter
-    def channel(self, value:str):
+    def channel(self, value:str) -> None:
         self._channel = TwitchChannel(value)
     # ------------------------------------------------------------------------------------------------------------------
     @property
-    def user(self):
+    def user(self) -> TwitchUser:
         return self._user
     @user.setter
-    def user(self, value:str):
+    def user(self, value:str) -> None:
         self._user = TwitchUser(value)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Special methods -
     # ------------------------------------------------------------------------------------------------------------------
-    def write(self,output: str):
+    def write(self,output: str) -> None:
         self.output = output
         self.flag = MessageFlags.write
 
-    def reply(self, output: str):
+    def reply(self, output: str) -> None:
         if self.raw_input is None: # which means the context was probably created in a task or something like it
             raise ValueError(
                 "This context was not created as a reponse to a chat message and therefor can't reply to anything"

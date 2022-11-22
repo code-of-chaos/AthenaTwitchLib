@@ -22,7 +22,7 @@ class TwitchChannel:
     """
     name:str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.name[0] != "#":
             self.name = f"#{self.name}"
 

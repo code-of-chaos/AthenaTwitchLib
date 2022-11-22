@@ -4,6 +4,9 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass, field
+from collections.abc import Mapping
+from typing import Any
+from typing import Self
 
 # Custom Library
 
@@ -15,26 +18,24 @@ from AthenaTwitchBot.data.twitch_api_scopes import TwitchApiScopes
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, kw_only=True)
 class TwitchApiUser:
-    id:str=None
-    login:str=None
-    display_name:str=None
-    type:str=None
-    broadcaster_type:str=None
-    description:str=None
-    profile_image_url:str=None
-    offline_image_url:str=None
-    view_count:int=None
-    email:str=None
-    created_at:str=None
+    id:str | None = None
+    login:str | None = None
+    display_name:str | None = None
+    type:str | None = None
+    broadcaster_type:str | None = None
+    description:str | None = None
+    profile_image_url:str | None = None
+    offline_image_url:str | None = None
+    view_count:int | None = None
+    email:str | None = None
+    created_at:str | None = None
 
-    scopes:set[TwitchApiScopes]=None
+    scopes:set[TwitchApiScopes] | None = None
 
+    # `data` actually should have a type like Mapping[str, str | None]: type checker issue
     @classmethod
-    def new_from_dict(cls, data:dict) -> TwitchApiUser:
-        obj = cls()
-        for k,v in data.items():
-            setattr(obj, k, v)
-        return obj
+    def new_from_dict(cls, data:Mapping[str, Any]) -> Self:  # type: ignore[valid-type]
+        return cls(**data)
 
     def set_scopes(self, data:list[str]) -> TwitchApiUser:
         scopes_string_mapping = TwitchApiScopes.string_mapping()

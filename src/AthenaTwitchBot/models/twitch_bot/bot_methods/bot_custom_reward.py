@@ -4,12 +4,15 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
+from collections.abc import Callable
+from collections.abc import MutableMapping
 from typing import ClassVar
 
 # Custom Library
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_method_inheritance.callback import BotMethodCallback
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_method_inheritance.callback import TBMCCallback
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -33,20 +36,16 @@ class BotCustomReward(BotMethodCallback):
         The command needs this value to define on which eedeem it should trigger the callback
     - args : Boolean option to allow the remaining chat words after the command to be used in the `args` argument
     """
-    custom_reward_id:str=None
-    registered:ClassVar[dict[str,BotCustomReward]]=None
+    custom_reward_id:str | None = None
+    registered:ClassVar[MutableMapping[str, BotCustomReward]]={}
 
     @classmethod
     def register(
             cls,custom_reward_id:str,
             *,
             args:bool=False
-    ):
+    ) -> Callable[[TBMCCallback], None]:
         """Registers the function to the class"""
-        # make sure the register exists
-        if cls.registered is None:
-            cls.registered = {}
-
         # make sure we don't overwrite an already defined command with the same name
         if custom_reward_id in cls.registered:
             raise ValueError(f"A BotCustomReward with the custom_reward_id of '{custom_reward_id}' already exists")
@@ -55,7 +54,7 @@ class BotCustomReward(BotMethodCallback):
         #   Doesn't behave like a regular decorator because we aren't storing a "wrapper" which handles args and kwargs
         #   Args and kwargs of the function are handled by the handle_chat_message function
         #   It is expected that the function is located within the defined TwitchBot of the application
-        def decorator(fnc):
+        def decorator(fnc: TBMCCallback) -> None:
             cls.registered[custom_reward_id] = cls(
                 custom_reward_id=custom_reward_id,
                 callback=fnc,

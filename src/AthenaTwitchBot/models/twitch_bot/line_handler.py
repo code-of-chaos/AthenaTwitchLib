@@ -3,28 +3,37 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from typing import Callable
+
+from collections.abc import Callable
+from collections.abc import Mapping
+from collections.abc import Awaitable
+from typing import Any
+from typing import ClassVar
 
 # Custom Library
 from AthenaLib.data.text import NOTHING
 from AthenaColor import ForeNest
 
 # Custom Packages
+import AthenaTwitchBot.data.global_vars as gbl
 from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
+from AthenaTwitchBot.models.twitch_bot.message_tags import MessageTags
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_command import BotCommand
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_mentioned import BotMentioned
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_mentioned_start import BotMentionedStart
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_custom_reward import BotCustomReward
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_first_time_chatter import BotFirstTimeChatter
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_chat_message import BotChatMessage
+from AthenaTwitchBot.models.twitch_bot.both_methods.bot_method_inheritance.callback import BotMethodCallback
+from AthenaTwitchBot.models.twitch_user import TwitchUser
+from AthenaTwitchBot.models.twitch_channel import TwitchChannel
 from AthenaTwitchBot.data.message_flags import MessageFlags
 from AthenaTwitchBot.data.irc_twitch import *
-import AthenaTwitchBot.data.global_vars as gbl
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
-async def _execute_command(command:BotCommand, context:MessageContext):
+async def _execute_command(command:BotMethodCallback, context:MessageContext) -> Any:
     if command.args:
         await command(callback_self=gbl.bot, context=context, args=context.chat_message[1:])
     else:
@@ -34,11 +43,11 @@ async def _execute_command(command:BotCommand, context:MessageContext):
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class LineHandler:
-    TWITCH_SPECIFIC_IRC_MAPPING: dict[str:Callable] = None
-    TWITCH_IRC_MAPPING: dict[str:Callable] = None
+    TWITCH_SPECIFIC_IRC_MAPPING: ClassVar[Mapping[str, Callable[[MessageContext], Awaitable[None]]]] = {}
+    TWITCH_IRC_MAPPING: ClassVar[Mapping[str, Callable[[MessageContext], Awaitable[None]]]] = {}
 
     @classmethod
-    def _define_mappings(cls):
+    def _define_mappings(cls) -> None:
         cls.TWITCH_SPECIFIC_IRC_MAPPING = {
             "CLEARCHAT": cls.handle_irc_clearchat,
             "CLEARMSG": cls.handle_irc_clearmsg,
@@ -51,13 +60,13 @@ class LineHandler:
             "USERSTATE": cls.handle_irc_userstate,
             "WHISPER": cls.handle_irc_whisper,
         }
-        cls.TWITCH_IRC_MAPPING: dict[str:Callable] = {
+        cls.TWITCH_IRC_MAPPING = {
             "PART": cls.handle_user_part,
             "JOIN": cls.handle_user_join,
         }
 
     @classmethod
-    async def handle_line(cls, line:bytearray):
+    async def handle_line(cls, line:bytes) -> None:
         if cls.TWITCH_SPECIFIC_IRC_MAPPING is None:
             cls._define_mappings()
 
@@ -65,10 +74,12 @@ class LineHandler:
         #   This is handled by the MessageContext class
         #   Decoding of the line into a string format is also handled by the MessageContext class
         await cls.handle_context(context := MessageContext(raw_input=line))
+        assert gbl.bot_server is not None
         await gbl.bot_server.output_all(context)
 
     @classmethod
     async def handle_context(cls,context:MessageContext) -> None:
+        assert gbl.bot is not None
         # match the pattern of th line to something we can use and pas off to other "sub handlers"
         #   User "sub handlers" for ease of writing and stuff like that
         match context.raw_input_decoded_split:
@@ -87,10 +98,10 @@ class LineHandler:
                 # PRIVMSG
                 # #directiveathena
                 # :that sentence was poggers
-                context.tags = tags
-                context.channel = channel_str
-                context.user = user_name_str
-                context.chat_message = text
+                context.tags = MessageTags.new_from_tags_str(tags)
+                context.channel = TwitchChannel(channel_str)
+                context.user = TwitchUser(user_name_str)
+                context.chat_message = tuple(text)
                 await cls.handle_chat_message(context)
                 return
 
@@ -102,9 +113,9 @@ class LineHandler:
                 # :tmi.twitch.tv
                 # ...
                 # #directiveathena
-                context.tags = tags
-                context.channel = channel_str
-                context.chat_message = text
+                context.tags = MessageTags.new_from_tags_str(tags)
+                context.channel = TwitchChannel(channel_str)
+                context.chat_message = tuple(text)
                 await cls.TWITCH_SPECIFIC_IRC_MAPPING[twitch_specific_irc](context)
                 return
 
@@ -115,9 +126,9 @@ class LineHandler:
                 # :twidi_angel!twidi_angel@twidi_angel.tmi.twitch.tv
                 # PART
                 # #directiveathena
-                context.channel = channel_str
-                context.user = user_name_str
-                context.chat_message = text
+                context.channel = TwitchChannel(channel_str)
+                context.user = TwitchUser(user_name_str)
+                context.chat_message = tuple(text)
                 await cls.TWITCH_IRC_MAPPING[twitch_irc](context,)
                 return
 
@@ -180,58 +191,59 @@ class LineHandler:
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def handle_bot_join(cls, context:MessageContext):
+    async def handle_bot_join(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
     @classmethod
-    async def handle_bot_capabilities(cls, context:MessageContext,capability:str):
+    async def handle_bot_capabilities(cls, context:MessageContext,capability:str) -> None:
         context.flag = MessageFlags.no_output
     @classmethod
-    async def handle_bot_channel(cls, context:MessageContext):
-        context.flag = MessageFlags.no_output
-
-    # ------------------------------------------------------------------------------------------------------------------
-    @classmethod
-    async def handle_user_join(cls, context:MessageContext):
-        context.flag = MessageFlags.no_output
-    @classmethod
-    async def handle_user_part(cls, context:MessageContext):
+    async def handle_bot_channel(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    async def handle_irc_clearchat(cls, context:MessageContext):
+    async def handle_user_join(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
     @classmethod
-    async def handle_irc_clearmsg(cls, context:MessageContext):
+    async def handle_user_part(cls, context:MessageContext) -> None:
+        context.flag = MessageFlags.no_output
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @classmethod
+    async def handle_irc_clearchat(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
     @classmethod
-    async def handle_irc_globaluserstate(cls, context:MessageContext):
+    async def handle_irc_clearmsg(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
     @classmethod
-    async def handle_irc_hosttarget(cls, context:MessageContext):
+    async def handle_irc_globaluserstate(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
     @classmethod
-    async def handle_irc_notice(cls, context:MessageContext):
+    async def handle_irc_hosttarget(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
     @classmethod
-    async def handle_irc_reconnect(cls, context:MessageContext):
+    async def handle_irc_notice(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
     @classmethod
-    async def handle_irc_roomstate(cls, context:MessageContext):
+    async def handle_irc_reconnect(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
     @classmethod
-    async def handle_irc_usernotice(cls, context:MessageContext):
+    async def handle_irc_roomstate(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
     @classmethod
-    async def handle_irc_userstate(cls, context:MessageContext):
+    async def handle_irc_usernotice(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
     @classmethod
-    async def handle_irc_whisper(cls, context:MessageContext):
+    async def handle_irc_userstate(cls, context:MessageContext) -> None:
+        context.flag = MessageFlags.no_output
+    @classmethod
+    async def handle_irc_whisper(cls, context:MessageContext) -> None:
         context.flag = MessageFlags.no_output
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
     async def handle_chat_message(cls, context:MessageContext) -> None:
+        assert gbl.bot is not None
         # define context attributes before it is handed off to the specific callback (or not used at all)
         #   Done so the user can use this information in their specific callback code
 

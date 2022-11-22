@@ -22,7 +22,7 @@ class TwitchUser:
     """
     name:str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # :billy_ikanda!billy_ikanda@billy_ikanda.tmi.twitch.tv
         self.name = self.name.split("!")[0][1:]
 

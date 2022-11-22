@@ -4,8 +4,11 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass, field
+from collections.abc import Callable
+from collections.abc import MutableMapping
+from collections.abc import Mapping
 from typing import Any
-from typing import Callable
+from typing import Self
 
 # Custom Library
 from AthenaLib.data.text import NOTHING
@@ -22,7 +25,7 @@ from AthenaColor import ForeNest, HEX
 #   The key is the string stored in the irc but because it used characters that can't be used as class attributes names,
 #       the key has to be mapped to the corresponding attr name and any conversion that needs to be done
 
-MESSAGE_TAG_MAPPING:dict[str:tuple[str,Callable]] = {
+MESSAGE_TAG_MAPPING: Mapping[str, tuple[str, Callable[[Any], Any]]] = {
     "badge-info":                   ("badge_info",                  (_return_as_is := lambda value: value)),
     "badges":                       ("badges",                      _return_as_is),
     "client-nonce":                 ("client_nonce",                _return_as_is),
@@ -88,13 +91,14 @@ class MessageTags:
     vip:bool=False
 
     @classmethod
-    def new_from_tags_str(cls, tags_str:str) -> MessageTags:
-        attr_value:dict[str:Any] = {}
+    def new_from_tags_str(cls, tags_str:str) -> Self:  # type: ignore [valid-type]
+      # issue with type checkers, should be somthing like: MutableMapping[str, str | HEX | bool]
+        attr_value: MutableMapping[str, Any] = {}
         for tag_value in tags_str.split(";"):
             tag,value = tag_value.split("=")
             try:
                 attr_name, callback = MESSAGE_TAG_MAPPING[tag.replace("@", "")]
-                attr_value[attr_name] = callback(value=value)
+                attr_value[attr_name] = callback(value)
             except KeyError:
                 # don't make this crash the bot !
                 print(ForeNest.Maroon(f"{tag} not found in mapping"))

@@ -3,17 +3,24 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+from collections.abc import Awaitable
 from dataclasses import dataclass, field
-from typing import Callable, ClassVar
+from typing import Any
+from typing import Callable
+from typing import ClassVar
+from typing import TypeAlias
 
 # Custom Library
 from AthenaLib.models.time import TimeValue, Minute
 
 # Custom Packages
-
+from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
+_TBotTaskCallback = Callable[[Any, MessageContext], Awaitable[None]]
+
+
 @dataclass(slots=True)
 class BotTask:
     """
@@ -34,22 +41,19 @@ class BotTask:
     - channel : list of TwitchChannel values which defines on which channels this command should be enabled.
         If left unassigned it will work on all channels the bot is joined on
     """
-    callback:Callable
+
+    callback:_TBotTaskCallback
     interval:TimeValue=field(default_factory=lambda: Minute(10))
-    registered:ClassVar[list[BotTask]]=None
+    registered:ClassVar[list[BotTask]]=[]
 
     @classmethod
-    def register(cls, *,interval:TimeValue=Minute(10)):
+    def register(cls, *,interval:TimeValue=Minute(10)) -> Callable[[_TBotTaskCallback], None]:
         """Registers the function to the class"""
-        # make sure the register exists
-        if cls.registered is None:
-            cls.registered = []
-
         # allows the usage as a decorator
         #   Doesn't behave like a regular decorator because we aren't storing a "wrapper" which handles args and kwargs
         #   Args and kwargs of the function are handled by the handle_chat_message function
         #   It is expected that the function is located within the defined TwitchBot of the application
-        def decorator(fnc):
+        def decorator(fnc: _TBotTaskCallback) -> None:
             cls.registered.append(
                 cls(callback=fnc, interval=interval)
             )

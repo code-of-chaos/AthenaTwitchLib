@@ -4,8 +4,10 @@
 # General Packages
 from __future__ import annotations
 import socket
-from dataclasses import dataclass, field
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from typing import NoReturn
 
 # Custom Library
 from AthenaColor import ForeNest
@@ -32,15 +34,15 @@ class BotServer:
     irc_port_ssl:int=6697
 
     # things that aren't normally customized, but you never know what a user might want
-    chat_bot_protocol:type[TwitchBotProtocol]=TwitchBotProtocol
+    chat_bot_protocol:Callable[[], asyncio.BaseProtocol]=lambda: TwitchBotProtocol()
     logic_output:LogicOutput=field(default_factory=LogicOutput)
 
     # non init stuff
-    bot_transport:asyncio.Transport=field(init=False, repr=False)
-    bot_tasks:set[asyncio.Task]=field(init=False, repr=False, default_factory=set)
+    bot_transport:asyncio.BaseTransport=field(init=False, repr=False)
+    bot_tasks:set[asyncio.Task[None]]=field(init=False, repr=False, default_factory=set)
     loop:asyncio.AbstractEventLoop=field(init=False, repr=False)
 
-    async def launch(self):
+    async def launch(self) -> None:
         # self.loop.create_task(self.start_chat_bot(self.loop))
         await self.start_chat_bot()
         print(ForeNest.Gold("CONNECTED"))
@@ -57,7 +59,7 @@ class BotServer:
     # ------------------------------------------------------------------------------------------------------------------
     # - Launch the chat bot -
     # ------------------------------------------------------------------------------------------------------------------
-    async def start_chat_bot(self):
+    async def start_chat_bot(self) -> None:
         sock = socket.socket()
         sock.settimeout(5.)
         sock.connect((self.irc_host,self.irc_port_ssl if self.ssl_enabled else self.irc_port))
@@ -72,7 +74,8 @@ class BotServer:
         if self.bot_transport is None:
             raise ConnectionRefusedError
 
-    async def login_chat_bot(self):
+    async def login_chat_bot(self) -> None:
+        assert gbl.bot is not None
         await self.output_twitch(MessageContext(
             flag=MessageFlags.login,output=f"PASS oauth:{gbl.bot.oauth_token}")
         )
@@ -92,39 +95,42 @@ class BotServer:
     # ------------------------------------------------------------------------------------------------------------------
     # - Capabilities -
     # ------------------------------------------------------------------------------------------------------------------
-    async def set_twitch_capability_commands(self):
+    async def set_twitch_capability_commands(self) -> None:
+        assert gbl.bot is not None
         if gbl.bot.twitch_capability_commands:
             await self.output_twitch(MessageContext(flag=MessageFlags.login,output=irc_twitch.REQUEST_COMMANDS))
-    async def set_twitch_capability_membership(self):
+    async def set_twitch_capability_membership(self) -> None:
+        assert gbl.bot is not None
         if gbl.bot.twitch_capability_membership:
             await self.output_twitch(MessageContext(flag=MessageFlags.login,output=irc_twitch.REQUEST_COMMANDS))
-    async def set_twitch_capability_tags(self):
+    async def set_twitch_capability_tags(self) -> None:
+        assert gbl.bot is not None
         if gbl.bot.twitch_capability_tags:
             await self.output_twitch(MessageContext(flag=MessageFlags.login,output=irc_twitch.REQUEST_TAGS))
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Register and start up tasks to be run every interval -
     # ------------------------------------------------------------------------------------------------------------------
-    async def start_chat_bot_tasks(self):
-        if BotTask.registered is not None:
-            for task in BotTask.registered: #type:BotTask
-                loop = asyncio.get_running_loop()
-                coro = loop.create_task(self.schedule_chat_bot_task(task=task))
-                asyncio.ensure_future(coro, loop=loop)
-                self.bot_tasks.add(coro)
-
-    async def schedule_chat_bot_task(self, task:BotTask):
+    async def schedule_chat_bot_task(self, task:BotTask) -> NoReturn:
+        assert gbl.bot is not None
         while True:
             await asyncio.sleep(task.interval.to_int_as_seconds())
             context = MessageContext(_channel=gbl.bot.channel)
-            await task.callback(self=gbl.bot, context=context)
+            await task.callback(gbl.bot, context)
             await self.output_all(context)
             del context
+
+    async def start_chat_bot_tasks(self) -> None:
+        for task in BotTask.registered:
+            loop = asyncio.get_running_loop()
+            coro = loop.create_task(self.schedule_chat_bot_task(task=task))
+            asyncio.ensure_future(coro, loop=loop)
+            self.bot_tasks.add(coro)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Outputs -
     # ------------------------------------------------------------------------------------------------------------------
-    async def output_all(self, context:MessageContext):
+    async def output_all(self, context:MessageContext) -> None:
         await asyncio.gather(
             *[self.output_direct(
                 output_type=t,
@@ -132,10 +138,10 @@ class BotServer:
             ) for t in self.logic_output.types]
         )
 
-    async def output_direct(self, output_type: OutputTypes, context:MessageContext):
+    async def output_direct(self, output_type: OutputTypes, context:MessageContext) -> None:
         await self.logic_output[output_type].output(context, transport=self.bot_transport)
 
-    async def output_twitch(self, context:MessageContext):
+    async def output_twitch(self, context:MessageContext) -> None:
         await self.logic_output[self.logic_output.types.twitch].output(context, transport=self.bot_transport)
 
 

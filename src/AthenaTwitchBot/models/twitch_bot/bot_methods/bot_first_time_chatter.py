@@ -3,13 +3,16 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+
 from dataclasses import dataclass
+from collections.abc import Callable
 from typing import ClassVar
 
 # Custom Library
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_method_inheritance.callback import BotMethodCallback
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_method_inheritance.callback import TBMCCallback
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -32,14 +35,14 @@ class BotFirstTimeChatter(BotMethodCallback):
     - channel : list of TwitchChannel values which defines on which channels this command should be enabled.
         If left unassigned it will work on all channels the bot is joined on
     """
-    registered: ClassVar[BotFirstTimeChatter] = None
+    registered: ClassVar[BotFirstTimeChatter | None] = None
 
     @classmethod
     def register(
             cls,
             *,
             args:bool=False
-    ):
+    ) -> Callable[[TBMCCallback], None]:
         """Registers the function to the class"""
         # Only allow one registered command for this type
         if cls.registered is not None:
@@ -49,7 +52,7 @@ class BotFirstTimeChatter(BotMethodCallback):
         #   Doesn't behave like a regular decorator because we aren't storing a "wrapper" which handles args and kwargs
         #   Args and kwargs of the function are handled by the handle_chat_message function
         #   It is expected that the function is located within the defined TwitchBot of the application
-        def decorator(fnc):
+        def decorator(fnc: TBMCCallback) -> None:
             cls.registered = cls(
                 callback=fnc,
                 args=args

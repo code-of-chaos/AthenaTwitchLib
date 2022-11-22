@@ -5,6 +5,7 @@
 from __future__ import annotations
 from dataclasses import dataclass,field
 import datetime
+from typing import Any
 
 # Custom Library
 
@@ -18,17 +19,19 @@ from AthenaTwitchBot.models.twitch_bot.message_context import MessageContext
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class BotMethodRateLimit(BotMethodCallback):
-    rate_limit:datetime.timedelta=None
+    rate_limit:datetime.timedelta | None = None
     rate_limit_old_time:datetime.datetime=field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # if there is a rate limit in placer
         #   make the command available at the bot start, which is done by subtracting the time delta from the
         #   current time, which places the "virtually last call to the command" far enough away in the past
         if self.rate_limit:
             self.rate_limit_old_time = datetime.datetime.now()-self.rate_limit
 
-    async def __call__(self, *args, callback_self:TwitchBot, context:MessageContext, **kwargs):
+    async def __call__(self, *args: Any, callback_self:TwitchBot, context:MessageContext, **kwargs: Any) -> Any:
+        if self.callback is None:
+            raise ValueError("callback can't be `None`")
         # rate limiter
         #   set here as the rate limit can be applied to all commands and makes the match case statement much more easy
         if self.rate_limit:

@@ -3,8 +3,9 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import asyncio
 
+import asyncio
+from typing import Any
 # Custom Library
 
 # Custom Packages
@@ -20,37 +21,30 @@ import AthenaTwitchBot.data.global_vars as gbl
 class Launcher:
     _loop:asyncio.AbstractEventLoop
 
-    _api:TwitchAPI=None
-    _bot:TwitchBot=None
+    _api:TwitchAPI | None = None
+    _bot:TwitchBot | None = None
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Properties -
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
-    @property
-    def api(cls) -> TwitchAPI:
-        if cls._api is None:
-            raise ValueError("The API connector was never started")
-        return cls._api
-
-    @classmethod
-    async def start_API_connector(cls,broadcaster_token:str,broadcaster_client_id:str):
+    async def start_API_connector(cls,broadcaster_token:str,broadcaster_client_id:str) -> None:
         cls._api = TwitchAPI(
             broadcaster_token=broadcaster_token,
             broadcaster_client_id=broadcaster_client_id
         )
         # connect to the API
-        await cls.api.connect()
+        await cls._api.connect()
 
     @classmethod
-    async def start_Bot(cls, bot:TwitchBot,*,sll:bool=True,**kwargs):
-        gbl.bot = cls.bot = bot
+    async def start_Bot(cls, bot:TwitchBot,*,sll:bool=True,**kwargs: Any) -> None:
+        gbl.bot = cls._bot = bot
         gbl.bot_server = BotServer(ssl_enabled=sll, **kwargs)
         await gbl.bot_server.launch()
 
 
     @classmethod
-    async def start_all(cls, bot:TwitchBot,broadcaster_token:str, broadcaster_client_id:str, *,sll:bool=True, **kwargs):
+    async def start_all(cls, bot:TwitchBot,broadcaster_token:str, broadcaster_client_id:str, *,sll:bool=True, **kwargs: Any) -> None:
         await cls.start_API_connector(
             broadcaster_token=broadcaster_token,
             broadcaster_client_id=broadcaster_client_id

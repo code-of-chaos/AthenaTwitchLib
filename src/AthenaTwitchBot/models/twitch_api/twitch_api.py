@@ -1,3 +1,4 @@
+# TODO more concrete type instead of (Mutable)Mapping[str, Any] (this is placed all over the file...)
 # ----------------------------------------------------------------------------------------------------------------------
 # - Package Imports -
 # ----------------------------------------------------------------------------------------------------------------------
@@ -7,9 +8,19 @@ import json
 import urllib.request
 import urllib.error
 import asyncio
+from collections.abc import Callable
+from collections.abc import MutableMapping
+from collections.abc import Mapping
+from collections.abc import Awaitable
+from collections.abc import Coroutine
 from dataclasses import dataclass, field
 from functools import wraps
-from typing import Callable
+from typing import Any
+from typing import cast
+from typing import ParamSpec
+from typing import TypeVar
+from typing import Protocol
+
 import AthenaLib.HTTP.functions.requests as requests
 
 # Custom Packages
@@ -20,20 +31,38 @@ from AthenaTwitchBot.data.twitch_api_scopes import TwitchApiScopes
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
-def connected_to_twitch(fnc):
+class RequestCallback(Protocol):
+    def __call__(
+            self,
+            headers: MutableMapping[str, Any],
+            url: str,
+            data: bytes | None = None,
+            query_parameters: Mapping[Any, Any] | None = None,
+            *,
+            loop: asyncio.AbstractEventLoop | None = None,
+# TODO            method: str
+    ) -> Any:
+        ...
+
+P = ParamSpec('P')
+# TODO more specific mapping type?
+TRequest = MutableMapping[Any, Any]
+
+
+def connected_to_twitch(fnc: Callable[P, Awaitable[TRequest]]) -> Callable[P, Coroutine[Any, Any, TRequest]]:
     @wraps(fnc)
-    async def wrapper(*args,**kwargs):
-        self,  *_ = args #type: TwitchAPI
-        if not self.is_connected:
+    async def wrapper(*args: P.args,**kwargs: P.kwargs) -> TRequest:
+        self, *_ = args
+        if not self.is_connected:  # type: ignore [attr-defined]
             raise ValueError(f"TwitchAPI.connect() has to be run before the {fnc} can be used")
         return await fnc(*args, **kwargs)
     return wrapper
 
-def user_has_scope(scope:TwitchApiScopes):
-    def decorator(fnc):
-        async def wrapper(*args,**kwargs):
-            self, *_ = args  # type: TwitchAPI
-            if scope not in self.user.scopes:
+def user_has_scope(scope:TwitchApiScopes) -> Callable[[Callable[P, Awaitable[TRequest]]], Callable[P, Coroutine[Any, Any, TRequest]]]:
+    def decorator(fnc: Callable[P, Awaitable[TRequest]]) -> Callable[P, Coroutine[Any, Any, TRequest]]:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> TRequest:
+            self, *_ = args
+            if scope not in self.user.scopes:  # type: ignore [attr-defined]
                 raise ValueError(f"The scope of '{scope.value}' was not defined on the user")
             return await fnc(*args, **kwargs)
         return wrapper
@@ -49,15 +78,15 @@ class TwitchAPI:
     broadcaster_client_id:str
 
     # set after init
-    user:TwitchApiUser|None=None
+    user:TwitchApiUser=field(default_factory=lambda: TwitchApiUser())
 
     # non init stuff
-    is_connected:bool=field(init=False, default=False)
-    _loop:asyncio.AbstractEventLoop = field(init=False)
-    _header:dict=field(init=False, default=None)
-    _header_json:dict=field(init=False, default=None)
+    is_connected: bool=field(init=False, default=False)
+    _loop: asyncio.AbstractEventLoop = field(init=False)
+    _header: MutableMapping[str, Any]=field(init=False, default_factory=dict)
+    _header_json: MutableMapping[str, Any]=field(init=False, default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._loop = asyncio.get_event_loop()
         self._header = {
             "Authorization":f"Bearer {self.broadcaster_token}",
@@ -71,27 +100,34 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     # - Methods that do all the magic -
     # ------------------------------------------------------------------------------------------------------------------
-    async def _request(self, callback:Callable, url:str, headers:dict,data:dict|None=None,query_parameters:dict|None=None):
+    async def _request(
+            self,
+            callback: RequestCallback,
+            url:str,
+            headers:MutableMapping[str, Any],
+            data:MutableMapping[str, Any]={},
+            query_parameters:MutableMapping[str, Any]={}
+    ) -> TRequest:
         try:
             response = await (callback(
                 url=url,
                 headers=headers,
                 loop=self._loop,
-                data=data,
+                # XXX Serious issue, type mismatch with AthenaLib
+                data=data,  # type: ignore [arg-type]
                 query_parameters=query_parameters
             ))
             try:
-                return json.loads(response.read())
-            except json.JSONDecodeError:
-                return response.read()
+                return cast(MutableMapping[Any, Any], json.loads(response.read()))
+            except json.JSONDecodeError as json_error:
+                raise ValueError("Error parsing twitch response") from json_error
         except urllib.error.URLError as e:
-            print(e)
-            raise
+            raise ValueError("couldn't find twitch resource: {url}") from e
 
     # ------------------------------------------------------------------------------------------------------------------
     # - API methods-
     # ------------------------------------------------------------------------------------------------------------------
-    async def connect(self) -> dict:
+    async def connect(self) -> TRequest:
         # Execute the request
         login_data, scope_data = await asyncio.gather(
             self.login(),
@@ -99,20 +135,20 @@ class TwitchAPI:
         )
 
         # store the user, as some user data is required in further api commands
-        self.user = TwitchApiUser.new_from_dict(login_data["data"][0]).set_scopes(scope_data["scopes"])
+        self.user = TwitchApiUser.new_from_dict(login_data["data"][0]).set_scopes(scope_data["scopes"])  # type: ignore [attr-defined]
         self.is_connected = True
 
         # return the data dictionary back
         return login_data
 
-    async def login(self) -> dict:
+    async def login(self) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.users.value,
             headers=self._header
         )
 
-    async def get_scopes(self) -> dict:
+    async def get_scopes(self) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.scopes.value,
@@ -122,7 +158,7 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @user_has_scope(scope=TwitchApiScopes.ChannelEditCommercial)
     @connected_to_twitch
-    async def start_commercial(self, *, length:int):
+    async def start_commercial(self, *, length:int) -> TRequest:
         return await self._request(
             callback=requests.post,
             url=TwitchApiURL.commercial.value,
@@ -139,7 +175,7 @@ class TwitchAPI:
     async def get_extension_analytics(
             self, *, after:str|None=None, ended_at:str|None=None, extension_id:str|None=None, first:int|None=None, started_at:str|None=None,
             type_:str|None=None
-    ):
+    ) -> TRequest:
         query = {"after": after, "ended_at": ended_at, "extension_id": extension_id, "first": first,
                  "started_at": started_at, "type": type_}
 
@@ -158,7 +194,7 @@ class TwitchAPI:
     async def get_game_analytics(
             self, *, after:str|None=None, ended_at:str|None=None, game_id:str|None=None, first:int|None=None, started_at:str|None=None,
             type_:str|None=None
-    ):
+    ) -> TRequest:
         query = {"after": after, "ended_at": ended_at, "game_id": game_id, "first": first, "started_at": started_at,
                  "type": type_}
 
@@ -173,8 +209,8 @@ class TwitchAPI:
     @user_has_scope(scope=TwitchApiScopes.BitsRead)
     @connected_to_twitch
     async def get_bits_leaderboard(
-            self, *, count:int = None, period:str = None, started_at:str|None=None, user_id:str|None=None
-    ):
+            self, *, count:int|None = None, period:str|None = None, started_at:str|None=None, user_id:str|None=None
+    ) -> TRequest:
         query = {"count": count, "period": period, "started_at": started_at, "user_id": user_id}
 
         return await self._request(
@@ -186,7 +222,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_cheermotes(self, broadcaster_id:str|None=None):
+    async def get_cheermotes(self, broadcaster_id:str|None=None) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.cheermotes.value,
@@ -196,7 +232,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_extension_transactions(self, extension_id:str, id_:str|None=None, after:str|None=None, first:int|None=None):
+    async def get_extension_transactions(self, extension_id:str, id_:str|None=None, after:str|None=None, first:int|None=None) -> TRequest:
         # assemble query
         query = {"extension_id": extension_id, "id_": id_, "after": after, "first": first}
 
@@ -209,7 +245,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_channel_information(self, broadcaster_id:str|None=None):
+    async def get_channel_information(self, broadcaster_id:str|None=None) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.channel_information.value,
@@ -223,7 +259,7 @@ class TwitchAPI:
     async def modify_channel_information(
             self, broadcaster_id:str|None=None, game_id:str|None=None, broadcaster_language:str|None=None, title:str|None=None,
             delay:int|None=None
-    ):
+    ) -> TRequest:
         data= {"game_id": game_id, "broadcaster_language": broadcaster_language, "title": title, "delay": delay}
 
         return await self._request(
@@ -237,7 +273,7 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @user_has_scope(scope=TwitchApiScopes.ChannelReadEditors)
     @connected_to_twitch
-    async def get_channel_editors(self, broadcaster_id:str|None=None):
+    async def get_channel_editors(self, broadcaster_id:str|None=None) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.channel_editors.value,
@@ -254,7 +290,7 @@ class TwitchAPI:
             is_max_per_user_per_stream_enabled:bool|None=None, max_per_user_per_stream:int|None=None,
             is_global_cooldown_enabled:bool|None=None, global_cooldown_seconds:int|None=None,
             should_redemptions_skip_request_queue:bool|None=None
-    ):
+    ) -> TRequest:
         data= {"title": title, "cost": cost, "prompt": prompt, "is_enabled": is_enabled,
                "background_color": background_color, "is_user_input_required": is_user_input_required,
                "is_max_per_stream_enabled": is_max_per_stream_enabled, "max_per_stream": max_per_stream,
@@ -275,7 +311,7 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @user_has_scope(scope=TwitchApiScopes.ChannelManageRedemptions)
     @connected_to_twitch
-    async def delete_custom_reward(self, id_:str):
+    async def delete_custom_reward(self, id_:str) -> TRequest:
         return await self._request(
             callback=requests.delete,
             url=TwitchApiURL.custom_rewards.value,
@@ -285,7 +321,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_custom_reward(self, *, reward_id: str = None, only_manageable_rewards: bool = None) -> dict:
+    async def get_custom_reward(self, *, reward_id: str|None = None, only_manageable_rewards: bool = False)-> TRequest:
         query = {"broadcaster_id": self.user.id, "reward_id":reward_id,
                  "only_manageable_rewards":only_manageable_rewards}
 
@@ -301,7 +337,7 @@ class TwitchAPI:
     @connected_to_twitch
     async def get_custom_reward_redemption(
             self,reward_id:str,*,id_:str|None=None, status:str|None=None, sort:str|None=None, after:str|None=None, first:int|None=None
-    ):
+    ) -> TRequest:
         query = {"broadcaster_id": self.user.id, "reward_id": reward_id, "id": id_, "status": status, "sort": sort,
                  "after": after, "first": first}
         return await self._request(
@@ -320,7 +356,7 @@ class TwitchAPI:
             is_max_per_user_per_stream_enabled:bool|None=None, max_per_user_per_stream:int|None=None,
             is_global_cooldown_enabled:bool|None=None, global_cooldown_seconds:int|None=None,
             should_redemptions_skip_request_queue:bool|None=None
-    ):
+    ) -> TRequest:
         query = {
             "broadcaster_id": self.user.id,
             "id":id_
@@ -354,7 +390,7 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @user_has_scope(scope=TwitchApiScopes.ChannelManageRedemptions)
     @connected_to_twitch
-    async def update_custom_reward_redemption(self,id_:str,reward_id:str, status:str):
+    async def update_custom_reward_redemption(self,id_:str,reward_id:str, status:str) -> TRequest:
         return await self._request(
             callback=requests.patch,
             url=TwitchApiURL.custom_reward_redemptions.value,
@@ -365,7 +401,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_channel_emotes(self):
+    async def get_channel_emotes(self) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.emotes_chat.value,
@@ -375,7 +411,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_global_emotes(self):
+    async def get_global_emotes(self) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.emotes_global.value,
@@ -384,7 +420,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_emote_sets(self, emote_set_id:str):
+    async def get_emote_sets(self, emote_set_id:str) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.emotes_set.value,
@@ -394,7 +430,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_channel_chat_badges(self):
+    async def get_channel_chat_badges(self) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.badges_chat.value,
@@ -404,7 +440,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_global_chat_badges(self):
+    async def get_global_chat_badges(self) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.badges_global.value,
@@ -413,7 +449,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_chat_settings(self, *, moderator_id:str|None=None):
+    async def get_chat_settings(self, *, moderator_id:str|None=None) -> TRequest:
         query = {
             "broadcaster_id": self.user.id,
             "moderator_id":moderator_id
@@ -435,7 +471,7 @@ class TwitchAPI:
             non_moderator_chat_delay_duration:int|None=None,slow_mode:bool|None=None, slow_mode_wait_time:int|None=None,
             subscriber_mode:bool|None=None,unique_chat_mode:bool|None=None
 
-    ):
+    ) -> TRequest:
         query = {
             "broadcaster_id": self.user.id,
             "moderator_id": moderator_id
@@ -463,7 +499,7 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @user_has_scope(scope=TwitchApiScopes.ClipsEdit)
     @connected_to_twitch
-    async def create_clip(self, *, hash_delay:bool|None=None):
+    async def create_clip(self, *, hash_delay:bool=False) -> TRequest:
         query = {
             "broadcaster_id": self.user.id,
             "hash_delay": hash_delay
@@ -478,7 +514,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_clips(self, game_id:str, id_:str):
+    async def get_clips(self, game_id:str, id_:str) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.clips.value,
@@ -492,7 +528,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_code_status(self, code:str, user_id:int):
+    async def get_code_status(self, code:str, user_id:int) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.entitlements_code.value,
@@ -508,7 +544,7 @@ class TwitchAPI:
     async def get_drop_entitlements(
             self, id_:str|None=None, user_id:str|None=None, game_id:str|None=None, fulfillment_status:str|None=None,
             after:str|None = None, first:int|None=None
-    ):
+    ) -> TRequest:
         query = {
             "id_":id_,
             "user_id":user_id,
@@ -527,7 +563,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def update_drops_entitlements(self, entitlement_ids:list[str]|None=None, fulfillment_status:str|None=None):
+    async def update_drops_entitlements(self, entitlement_ids:list[str]|None=None, fulfillment_status:str|None=None) -> TRequest:
         return await self._request(
             callback=requests.patch,
             url=TwitchApiURL.entitlements_drops.value,
@@ -541,7 +577,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def redeem_code(self, code:str):
+    async def redeem_code(self, code:str) -> TRequest:
         return await self._request(
             callback=requests.patch,
             url=TwitchApiURL.entitlements_code.value,
@@ -551,7 +587,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_extension_configuration_segment(self, extension_id:str,segment:str):
+    async def get_extension_configuration_segment(self, extension_id:str,segment:str) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.extension_configurations.value,
@@ -563,8 +599,8 @@ class TwitchAPI:
     @connected_to_twitch
     async def set_extension_configuration_segment(
             self, extension_id:str,segment:str,
-            *, content:str=None,version:str=None
-    ):
+            *, content:str|None=None,version:str|None=None
+    ) -> TRequest:
         return await self._request(
             callback=requests.put,
             url=TwitchApiURL.extension_configurations.value,
@@ -581,7 +617,7 @@ class TwitchAPI:
     @connected_to_twitch
     async def set_extension_required_configuration(
             self, extension_id:str,required_configuration:str,extension_version:str
-    ):
+    ) -> TRequest:
         return await self._request(
             callback=requests.put,
             url=TwitchApiURL.extension_configurations.value,
@@ -598,8 +634,8 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def send_extension_pubsub_message(
-            self, target:list,is_global_broadcast:bool,message:str
-    ):
+            self, target:list[Any],is_global_broadcast:bool,message:str
+    ) -> TRequest:
         return await self._request(
             callback=requests.post,
             url=TwitchApiURL.extension_pubsub.value,
@@ -615,8 +651,8 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_extension_live_channels(
-            self, extension_id:str,*,first:int=None,after:str
-    ):
+            self, extension_id:str,*,first:int|None=None,after:str
+    ) -> TRequest:
         return await self._request(
             callback=requests.post,
             url=TwitchApiURL.extension_live.value,
@@ -634,7 +670,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_extension_secrets(self):
+    async def get_extension_secrets(self) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.extension_configurations.value,
@@ -644,8 +680,8 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def create_extension_secret(
-            self, extension_id:str,*,delay:int=None
-    ):
+            self, extension_id:str,*,delay:int|None=None
+    ) -> TRequest:
         return await self._request(
             callback=requests.post,
             url=TwitchApiURL.extension_jwt_secrets.value,
@@ -664,7 +700,7 @@ class TwitchAPI:
     @connected_to_twitch
     async def send_extension_chat_message(
             self, text:str,extension_id:str,extension_version:str
-    ):
+    ) -> TRequest:
         return await self._request(
             callback=requests.post,
             url=TwitchApiURL.extension_chat.value,
@@ -682,8 +718,8 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_extensions(
-            self, extension_id:str,*,extension_version:str=None
-    ):
+            self, extension_id:str,*,extension_version:str|None=None
+    ) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.extension.value,
@@ -700,8 +736,8 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_released_extensions(
-            self, extension_id:str,*,extension_version:str=None
-    ):
+            self, extension_id:str,*,extension_version:str|None=None
+    ) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.extension_released.value,
@@ -718,8 +754,8 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_extension_bits_products(
-            self, *,should_include_all:bool=None
-    ):
+            self, *,should_include_all:bool=False
+    ) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.extension.value,
@@ -736,8 +772,8 @@ class TwitchAPI:
     @connected_to_twitch
     async def update_extension_bits_product(
             self, sku:str,cost_amount:int, cost_type:str,display_name:str,
-            *,in_development:bool=None,expiration:str=None,is_broadcast:bool=None
-    ):
+            *,in_development:bool=False,expiration:str|None=None,is_broadcast:bool=False
+    ) -> TRequest:
         return await self._request(
             callback=requests.put,
             url=TwitchApiURL.extension.value,
@@ -763,8 +799,8 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def create_eventsub_subscription(
-            self, type_:str,version:str, condition:dict,transport:dict,
-    ):
+            self, type_:str,version:str, condition:MutableMapping[str, Any],transport:MutableMapping[str, Any],
+    ) -> TRequest:
         return await self._request(
             callback=requests.post,
             url=TwitchApiURL.eventsub_subscriptions.value,
@@ -781,7 +817,7 @@ class TwitchAPI:
     @connected_to_twitch
     async def delete_eventsub_subscription(
             self, id_:str
-    ):
+    ) -> TRequest:
         return await self._request(
             callback=requests.delete,
             url=TwitchApiURL.eventsub_subscriptions.value,
@@ -794,8 +830,8 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
     async def get_eventsub_subscriptions(
-            self,*, status:str=None, type_:str=None, user_id:str=None, after:str
-    ):
+            self,*, status:str|None=None, type_:str|None=None, user_id:str|None=None, after:str
+    ) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.eventsub_subscriptions.value,
@@ -815,7 +851,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_top_games(self,*,after:str|None=None, before:str|None=None, first:str|None=None):
+    async def get_top_games(self,*,after:str|None=None, before:str|None=None, first:str|None=None) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.games_top.value,
@@ -829,7 +865,7 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_games(self, id_:str, name:str):
+    async def get_games(self, id_:str, name:str) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.games.value,
@@ -839,24 +875,24 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_creator_goals(self, broadcaster_id:str|None=None):
+    async def get_creator_goals(self, broadcaster_id:str|None=None) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.goals.value,
             headers=self._header,
-            query_parameters={"broadcaster_id":broadcaster_id if broadcaster_id is not None else self.user.id}
+            query_parameters={"broadcaster_id":broadcaster_id if broadcaster_id is not None else str(self.user.id)}
         )
 
     # ------------------------------------------------------------------------------------------------------------------
     @user_has_scope(scope=TwitchApiScopes.ChannelReadHypeTrain)
     @connected_to_twitch
-    async def get_hype_train_events(self, first:int|None=None, cursor:str|None=None):
+    async def get_hype_train_events(self, first:int|None=None, cursor:str|None=None) -> TRequest:
         return await self._request(
             callback=requests.get,
             url=TwitchApiURL.hypetrain.value,
             headers=self._header,
             query_parameters={
-                k:v for k,v in
+                k:str(v) for k,v in
                 {"broadcaster_id": self.user.id, "first": first, "cursor": cursor}.items()
                 if v is not None
             }
@@ -865,7 +901,7 @@ class TwitchAPI:
     # ------------------------------------------------------------------------------------------------------------------
     @user_has_scope(scope=TwitchApiScopes.ModerationRead)
     @connected_to_twitch
-    async def check_automod_status(self,msg_id:str, msg_text:str):
+    async def check_automod_status(self,msg_id:str, msg_text:str) -> TRequest:
         return await self._request(
             callback=requests.post,
             url=TwitchApiURL.enforcements_status.value,
@@ -879,263 +915,263 @@ class TwitchAPI:
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def manage_held_automod_messages(self):
+    async def manage_held_automod_messages(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_automod_settings(self):
+    async def get_automod_settings(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def update_automod_settings(self):
+    async def update_automod_settings(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_banned_users(self):
+    async def get_banned_users(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def ban_user(self):
+    async def ban_user(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def unban_user(self):
+    async def unban_user(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_blocked_terms(self):
+    async def get_blocked_terms(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def add_blocked_term(self):
+    async def add_blocked_term(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def remove_blocked_term(self):
+    async def remove_blocked_term(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_moderators(self):
+    async def get_moderators(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_polls(self):
+    async def get_polls(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def create_poll(self):
+    async def create_poll(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def end_poll(self):
+    async def end_poll(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_predictions(self):
+    async def get_predictions(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def create_prediction(self):
+    async def create_prediction(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def end_prediction(self):
+    async def end_prediction(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def start_a_raid(self):
+    async def start_a_raid(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def cancel_a_raid(self):
+    async def cancel_a_raid(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_channel_stream_schedule(self):
+    async def get_channel_stream_schedule(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_channel_icalendar(self):
+    async def get_channel_icalendar(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def update_channel_stream_schedule(self):
+    async def update_channel_stream_schedule(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def create_channel_stream_schedule_segment(self):
+    async def create_channel_stream_schedule_segment(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def update_channel_stream_schedule_segment(self):
+    async def update_channel_stream_schedule_segment(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def delete_channel_stream_schedule_segment(self):
+    async def delete_channel_stream_schedule_segment(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def search_categories(self):
+    async def search_categories(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def search_channels(self):
+    async def search_channels(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_soundtrack_current_track(self):
+    async def get_soundtrack_current_track(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_soundtrack_playlist(self):
+    async def get_soundtrack_playlist(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_soundtrack_playlists(self):
+    async def get_soundtrack_playlists(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_stream_key(self):
+    async def get_stream_key(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_streams(self):
+    async def get_streams(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_followed_streams(self):
+    async def get_followed_streams(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def create_stream_marker(self):
+    async def create_stream_marker(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_stream_markers(self):
+    async def get_stream_markers(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_broadcaster_subscriptions(self):
+    async def get_broadcaster_subscriptions(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def check_user_subscription(self):
+    async def check_user_subscription(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_all_stream_tags(self):
+    async def get_all_stream_tags(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_stream_tags(self):
+    async def get_stream_tags(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def replace_stream_tags(self):
+    async def replace_stream_tags(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_channel_teams(self):
+    async def get_channel_teams(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_teams(self):
+    async def get_teams(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_users(self):
+    async def get_users(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def update_user(self):
+    async def update_user(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_users_follows(self):
+    async def get_users_follows(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_user_block_list(self):
+    async def get_user_block_list(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def block_user(self):
+    async def block_user(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def unblock_user(self):
+    async def unblock_user(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_user_extensions(self):
+    async def get_user_extensions(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_user_active_extensions(self):
+    async def get_user_active_extensions(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def update_user_extensions(self):
+    async def update_user_extensions(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @connected_to_twitch
-    async def get_videos(self):
+    async def get_videos(self):  # type: ignore [no-untyped-def]
         return NotImplemented
 
     # ------------------------------------------------------------------------------------------------------------------
     @user_has_scope(scope=TwitchApiScopes.ChannelManageVideos)
     @connected_to_twitch
-    async def delete_videos(self,id_:str):
+    async def delete_videos(self,id_:str) -> TRequest:
         return await self._request(
             callback=requests.delete,
             url=TwitchApiURL.videos.value,
@@ -1143,8 +1179,3 @@ class TwitchAPI:
             query_parameters={"id": id_}
 
         )
-
-
-
-
-

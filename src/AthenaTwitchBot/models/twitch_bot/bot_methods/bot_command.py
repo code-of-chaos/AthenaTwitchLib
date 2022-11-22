@@ -4,6 +4,8 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
+from collections.abc import MutableMapping
+from collections.abc import Callable
 from typing import ClassVar
 import datetime
 
@@ -11,6 +13,7 @@ import datetime
 
 # Custom Packages
 from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_method_inheritance.rate_limit import BotMethodRateLimit
+from AthenaTwitchBot.models.twitch_bot.bot_methods.bot_method_inheritance.callback import TBMCCallback
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -39,24 +42,20 @@ class BotCommand(BotMethodRateLimit):
     - channel : list of TwitchChannel values which defines on which channels this command should be enabled.
         If left unassigned it will work on all channels the bot is joined on
     """
-    name:str=None
-    subscriber_only:bool=None
-    mod_only:bool=None
+    name:str | None = None
+    subscriber_only:bool=False
+    mod_only:bool=False
 
-    registered:ClassVar[dict[str,BotCommand]]=None
+    registered:ClassVar[MutableMapping[str, BotCommand]]={}
 
     # ------------------------------------------------------------------------------------------------------------------
     @classmethod
     def register(
             cls, name:str,
             *,
-            args:bool=False,subscriber_only:bool=False, mod_only:bool=False, rate_limit:datetime.timedelta=None
-    ):
+            args:bool=False,subscriber_only:bool=False, mod_only:bool=False, rate_limit:datetime.timedelta | None = None
+    ) -> Callable[[TBMCCallback], None]:
         """Registers the function to the class"""
-
-        # make sure the register exists
-        if cls.registered is None:
-            cls.registered = {}
 
         # only allow commands to be used by one level of roles,
         #   and not by multiple at the same time
@@ -71,7 +70,7 @@ class BotCommand(BotMethodRateLimit):
         #   Doesn't behave like a regular decorator because we aren't storing a "wrapper" which handles args and kwargs
         #   Args and kwargs of the function are handled by the handle_chat_message function
         #   It is expected that the function is located within the defined TwitchBot of the application
-        def decorator(fnc):
+        def decorator(fnc: TBMCCallback) -> None:
             cls.registered[name] = cls(
                 name=name,
                 callback=fnc,

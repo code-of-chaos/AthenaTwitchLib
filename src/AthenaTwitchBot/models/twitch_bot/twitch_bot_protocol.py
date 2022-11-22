@@ -13,14 +13,14 @@ from AthenaTwitchBot.models.twitch_bot.line_handler import LineHandler
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class TwitchBotProtocol(asyncio.Protocol):
+class TwitchBotProtocol(asyncio.BaseProtocol):
     transport: asyncio.transports.BaseTransport
     __slots__ = ("transport",)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - asyncio.Protocol methods-
     # ------------------------------------------------------------------------------------------------------------------
-    def data_received(self, data: bytearray) -> None:
+    def data_received(self, data: bytes) -> None:
         for line in data.split(b"\r\n"):
             if line:
                 asyncio.create_task(LineHandler.handle_line(line))

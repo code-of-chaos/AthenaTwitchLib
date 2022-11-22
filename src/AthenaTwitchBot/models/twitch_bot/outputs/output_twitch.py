@@ -61,7 +61,7 @@ class OutputTwitch(Output):
     }
 
     # noinspection PyMethodOverriding
-    async def output(self, context:MessageContext,*,transport:asyncio.Transport):
+    async def output(self, context:MessageContext,* ,transport:asyncio.BaseTransport | None = None) -> None:
         # if no output has been defined, just exit here
         if context.output is None:
             return
