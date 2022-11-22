@@ -27,17 +27,17 @@ setuptools.setup(
     version=version_handler(),
     author="Andreas Sas",
     author_email="",
-    description="A zero 3rd party dependency Twitch bot Connector",
+    description="A library to create Twitch Chat Bots and connect to the Twitch Helix API.",
     long_description=readme_handler(),
     long_description_content_type="text/markdown",
-    url="https://github.com/DirectiveAthena/AthenaTwitchBot",
+    url="https://github.com/Athena-Chaos-Driven-Code/AthenaTwitchLib",
     project_urls={
-        "Bug Tracker": "https://github.com/DirectiveAthena/AthenaTwitchBot/issues",
+        "Bug Tracker": "https://github.com/Athena-Chaos-Driven-Code/AthenaTwitchLib/issues",
     },
     license="GPLv3",
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
-    python_requires=">=3.10",
+    python_requires=">=3.11",
     install_requires=[
         "AthenaLib>=1.1.0",
         "AthenaColor>=6.0.1"
