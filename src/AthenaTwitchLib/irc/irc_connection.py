@@ -73,8 +73,14 @@ class IrcConnection:
                     self.current_restart_attempt +=1
                     print(f"{NEW_LINE*25}{'-'*25}RESTART ATTEMPT {self.current_restart_attempt}{'-'*25}")
                     bot_transport.close()
+
+                    # just wait a set interval,
+                    #   to make sure we aren't seen as a ddos
+                    await asyncio.sleep(0.5)
+
+                    # restarts it all
                     self.restart_attempts -= 1
-                    continue # restarts it all
+                    continue
 
                 case BotEvent.EXIT | _:
                     print(result)
