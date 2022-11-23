@@ -148,11 +148,12 @@ class CommandLogicSqlite(BaseCommandLogic):
 
 
     @staticmethod
-    async def output(context: MessageCommandContext, data: CommandData, msg: str):
+    async def output(context: MessageCommandContext, data: CommandData, msg: str, format_:dict=None):
 
         msg_formatted = msg.format(
             username=context.username,
             channel=context.channel,
+            **format_ if format_ is not None else {}
         )
 
         if data.output_type == OutputTypes.WRITE:
@@ -212,12 +213,7 @@ class CommandLogicSqlite(BaseCommandLogic):
                 await self.output(context, data, data.output_text)
 
             case CommandData(command_type=CommandTypes.FORMAT):
-                await self.output( context, data, data.output_text.format(
-                    **{
-                        f"args_{i}":a
-                        for i, a in enumerate(context.args)
-                    }
-                ))
+                await self.output( context, data, data.output_text, format_={f"args_{i}":a for i, a in enumerate(context.args)})
 
             case CommandData(command_type=CommandTypes.EXIT):
                 context.bot_event_future.set_result(BotEvent.EXIT)
