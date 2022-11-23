@@ -1,19 +1,14 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # - Package Imports -
 # ----------------------------------------------------------------------------------------------------------------------
-# General Packages
-from __future__ import annotations
-
-# Athena Packages
-
-# Local Imports
+from AthenaTwitchLib.logger._types import TwitchLoggerType
+from AthenaTwitchLib.logger.irc import IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
-# - Code -
+# - Extra simple features -
 # ----------------------------------------------------------------------------------------------------------------------
-def twitch_irc_output_format(text:str) -> bytes:
+def get_irc_logger() -> IrcLogger:
     """
-    Formats the string into the correct byte structure expected by the Twitch IRC
+    Tiny function to get the IRC logger without too much extra syntax
     """
-    text_flat:str = text.replace('\r\n',' ').replace('\n',' ')
-    return f"{text_flat}\r\n".encode("utf_8")
+    return IrcLogger.get_logger(TwitchLoggerType.IRC)
