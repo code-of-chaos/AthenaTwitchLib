@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # - Package Imports -
 # ----------------------------------------------------------------------------------------------------------------------
-from AthenaTwitchLib.logger._types import TwitchLoggerType
+from AthenaTwitchLib.logger._types import TwitchLoggerType, IrcSection
 from AthenaTwitchLib.logger.irc import IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------

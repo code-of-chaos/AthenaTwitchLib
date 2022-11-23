@@ -8,14 +8,16 @@ import re
 from dataclasses import dataclass, field
 import functools
 from typing import Any, Callable
+import json
 
 # Athena Packages
 from AthenaColor import ForeNest as Fore
+from AthenaLib.general.functions.json import GeneralCustomJsonEncoder
 
 # Local Imports
 from AthenaTwitchLib.irc.regex import RegexPatterns
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG, TagsUSERSTATE
-from AthenaTwitchLib.logger import IrcLogger, TwitchLoggerType
+from AthenaTwitchLib.logger import IrcLogger, get_irc_logger, IrcSection
 from AthenaTwitchLib.irc.message_context import MessageContext,MessageCommandContext
 from AthenaTwitchLib.irc.data.enums import BotEvent
 from AthenaTwitchLib.irc.bot import Bot
@@ -35,17 +37,17 @@ class _TransportBuffer:
     def write(cls, data:bytes):
         cls.buffer.append(data)
 
-def track_handler(fnc:Callable) -> Any:
+def log_handler(fnc:Callable) -> Any:
     """
     Simple decorator to keep track of how many calls are made to handlers
     """
     @functools.wraps(fnc)
     async def wrapper(*args, **kwargs):
-        logger = IrcLogger.get_logger(TwitchLoggerType.IRC)
+        logger:IrcLogger = get_irc_logger()
         result, *_ = await asyncio.gather(
             fnc(*args, **kwargs),
-            logger.log_handler_called(fnc.__name__),
-            logger.log_handled_message(line=kwargs.get("line",None))
+            logger.log_debug(section=IrcSection.HANDLER_CALLED, text=fnc.__name__),
+            logger.log_debug(section=IrcSection.MSG, text=kwargs.get("line", None)),
         )
         return result
 
@@ -65,11 +67,11 @@ class IrcConnectionProtocol(asyncio.Protocol):
     bot_obj:Bot
 
     _transport: asyncio.transports.Transport = None  # delayed as it has to be set after the connection has been made
-    _loop :asyncio.AbstractEventLoop = field(init=False)
-    _logger:IrcLogger = field(init=False, default_factory=lambda: IrcLogger.get_logger(TwitchLoggerType.IRC))
+    loop :asyncio.AbstractEventLoop = field(init=False)
+    logger:IrcLogger = field(init=False, default_factory=get_irc_logger)
 
     def __post_init__(self):
-        self._loop = asyncio.get_running_loop()
+        self.loop = asyncio.get_running_loop()
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Properties -
@@ -120,39 +122,39 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
             elif message := self.regex_patterns.message.match(line):
                 if cmd_match := self.regex_patterns.message_command.match(message.groups()[-1]):
-                    self._loop.create_task(self.handle_message_command(message,cmd_match,line=line))
+                    self.loop.create_task(self.handle_message_command(message, cmd_match, line=line))
                 else:
-                    self._loop.create_task(self.handle_message(message, line=line))
+                    self.loop.create_task(self.handle_message(message, line=line))
 
             elif line == "PING :tmi.twitch.tv":
-                self._loop.create_task(self.handle_ping(line=line))
+                self.loop.create_task(self.handle_ping(line=line))
 
             elif server_message := self.regex_patterns.server_message.match(line):
-                self._loop.create_task(self.handle_server_message(server_message, line=line))
+                self.loop.create_task(self.handle_server_message(server_message, line=line))
 
             elif join := self.regex_patterns.join.match(line):
-                self._loop.create_task(self.handle_join(join, line=line))
+                self.loop.create_task(self.handle_join(join, line=line))
 
             elif part := self.regex_patterns.part.match(line):
-                self._loop.create_task(self.handle_part(part, line=line))
+                self.loop.create_task(self.handle_part(part, line=line))
 
             elif server_353 := self.regex_patterns.server_353.match(line):
-                self._loop.create_task(self.handle_server_353(server_353, line=line))
+                self.loop.create_task(self.handle_server_353(server_353, line=line))
 
             elif server_366 := self.regex_patterns.server_366.match(line):
-                self._loop.create_task(self.handle_server_366(server_366, line=line))
+                self.loop.create_task(self.handle_server_366(server_366, line=line))
 
             elif server_cap := self.regex_patterns.server_cap.match(line):
-                self._loop.create_task(self.handle_server_cap(server_cap, line=line))
+                self.loop.create_task(self.handle_server_cap(server_cap, line=line))
 
             elif user_notice := self.regex_patterns.user_notice.match(line):
-                self._loop.create_task(self.handle_user_notice(user_notice, line=line))
+                self.loop.create_task(self.handle_user_notice(user_notice, line=line))
 
             elif user_state := self.regex_patterns.user_state.match(line):
-                self._loop.create_task(self.handle_user_state(user_state, line=line))
+                self.loop.create_task(self.handle_user_state(user_state, line=line))
 
             else:
-                self._loop.create_task(self.handle_UNKNOWN(line))
+                self.loop.create_task(self.handle_UNKNOWN(line))
 
     def connection_lost(self, exc: Exception | None) -> None:
         if exc is not None:
@@ -164,7 +166,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
     # ------------------------------------------------------------------------------------------------------------------
     # - Line handlers -
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_ping(self,*, line):
         """
         Method is called when the Twitch server sends a keep alive PING message
@@ -176,7 +178,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         self.transport.write("PONG :tmi.twitch.tv\r\n".encode())
 
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_server_message(self, server_message:re.Match, *, line:str):
         """
         Method is called when the Twitch server sends a message that isn't related to any user or room messages
@@ -184,7 +186,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         print(f"{Fore.Blue('SERVER_MESSAGE')} | {line}")
 
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_server_353(self, server_353: re.Match, *, line: str):
         """
         Method is called when twitch sends a 353 message
@@ -192,7 +194,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         print(f"{Fore.AliceBlue('SERVER_353')} | {line}")
 
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_server_366(self, server_366: re.Match, *, line: str):
         """
         Method is called when twitch sends a 353 message
@@ -200,7 +202,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         print(f"{Fore.Ivory('SERVER_366')} | {line}")
 
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_server_cap(self, server_cap: re.Match, *, line: str):
         """
         Method is called when twitch sends a CAP message
@@ -208,7 +210,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         print(f"{Fore.Khaki('SERVER_CAP')} | {line}")
 
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_join(self, join:re.Match,*, line:str):
         """
         Method is called when any user (irc or viewer) joins the channel
@@ -216,7 +218,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         print(f"{Fore.Red('JOIN')} | {line}")
 
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_part(self, part:re.Match, *, line:str):
         """
         Method is called when any user (irc or viewer) parts the channel
@@ -224,7 +226,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         print(f"{Fore.DeepPink('PART')} | {line}")
 
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_message(self, message:re.Match, *, line:str):
         """
         Method is called when any user (irc or viewer) sends a regular message in the channel
@@ -246,9 +248,13 @@ class IrcConnectionProtocol(asyncio.Protocol):
             bot_event_future=self.bot_event_future,
             original_line=line
         )
+        await self.logger.log_debug(
+            section=IrcSection.MSG_CONTEXT,
+            text=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
+        )
 
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_message_command(self, message:re.Match, cmd_match:re.Match, *, line:str):
         """
         Method is called when any user (irc or viewer) sends a message in the channel,
@@ -261,23 +267,31 @@ class IrcConnectionProtocol(asyncio.Protocol):
         tags_group_str,user,channel,text = message.groups()
         command, args = cmd_match.groups()
 
-        await self.bot_obj.command_logic.execute_command(
-            context=MessageCommandContext(
-                tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
-                user=user,
-                username=self.regex_patterns.username.findall(user)[0],
-                channel=channel,
-                text=f"!{command}",
-                transport=self.transport,
-                bot_event_future=self.bot_event_future,
-                original_line=line,
-                command=command,
-                args=args.strip().split(" ")
+        message_context = MessageCommandContext(
+            tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
+            user=user,
+            username=self.regex_patterns.username.findall(user)[0],
+            channel=channel,
+            text=f"!{command}",
+            transport=self.transport,
+            bot_event_future=self.bot_event_future,
+            original_line=line,
+            command=command,
+            args=args.strip().split(" ")
+        )
+
+        await asyncio.gather(
+            self.bot_obj.command_logic.execute_command(
+                context=message_context
+            ),
+            self.logger.log_debug(
+                section=IrcSection.MSG_CONTEXT,
+                text=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
             )
         )
 
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_user_notice(self, user_notice:re.Match, *, line:str):
         """
         Method is called when twitch sends a USERNOTICE message
@@ -285,7 +299,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         print(f"{Fore.Plum('USERNOTICE')} | {line}")
 
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_user_state(self, user_state:re.Match, *, line:str):
         """
         Method is called when twitch sends a USERSTATE message
@@ -295,10 +309,13 @@ class IrcConnectionProtocol(asyncio.Protocol):
         print(f"{Fore.Plum('USERSTATE')} | {line} | {tags}")
 
     # ------------------------------------------------------------------------------------------------------------------
-    @track_handler
+    @log_handler
     async def handle_UNKNOWN(self, line:str):
         """
         Method is called when the protocol can't find an appropriate match for the given string
         """
         print(Fore.SlateGray(f"NOT CAUGHT | {line}"))
-        await self._logger.log_unknown_message(line)
+        await self.logger.log_warning(
+            section=IrcSection.HANDLER_UNKNOWN,
+            text=line
+        )

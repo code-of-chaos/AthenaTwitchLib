@@ -14,7 +14,4 @@ from AthenaLib.logging import AthenaSqliteLogger
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 class IrcLogger(AthenaSqliteLogger):
-
-    class Sections(enum.StrEnum):
-        CALLED_HANDLERS = enum.auto()
-        UNKNOWN_TAG = enum.auto()
+    pass

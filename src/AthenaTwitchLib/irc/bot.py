@@ -11,7 +11,7 @@ import asyncio
 # Local Imports
 from AthenaTwitchLib.irc.logic import CommandLogic, TaskLogic
 from AthenaTwitchLib.string_formatting import twitch_irc_output_format
-from AthenaTwitchLib.logger import IrcLogger, TwitchLoggerType
+from AthenaTwitchLib.logger import IrcLogger, IrcSection, get_irc_logger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -37,7 +37,48 @@ class Bot:
 
     # non init
     transport:asyncio.BaseTransport|asyncio.Transport = field(init=False)
-    logger:IrcLogger = field(init=False, default_factory=lambda:IrcLogger.get_logger(TwitchLoggerType.IRC))
+    logger:IrcLogger = field(init=False, default_factory=get_irc_logger)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Login functions -
+    # ------------------------------------------------------------------------------------------------------------------
+    async def _cap_tags(self):
+        """
+        Assigns the Twitch IRC chat capability of receiving tags
+        This should always be requested, else answering to chat is impossible
+        """
+        if not self.capability_tags:
+            await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_tags not enabled")
+            return
+
+        self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/tags"))
+        await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_tags set")
+
+    async def _cap_commands(self):
+        """
+        Assigns the Twitch IRC chat capability of sending twitch (`/`) commands in chat, by the bot
+        """
+        if not self.capability_commands:
+            await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_commands not enabled")
+            return
+
+        self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/commands"))
+        await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_commands set")
+
+    async def _cap_membership(self):
+        """
+        Assigns the Twitch IRC chat capability of receiving membership information
+        """
+        if not self.capability_membership:
+            await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_membership not enabled")
+            return
+
+        self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/membership"))
+        await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_membership set")
+
+    async def _write_to_twitch(self, section:IrcSection, txt:str):
+        self.transport.write(twitch_irc_output_format(txt))
+        await self.logger.log_debug(section=section, text=txt)
 
     async def login(self):
         """
@@ -48,19 +89,30 @@ class Bot:
         #   as it is a direct write only feature and doesn't need to respond to anything
         self.transport.write(twitch_irc_output_format(f"PASS oauth:{self.oath_token}"))
         self.transport.write(twitch_irc_output_format(f"NICK {self.name}"))
-        for channel in self.join_channel:
-            self.transport.write(twitch_irc_output_format(f"JOIN #{channel}"))
 
         # Request correct capabilities
-        if self.capability_tags:  # this should always be requested, else answering to chat is not possible
-            self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/tags"))
-        if self.capability_commands:
-            self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/commands"))
-        if self.capability_membership:
-            self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/membership"))
+        await asyncio.gather(
+            self.logger.log_debug(
+                section=IrcSection.LOGIN,
+                text=f"[{self.name=}, {self.join_channel=}, {self.join_message=}, {self.prefix=}]"
+            ),
+
+            # Join all channels and don't wait for the logger to finish
+            *(self._write_to_twitch(section=IrcSection.JOIN, txt=f"JOIN #{channel}")
+              for channel in self.join_channel),
+
+            # Get capabilities from Twitch
+            self._cap_tags(),
+            self._cap_commands(),
+            self._cap_membership(),
+        )
 
         # will catch all those that are Truthy (not: "", None, False, ...)
         if self.join_message:
-            for channel in self.join_channel:
-                self.transport.write(twitch_irc_output_format(f"PRIVMSG #{channel} :{self.join_message}"))
-
+            await asyncio.gather(
+                (self._write_to_twitch(
+                    section=IrcSection.LOGIN_MSG,
+                    txt=f"PRIVMSG #{channel} :{self.join_message}"
+                )
+                for channel in self.join_channel),
+            )

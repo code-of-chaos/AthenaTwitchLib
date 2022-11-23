@@ -4,8 +4,10 @@
 # General Packages
 from __future__ import annotations
 
-import re
-from dataclasses import dataclass
+import copy
+import datetime
+import json
+from dataclasses import dataclass, asdict
 import asyncio
 
 # Athena Packages
@@ -13,6 +15,7 @@ import asyncio
 # Local Imports
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG
 from AthenaTwitchLib.string_formatting import twitch_irc_output_format
+from AthenaTwitchLib.logger import IrcLogger, IrcSection, get_irc_logger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -32,6 +35,14 @@ class MessageContext:
     bot_event_future:asyncio.Future
     original_line:str
 
+    def as_dict(self):
+        return {
+            "tags": asdict(self.tags),
+            "user": self.user,
+            "username": self.username,
+            "channel": self.channel,
+            "text": self.text
+        }
 
     async def reply(self, reply_msg:str):
         """

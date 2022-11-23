@@ -17,6 +17,7 @@ from AthenaTwitchLib.irc.irc_connection_protocol import IrcConnectionProtocol
 from AthenaTwitchLib.irc.regex import RegexPatterns
 from AthenaTwitchLib.irc.data.enums import BotEvent
 from AthenaTwitchLib.irc.bot import Bot
+from AthenaTwitchLib.logger import get_irc_logger, IrcLogger, IrcSection
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -44,6 +45,7 @@ class IrcConnection:
         It also logs the irc in onto the Twitch IRC server
         """
         while self.restart_attempts != 0:
+            logger:IrcLogger = get_irc_logger()
 
             # Assemble the asyncio.Protocol
             #   The custom protocol_type needs a constructor to known which patterns to use, settings, etc...
@@ -56,7 +58,10 @@ class IrcConnection:
                 sock=self._assemble_socket()
             )
             if bot_transport is None:
+                await logger.log_error(section=IrcSection.CONNECTION_REFUSED)
                 raise ConnectionRefusedError
+            else:
+                await logger.log_debug(section=IrcSection.CONNECTION_MADE)
 
             # Give the protocol the transporter,
             #   so it can easily create write calls to the connection
@@ -71,7 +76,7 @@ class IrcConnection:
 
             # Waiting portion of the IrcConnection,
             #   This regulates the irc starting back up and restarting
-            match result := await bot_event :
+            match await bot_event :
                 case BotEvent.RESTART:
                     self.current_restart_attempt +=1
                     print(f"{NEW_LINE*25}{'-'*25}RESTART ATTEMPT {self.current_restart_attempt}{'-'*25}")
@@ -79,7 +84,13 @@ class IrcConnection:
 
                     # just wait a set interval,
                     #   to make sure we aren't seen as a ddos
-                    await asyncio.sleep(0.5)
+                    await asyncio.gather(
+                        logger.log_warning(
+                            section=IrcSection.CONNECTION_RESTART,
+                            text=f"attempt={self.current_restart_attempt}"),
+                        asyncio.sleep(0.5)
+
+                    )
 
                     # Clear previous tasks
                     self.bot_obj.task_logic.stop_all_tasks()
@@ -89,7 +100,9 @@ class IrcConnection:
                     continue
 
                 case BotEvent.EXIT | _:
-                    print(result)
+                    await logger.log_warning(
+                        section=IrcSection.CONNECTION_EXIT,
+                        text=f"called by BotEvent")
                     self.bot_obj.task_logic.stop_all_tasks()
                     self.loop.stop()
                     break
