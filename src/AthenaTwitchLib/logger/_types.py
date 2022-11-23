@@ -35,3 +35,6 @@ class IrcSection(enum.StrEnum):
     LOGIN_CAPABILITY = enum.auto()
 
     JOIN = enum.auto()
+    CMD_DATA = enum.auto()
+    CMD_UNKNOWN = enum.auto()
+    CMD_NOT_PARSABLE = enum.auto()

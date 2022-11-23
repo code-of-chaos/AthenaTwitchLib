@@ -11,7 +11,7 @@ import enum
 from AthenaColor import ForeNest as Fore
 
 # Local Imports
-from AthenaTwitchLib.logger import IrcLogger, TwitchLoggerType
+from AthenaTwitchLib.logger import IrcLogger, get_irc_logger, IrcSection
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -54,9 +54,6 @@ class Tags:
     _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.UNKNOWN
     _CONVERSION_MAPPING:ClassVar[dict[str:Conversion]] = {}
 
-    # non init
-
-
     @classmethod
     async def import_from_group_as_str(cls, tags:str) -> Tags:
         """
@@ -64,7 +61,7 @@ class Tags:
         It will then cast the tags into the correct type, provided by the `cls._CONVERSION_MAPPING`
         """
         converted_tags:dict[str:Any] = {}
-        logger = IrcLogger.get_logger(TwitchLoggerType.IRC)
+        logger:IrcLogger =get_irc_logger()
 
         for tag in tags.split(";"):
             attr_name, value = tag.split("=",1)
@@ -72,7 +69,7 @@ class Tags:
             if not (conversion := cls._CONVERSION_MAPPING.get(attr_name, False)):
                 # If it fails, log and continue to the next one
                 print(Fore.Maroon(f"TAG NAME '{attr_name}={value}' NOT FOUND IN {cls.__name__}"))
-                await logger.log_unknown_tag(cls._tag_type, attr_name, value)
+                await logger.log_warning(section=IrcSection.MSG_TAGS_UNKNOWN,text=f"{attr_name, value}")
                 continue
 
             # When everything goes as normal

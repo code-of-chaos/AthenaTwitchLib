@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchLib.logger import IrcLogger, TwitchLoggerType
+from AthenaTwitchLib.logger import IrcLogger, get_irc_logger
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -25,7 +25,7 @@ def register_callback_as_logical_component(fnc: Callable):
 # ----------------------------------------------------------------------------------------------------------------------
 class BaseLogic(ABC):
     _logic_components: list[Coroutine]
-    _logger: IrcLogger
+    logger: IrcLogger
 
     def __new__(cls, *args, **kwargs):
         obj = super().__new__(cls)
@@ -37,7 +37,7 @@ class BaseLogic(ABC):
                 (getattr(obj, i) for i in obj.__dir__())
             )
         )
-        obj._logger = IrcLogger.get_logger(TwitchLoggerType.IRC)
+        obj.logger = get_irc_logger()
 
         return obj
 

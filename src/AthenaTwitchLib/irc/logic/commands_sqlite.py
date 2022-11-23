@@ -9,7 +9,8 @@ import contextlib
 import aiosqlite
 import enum
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+import json
 
 # Athena Packages
 from AthenaLib.constants.types import PATHLIKE
@@ -18,6 +19,7 @@ from AthenaTwitchLib.irc.data.enums import BotEvent
 # Local Imports
 from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
+from AthenaTwitchLib.logger import IrcSection, get_irc_logger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -61,6 +63,14 @@ class CommandData:
         self.allow_vip = bool(self.allow_vip)
         self.allow_mod = bool(self.allow_mod)
         self.output_type = OutputTypes(self.output_type)
+
+        # Log to db
+        asyncio.get_event_loop().create_task(
+            get_irc_logger().log_debug(
+                section=IrcSection.CMD_DATA,
+                text=json.dumps(asdict(self))
+            )
+        )
 
 
 class CommandTypes(enum.StrEnum):

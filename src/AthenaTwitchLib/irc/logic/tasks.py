@@ -46,9 +46,6 @@ class TaskLogic(BaseLogic):
 
         # Extract data from the bot, and make sure that tasks adhere to this
 
-
-
-
         obj.open_tasks = []
         return obj
 
