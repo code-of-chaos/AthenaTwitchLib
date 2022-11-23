@@ -43,4 +43,4 @@ class RegexPatterns:
         self.user_notice = re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE #([^:]*) :(.*)")
         self.user_state = re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")
         self.user_state = re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")
-        self.username = re.compile(r":([^!]*)!\1@\1.tmi.twitch.tv")
+        self.username = re.compile(r":([^!]*)!\1@\1\.tmi\.twitch\.tv")
