@@ -67,7 +67,7 @@ class IrcConnection:
             await self.bot_obj.login()
 
             # noinspection PyTypeChecker
-            await self.bot_obj.task_logic.start_all_tasks(bot_transport)
+            self.bot_obj.task_logic.start_all_tasks(bot_transport, self.loop)
 
             # Waiting portion of the IrcConnection,
             #   This regulates the irc starting back up and restarting
@@ -79,10 +79,10 @@ class IrcConnection:
 
                     # just wait a set interval,
                     #   to make sure we aren't seen as a ddos
-                    await asyncio.gather(
-                        asyncio.sleep(0.5),
-                        self.bot_obj.task_logic.stop_all_tasks(),
-                    )
+                    await asyncio.sleep(0.5)
+
+                    # Clear previous tasks
+                    self.bot_obj.task_logic.stop_all_tasks()
 
                     # restarts it all
                     self.restart_attempts -= 1
@@ -90,7 +90,7 @@ class IrcConnection:
 
                 case BotEvent.EXIT | _:
                     print(result)
-                    await self.bot_obj.task_logic.stop_all_tasks()
+                    self.bot_obj.task_logic.stop_all_tasks()
                     self.loop.stop()
                     break
 

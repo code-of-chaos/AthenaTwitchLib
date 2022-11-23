@@ -63,23 +63,18 @@ class CommandLogic(BaseCommandLogic):
 
             # a command that all users can access
             case CommandData(allow_user=True), _:
-                print("NORMAL")
                 await fnc(context)
 
             case CommandData(allow_broadcaster=True), MessageCommandContext(user=user, channel=channel) if user == f":{channel}!{channel}@{channel}.tmi.twitch.tv":
-                print("BROADCASTER")
                 await fnc(context)
 
             case CommandData(allow_mod=True), MessageCommandContext(tags=TagsPRIVMSG(moderator=True)):
-                print("MOD")
                 await fnc(context)
 
             case CommandData(allow_sub=True), MessageCommandContext(tags=TagsPRIVMSG(subscriber=True)):
-                print("SUB")
                 await fnc(context)
 
             case CommandData(allow_vip=True), MessageCommandContext(tags=TagsPRIVMSG(vip=True)):
-                print("VIP")
                 await fnc(context)
 
             # in any other cases
