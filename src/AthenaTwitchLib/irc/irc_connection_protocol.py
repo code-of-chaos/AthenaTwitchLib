@@ -43,7 +43,7 @@ def log_handler(fnc:Callable) -> Any:
     """
     @functools.wraps(fnc)
     async def wrapper(*args, **kwargs):
-        IrcLogger.log_debug(section=SectionIRC.HANDLER_CALLED, text=fnc.__name__),
+        IrcLogger.log_track(section=SectionIRC.HANDLER_CALLED, text=fnc.__name__),
         IrcLogger.log_debug(section=SectionIRC.MSG, text=kwargs.get("line", None)),
         return await fnc(*args, **kwargs)
 
