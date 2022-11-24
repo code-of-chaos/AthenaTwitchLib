@@ -3,10 +3,6 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-
-import copy
-import datetime
-import json
 from dataclasses import dataclass, asdict
 import asyncio
 
@@ -15,7 +11,6 @@ import asyncio
 # Local Imports
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG
 from AthenaTwitchLib.string_formatting import twitch_irc_output_format
-from AthenaTwitchLib.logger import IrcLogger, IrcSection, get_irc_logger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

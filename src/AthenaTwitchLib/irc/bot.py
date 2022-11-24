@@ -11,7 +11,7 @@ import asyncio
 # Local Imports
 from AthenaTwitchLib.irc.logic import CommandLogic, TaskLogic
 from AthenaTwitchLib.string_formatting import twitch_irc_output_format
-from AthenaTwitchLib.logger import IrcLogger, IrcSection, get_irc_logger
+from AthenaTwitchLib.logger import IrcSection, IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -37,7 +37,6 @@ class Bot:
 
     # non init
     transport:asyncio.BaseTransport|asyncio.Transport = field(init=False)
-    logger:IrcLogger = field(init=False, default_factory=get_irc_logger)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Login functions -
@@ -48,37 +47,37 @@ class Bot:
         This should always be requested, else answering to chat is impossible
         """
         if not self.capability_tags:
-            await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_tags not enabled")
+            IrcLogger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_tags not enabled")
             return
 
         self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/tags"))
-        await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_tags set")
+        IrcLogger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_tags set")
 
     async def _cap_commands(self):
         """
         Assigns the Twitch IRC chat capability of sending twitch (`/`) commands in chat, by the bot
         """
         if not self.capability_commands:
-            await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_commands not enabled")
+            IrcLogger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_commands not enabled")
             return
 
         self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/commands"))
-        await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_commands set")
+        IrcLogger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_commands set")
 
     async def _cap_membership(self):
         """
         Assigns the Twitch IRC chat capability of receiving membership information
         """
         if not self.capability_membership:
-            await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_membership not enabled")
+            IrcLogger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_membership not enabled")
             return
 
         self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/membership"))
-        await self.logger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_membership set")
+        IrcLogger.log_debug(section=IrcSection.LOGIN_CAPABILITY, text="capability_membership set")
 
     async def _write_to_twitch(self, section:IrcSection, txt:str):
         self.transport.write(twitch_irc_output_format(txt))
-        await self.logger.log_debug(section=section, text=txt)
+        IrcLogger.log_debug(section=section, text=txt)
 
     async def login(self):
         """
@@ -90,13 +89,14 @@ class Bot:
         self.transport.write(twitch_irc_output_format(f"PASS oauth:{self.oath_token}"))
         self.transport.write(twitch_irc_output_format(f"NICK {self.name}"))
 
+        # Log that we have logged in
+        IrcLogger.log_debug(
+            section=IrcSection.LOGIN,
+            text=f"[{self.name=}, {self.join_channel=}, {self.join_message=}, {self.prefix=}]"
+        )
+
         # Request correct capabilities
         await asyncio.gather(
-            self.logger.log_debug(
-                section=IrcSection.LOGIN,
-                text=f"[{self.name=}, {self.join_channel=}, {self.join_message=}, {self.prefix=}]"
-            ),
-
             # Join all channels and don't wait for the logger to finish
             *(self._write_to_twitch(section=IrcSection.JOIN, txt=f"JOIN #{channel}")
               for channel in self.join_channel),

@@ -12,12 +12,12 @@ import json
 
 # Athena Packages
 from AthenaColor import ForeNest as Fore
-from AthenaLib.general.functions.json import GeneralCustomJsonEncoder
+from AthenaLib.general.json import GeneralCustomJsonEncoder
 
 # Local Imports
 from AthenaTwitchLib.irc.regex import RegexPatterns
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG, TagsUSERSTATE
-from AthenaTwitchLib.logger import IrcLogger, get_irc_logger, IrcSection
+from AthenaTwitchLib.logger import IrcSection, IrcLogger
 from AthenaTwitchLib.irc.message_context import MessageContext,MessageCommandContext
 from AthenaTwitchLib.irc.data.enums import BotEvent
 from AthenaTwitchLib.irc.bot import Bot
@@ -43,13 +43,9 @@ def log_handler(fnc:Callable) -> Any:
     """
     @functools.wraps(fnc)
     async def wrapper(*args, **kwargs):
-        logger:IrcLogger = get_irc_logger()
-        result, *_ = await asyncio.gather(
-            fnc(*args, **kwargs),
-            logger.log_debug(section=IrcSection.HANDLER_CALLED, text=fnc.__name__),
-            logger.log_debug(section=IrcSection.MSG, text=kwargs.get("line", None)),
-        )
-        return result
+        IrcLogger.log_debug(section=IrcSection.HANDLER_CALLED, text=fnc.__name__),
+        IrcLogger.log_debug(section=IrcSection.MSG, text=kwargs.get("line", None)),
+        return await fnc(*args, **kwargs)
 
     return wrapper
 
@@ -68,7 +64,6 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     _transport: asyncio.transports.Transport = None  # delayed as it has to be set after the connection has been made
     loop :asyncio.AbstractEventLoop = field(init=False)
-    logger:IrcLogger = field(init=False, default_factory=get_irc_logger)
 
     def __post_init__(self):
         self.loop = asyncio.get_running_loop()
@@ -248,7 +243,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
             bot_event_future=self.bot_event_future,
             original_line=line
         )
-        await self.logger.log_debug(
+        IrcLogger.log_debug(
             section=IrcSection.MSG_CONTEXT,
             text=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
         )
@@ -280,14 +275,13 @@ class IrcConnectionProtocol(asyncio.Protocol):
             args=args.strip().split(" ")
         )
 
-        await asyncio.gather(
-            self.bot_obj.command_logic.execute_command(
-                context=message_context
-            ),
-            self.logger.log_debug(
-                section=IrcSection.MSG_CONTEXT,
-                text=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
-            )
+        IrcLogger.log_debug(
+            section=IrcSection.MSG_CONTEXT,
+            text=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
+        )
+
+        await self.bot_obj.command_logic.execute_command(
+            context=message_context
         )
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -315,7 +309,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         Method is called when the protocol can't find an appropriate match for the given string
         """
         print(Fore.SlateGray(f"NOT CAUGHT | {line}"))
-        await self.logger.log_warning(
+        IrcLogger.log_warning(
             section=IrcSection.HANDLER_UNKNOWN,
             text=line
         )

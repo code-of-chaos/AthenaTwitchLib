@@ -3,15 +3,13 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import enum
 
 # Athena Packages
-from AthenaLib.logging import AthenaSqliteLogger
+from AthenaLib.logging.logger_sqlite import AthenaSqliteLogger
 
 # Local Imports
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class IrcLogger(AthenaSqliteLogger):
-    pass
+IrcLogger = AthenaSqliteLogger()

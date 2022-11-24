@@ -19,7 +19,7 @@ from AthenaTwitchLib.irc.data.enums import BotEvent
 # Local Imports
 from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
-from AthenaTwitchLib.logger import IrcSection, get_irc_logger
+from AthenaTwitchLib.logger import IrcSection, IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -65,11 +65,9 @@ class CommandData:
         self.output_type = OutputTypes(self.output_type)
 
         # Log to db
-        asyncio.get_event_loop().create_task(
-            get_irc_logger().log_debug(
-                section=IrcSection.CMD_DATA,
-                text=json.dumps(asdict(self))
-            )
+        IrcLogger.log_debug(
+            section=IrcSection.CMD_DATA,
+            text=json.dumps(asdict(self))
         )
 
 

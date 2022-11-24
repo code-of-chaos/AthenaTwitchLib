@@ -4,7 +4,6 @@
 # General Packages
 from __future__ import annotations
 import json
-import asyncio
 from dataclasses import dataclass, field, asdict
 from typing import Callable
 
@@ -14,7 +13,7 @@ from typing import Callable
 from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic,register_callback_as_logical_component
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG
-from AthenaTwitchLib.logger import IrcSection, get_irc_logger
+from AthenaTwitchLib.logger import IrcSection, IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -34,13 +33,11 @@ class CommandData:
         elif not isinstance(self.cmd_names, list):
             raise ValueError
 
-        # Log to db
-        asyncio.get_event_loop().create_task(
-            get_irc_logger().log_debug(
-                section=IrcSection.CMD_DATA,
-                text=json.dumps(asdict(self))
-            )
-        )
+        # # Log to db
+        # IrcLogger.log_debug(
+        #     section=IrcSection.CMD_DATA,
+        #     text=json.dumps(asdict(self))
+        # )
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -65,7 +62,7 @@ class CommandLogic(BaseCommandLogic):
         # Get the command from the stored bot's method.
         #   If it can't be found, skip the entire function
         if not (fnc := self._commands.get(context.command, False)):
-            await self.logger.log_debug(
+            IrcLogger.log_debug(
                 section=IrcSection.CMD_UNKNOWN,
                 text=context.original_line
             )
@@ -94,7 +91,7 @@ class CommandLogic(BaseCommandLogic):
             # in any other cases
             #   This should never happen
             case _,_:
-                await self.logger.log_warning(
+                IrcLogger.log_warning(
                     section=IrcSection.CMD_NOT_PARSABLE,
                     text=context.original_line
                 )

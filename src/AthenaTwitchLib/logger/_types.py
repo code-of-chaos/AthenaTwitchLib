@@ -12,10 +12,6 @@ import enum
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class TwitchLoggerType(enum.StrEnum):
-    IRC = enum.auto()
-    API = enum.auto()
-
 class IrcSection(enum.StrEnum):
     HANDLER_CALLED = enum.auto()
     HANDLER_UNKNOWN = enum.auto()
