@@ -220,7 +220,7 @@ class CommandLogicSqlite(BaseCommandLogic):
             case CommandData(command_type=CommandTypes.PLAIN):
                 await self.output(context, data, data.output_text)
 
-            case CommandData(command_type=CommandTypes.FORMAT):
+            case CommandData(command_type=CommandTypes.FORMAT) if context.args:
                 await self.output( context, data, data.output_text, format_={f"args_{i}":a for i, a in enumerate(context.args)})
 
             case CommandData(command_type=CommandTypes.EXIT):

@@ -12,4 +12,5 @@ from AthenaLib.logging.logger_sqlite import AthenaSqliteLogger
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-IrcLogger = AthenaSqliteLogger()
+IrcLogger = AthenaSqliteLogger(table_to_use="logger_twitch_irc")
+ApiLogger = AthenaSqliteLogger(table_to_use="logger_twitch_api")
