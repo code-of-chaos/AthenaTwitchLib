@@ -4,7 +4,7 @@
 # General Packages
 from __future__ import annotations
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # Athena Packages
 
@@ -13,34 +13,19 @@ from dataclasses import dataclass
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True, init=False)
+@dataclass(slots=True, frozen=True)
 class RegexPatterns:
-    server_message:re.Pattern
-    server_353:re.Pattern
-    server_366:re.Pattern
-    server_cap:re.Pattern
+    server_message:re.Pattern = field(default_factory=lambda:re.compile(r"^:tmi.twitch.tv \d\d\d ([^ ]*) :"))
+    server_353:re.Pattern = field(default_factory=lambda:re.compile(r"^:([^ ]*)\.tmi\.twitch\.tv 353 \1 = #([^ ]*) :"))
+    server_366:re.Pattern = field(default_factory=lambda:re.compile(r"^:([^ ]*)\.tmi\.twitch\.tv 366 \1 #([^ ]*) :End of /NAMES list$"))
+    server_cap:re.Pattern = field(default_factory=lambda:re.compile(r":tmi\.twitch\.tv CAP \* ACK :.*"))
 
-    join:re.Pattern
-    part:re.Pattern
+    join:re.Pattern = field(default_factory=lambda:re.compile(r"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv JOIN (#.*)"))
+    part:re.Pattern = field(default_factory=lambda:re.compile(r"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv PART (#.*)"))
 
-    message_command:re.Pattern
-    message:re.Pattern
-    user_notice:re.Pattern
-    user_state:re.Pattern
-    username:re.Pattern
+    message:re.Pattern = field(default_factory=lambda:re.compile(r"^@([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :(.*)"))
+    message_command: re.Pattern = field(default_factory=lambda: re.compile(r"^[!.?]([^ ]*)(.*)"))
 
-    def __init__(self, bot_name:str, bot_prefix:str):
-        self.server_message = re.compile(fr"^((:tmi.twitch.tv) \d\d\d ({bot_name}) :)")
-        self.server_353 = re.compile(fr"^:{bot_name}\.tmi\.twitch\.tv 353 {bot_name} = #.*:")
-        self.server_366 = re.compile(fr"^:{bot_name}\.tmi\.twitch\.tv 366 {bot_name} #.*:End of /NAMES list")
-        self.server_cap = re.compile(fr":tmi\.twitch\.tv CAP \* ACK :.*")
-
-        self.join = re.compile(fr"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv JOIN (#.*)")
-        self.part = re.compile(fr"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv PART (#.*)")
-
-        self.message = re.compile(fr"^@([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :(.*)")
-        self.message_command = re.compile(fr"^{bot_prefix}([^ ]*)(.*)")
-        self.user_notice = re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE #([^:]*) :(.*)")
-        self.user_state = re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")
-        self.user_state = re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")
-        self.username = re.compile(r":([^!]*)!\1@\1\.tmi\.twitch\.tv")
+    user_notice:re.Pattern = field(default_factory=lambda:re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE #([^:]*) :(.*)"))
+    user_state:re.Pattern = field(default_factory=lambda:re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)"))
+    username:re.Pattern = field(default_factory=lambda:re.compile(r":([^!]*)!\1@\1\.tmi\.twitch\.tv"))

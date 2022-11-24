@@ -130,10 +130,7 @@ class IrcConnection:
 
             # Creates a new regex pattern
             #   in the event that it's matches must change during a restart
-            regex_patterns=RegexPatterns(
-                bot_name=self.bot_obj.name,
-                bot_prefix=self.bot_obj.prefix
-            ),
+            regex_patterns=RegexPatterns(),
 
             # Assign the logic
             #   If this isn't defined, the protocol can't handle anything correctly

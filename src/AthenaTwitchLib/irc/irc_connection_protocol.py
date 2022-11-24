@@ -124,7 +124,10 @@ class IrcConnectionProtocol(asyncio.Protocol):
             elif line == "PING :tmi.twitch.tv":
                 self.loop.create_task(self.handle_ping(line=line))
 
-            elif server_message := self.regex_patterns.server_message.match(line):
+            elif (
+                (server_message := self.regex_patterns.server_message.match(line))
+                and server_message.groups()[0] == self.bot_obj.name
+            ):
                 self.loop.create_task(self.handle_server_message(server_message, line=line))
 
             elif join := self.regex_patterns.join.match(line):
