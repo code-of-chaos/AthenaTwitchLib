@@ -54,7 +54,7 @@ class TagsPRIVMSG(Tags):
         "bits": Conversion("bits", str),
         "color": Conversion("color", str),
         "client-nonce":Conversion("client_nonce", str),
-        "custom-reward-id":Conversion("custom-reward-id", str),
+        "custom-reward-id":Conversion("custom_reward_id", str),
         "display-name": Conversion("display_name", str),
         "emotes": Conversion("emotes", str),
         "emote-only": Conversion("emote_only", lambda obj: bool(int(obj))),

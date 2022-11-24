@@ -16,7 +16,7 @@ from AthenaLib.general.json import GeneralCustomJsonEncoder
 
 # Local Imports
 from AthenaTwitchLib.irc.regex import RegexPatterns
-from AthenaTwitchLib.irc.tags import TagsPRIVMSG, TagsUSERSTATE
+from AthenaTwitchLib.irc.tags import TagsPRIVMSG, TagsUSERSTATE, TagsUSERNOTICE
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 from AthenaTwitchLib.irc.message_context import MessageContext,MessageCommandContext
 from AthenaTwitchLib.irc.data.enums import BotEvent
@@ -150,6 +150,9 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
             elif user_notice := self.regex_patterns.user_notice.match(line):
                 self.loop.create_task(self.handle_user_notice(user_notice, line=line))
+
+            elif user_notice_raid := self.regex_patterns.user_notice_raid.match(line):
+                self.loop.create_task(self.handle_user_notice_raid(user_notice_raid, line=line))
 
             elif user_state := self.regex_patterns.user_state.match(line):
                 self.loop.create_task(self.handle_user_state(user_state, line=line))
@@ -298,7 +301,19 @@ class IrcConnectionProtocol(asyncio.Protocol):
         """
         Method is called when twitch sends a USERNOTICE message
         """
+        tags_group_str,user,channel,text = user_notice.groups()
+        tags = await TagsUSERNOTICE.import_from_group_as_str(tags_group_str)
         print(f"{Fore.Plum('USERNOTICE')} | {line}")
+
+    # ------------------------------------------------------------------------------------------------------------------
+    @log_handler
+    async def handle_user_notice_raid(self, user_notice_raid:re.Match, *, line:str):
+        """
+        Method is called when twitch sends a USERNOTICE message
+        """
+        tags_group_str,channel = user_notice_raid.groups()
+        tags = await TagsUSERNOTICE.import_from_group_as_str(tags_group_str)
+        print(f"{Fore.Plum('USERNOTICE RAID')} | {line} | {tags}")
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler

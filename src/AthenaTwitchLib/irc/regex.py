@@ -27,5 +27,6 @@ class RegexPatterns:
     message_command: re.Pattern = field(default_factory=lambda: re.compile(r"^([!.?#])([^ ]*)(.*)"))
 
     user_notice:re.Pattern = field(default_factory=lambda:re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE #([^:]*) :(.*)"))
+    user_notice_raid:re.Pattern = field(default_factory=lambda:re.compile(r"^([^ ]*msg-id=raid[^ ]*) :tmi.twitch.tv USERNOTICE #([^ ]*)$"))
     user_state:re.Pattern = field(default_factory=lambda:re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)"))
     username:re.Pattern = field(default_factory=lambda:re.compile(r":([^!]*)!\1@\1\.tmi\.twitch\.tv"))
