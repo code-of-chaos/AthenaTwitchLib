@@ -34,3 +34,6 @@ class SectionIRC(enum.StrEnum):
     CMD_DATA = enum.auto()
     CMD_UNKNOWN = enum.auto()
     CMD_NOT_PARSABLE = enum.auto()
+
+class SectionAPI(enum.StrEnum):
+    pass
