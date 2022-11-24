@@ -24,7 +24,7 @@ class RegexPatterns:
     part:re.Pattern = field(default_factory=lambda:re.compile(r"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv PART (#.*)"))
 
     message:re.Pattern = field(default_factory=lambda:re.compile(r"^@([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :(.*)"))
-    message_command: re.Pattern = field(default_factory=lambda: re.compile(r"^[!.?]([^ ]*)(.*)"))
+    message_command: re.Pattern = field(default_factory=lambda: re.compile(r"^([!.?#])([^ ]*)(.*)"))
 
     user_notice:re.Pattern = field(default_factory=lambda:re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE #([^:]*) :(.*)"))
     user_state:re.Pattern = field(default_factory=lambda:re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)"))

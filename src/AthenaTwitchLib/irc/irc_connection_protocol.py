@@ -116,7 +116,10 @@ class IrcConnectionProtocol(asyncio.Protocol):
                 continue
 
             elif message := self.regex_patterns.message.match(line):
-                if cmd_match := self.regex_patterns.message_command.match(message.groups()[-1]):
+                if (
+                    (cmd_match := self.regex_patterns.message_command.match(message.groups()[-1]) )
+                    and cmd_match.groups()[0] == self.bot_obj.prefix
+                ):
                     self.loop.create_task(self.handle_message_command(message, cmd_match, line=line))
                 else:
                     self.loop.create_task(self.handle_message(message, line=line))
@@ -263,7 +266,9 @@ class IrcConnectionProtocol(asyncio.Protocol):
         # Extract data from matched message
         #   Easily done due to regex groups
         tags_group_str,user,channel,text = message.groups()
-        command, args = cmd_match.groups()
+
+        # prefix, command, args
+        _,command, args = cmd_match.groups()
 
         message_context = MessageCommandContext(
             tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
