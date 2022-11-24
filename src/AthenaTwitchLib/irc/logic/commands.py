@@ -13,7 +13,7 @@ from typing import Callable
 from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic,register_callback_as_logical_component
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG
-from AthenaTwitchLib.logger import IrcSection, IrcLogger
+from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -35,7 +35,7 @@ class CommandData:
 
         # # Log to db
         # IrcLogger.log_debug(
-        #     section=IrcSection.CMD_DATA,
+        #     section=SectionIRC.CMD_DATA,
         #     text=json.dumps(asdict(self))
         # )
 
@@ -63,7 +63,7 @@ class CommandLogic(BaseCommandLogic):
         #   If it can't be found, skip the entire function
         if not (fnc := self._commands.get(context.command, False)):
             IrcLogger.log_debug(
-                section=IrcSection.CMD_UNKNOWN,
+                section=SectionIRC.CMD_UNKNOWN,
                 text=context.original_line
             )
             return
@@ -92,7 +92,7 @@ class CommandLogic(BaseCommandLogic):
             #   This should never happen
             case _,_:
                 IrcLogger.log_warning(
-                    section=IrcSection.CMD_NOT_PARSABLE,
+                    section=SectionIRC.CMD_NOT_PARSABLE,
                     text=context.original_line
                 )
 

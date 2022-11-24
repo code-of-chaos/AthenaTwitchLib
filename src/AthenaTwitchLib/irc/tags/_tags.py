@@ -12,7 +12,7 @@ from AthenaColor import ForeNest as Fore
 from AthenaLib.logging import AthenaSqliteLogger
 
 # Local Imports
-from AthenaTwitchLib.logger import IrcSection, IrcLogger
+from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -69,7 +69,7 @@ class Tags:
             if not (conversion := cls._CONVERSION_MAPPING.get(attr_name, False)):
                 # If it fails, log and continue to the next one
                 print(Fore.Maroon(f"TAG NAME '{attr_name}={value}' NOT FOUND IN {cls.__name__}"))
-                IrcLogger.log_warning(section=IrcSection.MSG_TAGS_UNKNOWN,text=f"{attr_name, value}")
+                IrcLogger.log_warning(section=SectionIRC.MSG_TAGS_UNKNOWN, text=f"{attr_name, value}")
                 continue
 
             # When everything goes as normal

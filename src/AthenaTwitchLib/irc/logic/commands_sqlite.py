@@ -19,7 +19,7 @@ from AthenaTwitchLib.irc.data.enums import BotEvent
 # Local Imports
 from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
-from AthenaTwitchLib.logger import IrcSection, IrcLogger
+from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -66,7 +66,7 @@ class CommandData:
 
         # Log to db
         IrcLogger.log_debug(
-            section=IrcSection.CMD_DATA,
+            section=SectionIRC.CMD_DATA,
             text=json.dumps(asdict(self))
         )
 

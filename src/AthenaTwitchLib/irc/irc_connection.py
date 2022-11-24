@@ -16,7 +16,7 @@ from AthenaTwitchLib.irc.irc_connection_protocol import IrcConnectionProtocol
 from AthenaTwitchLib.irc.regex import RegexPatterns
 from AthenaTwitchLib.irc.data.enums import BotEvent
 from AthenaTwitchLib.irc.bot import Bot
-from AthenaTwitchLib.logger import IrcSection, IrcLogger
+from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -56,10 +56,10 @@ class IrcConnection:
                 sock=self._assemble_socket()
             )
             if bot_transport is None:
-                IrcLogger.log_error(section=IrcSection.CONNECTION_REFUSED)
+                IrcLogger.log_error(section=SectionIRC.CONNECTION_REFUSED)
                 raise ConnectionRefusedError
             else:
-                IrcLogger.log_debug(section=IrcSection.CONNECTION_MADE)
+                IrcLogger.log_debug(section=SectionIRC.CONNECTION_MADE)
 
             # Give the protocol the transporter,
             #   so it can easily create write calls to the connection
@@ -79,7 +79,7 @@ class IrcConnection:
                     self.current_restart_attempt +=1
                     print(f"{NEW_LINE*25}{'-'*25}RESTART ATTEMPT {self.current_restart_attempt}{'-'*25}")
                     IrcLogger.log_warning(
-                        section=IrcSection.CONNECTION_RESTART,
+                        section=SectionIRC.CONNECTION_RESTART,
                         text=f"attempt={self.current_restart_attempt}"
                     )
 
@@ -100,7 +100,7 @@ class IrcConnection:
 
                 case BotEvent.EXIT | _:
                     IrcLogger.log_warning(
-                        section=IrcSection.CONNECTION_EXIT,
+                        section=SectionIRC.CONNECTION_EXIT,
                         text=f"called by BotEvent")
                     self.bot_obj.task_logic.stop_all_tasks()
                     self.loop.stop()

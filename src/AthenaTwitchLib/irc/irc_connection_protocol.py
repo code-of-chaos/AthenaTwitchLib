@@ -17,7 +17,7 @@ from AthenaLib.general.json import GeneralCustomJsonEncoder
 # Local Imports
 from AthenaTwitchLib.irc.regex import RegexPatterns
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG, TagsUSERSTATE
-from AthenaTwitchLib.logger import IrcSection, IrcLogger
+from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 from AthenaTwitchLib.irc.message_context import MessageContext,MessageCommandContext
 from AthenaTwitchLib.irc.data.enums import BotEvent
 from AthenaTwitchLib.irc.bot import Bot
@@ -43,8 +43,8 @@ def log_handler(fnc:Callable) -> Any:
     """
     @functools.wraps(fnc)
     async def wrapper(*args, **kwargs):
-        IrcLogger.log_debug(section=IrcSection.HANDLER_CALLED, text=fnc.__name__),
-        IrcLogger.log_debug(section=IrcSection.MSG, text=kwargs.get("line", None)),
+        IrcLogger.log_debug(section=SectionIRC.HANDLER_CALLED, text=fnc.__name__),
+        IrcLogger.log_debug(section=SectionIRC.MSG, text=kwargs.get("line", None)),
         return await fnc(*args, **kwargs)
 
     return wrapper
@@ -244,7 +244,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
             original_line=line
         )
         IrcLogger.log_debug(
-            section=IrcSection.MSG_CONTEXT,
+            section=SectionIRC.MSG_CONTEXT,
             text=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
         )
 
@@ -276,7 +276,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         )
 
         IrcLogger.log_debug(
-            section=IrcSection.MSG_CONTEXT,
+            section=SectionIRC.MSG_CONTEXT,
             text=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
         )
 
@@ -310,6 +310,6 @@ class IrcConnectionProtocol(asyncio.Protocol):
         """
         print(Fore.SlateGray(f"NOT CAUGHT | {line}"))
         IrcLogger.log_warning(
-            section=IrcSection.HANDLER_UNKNOWN,
+            section=SectionIRC.HANDLER_UNKNOWN,
             text=line
         )
