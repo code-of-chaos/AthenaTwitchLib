@@ -14,12 +14,13 @@ import json
 
 # Athena Packages
 from AthenaLib.constants.types import PATHLIKE
+from AthenaLib.general.sql import sanitize_sql
 
-from AthenaTwitchLib.irc.data.enums import BotEvent
 # Local Imports
 from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
+from AthenaTwitchLib.irc.data.enums import BotEvent
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -157,7 +158,6 @@ class CommandLogicSqlite(BaseCommandLogic):
 
     @staticmethod
     async def output(context: MessageCommandContext, data: CommandData, msg: str, format_:dict=None):
-
         msg_formatted = msg.format(
             username=context.username,
             channel=context.channel,
@@ -177,20 +177,29 @@ class CommandLogicSqlite(BaseCommandLogic):
         Otherwise, will  return False.
         """
         async with self._db_connect(auto_commit=False) as db:
-            db: aiosqlite.Connection
 
-            # noinspection SqlType
-            async with db.execute(f"SELECT * FROM commands WHERE `command_name` == '{context.command}'") as cursor:
-                for row in await cursor.fetchall(): #type: aiosqlite.Row
-                    match context, data := CommandData(**dict(row)):
-                        case MessageCommandContext(args=_), CommandData(command_arg=None|"*"):
-                            return data
+            async with db.execute(f"""# noinspection SqlType
+                SELECT * 
+                FROM commands 
+                WHERE (
+                    (`command_name`,`command_arg`) = ('{(cmd := sanitize_sql(context.command))}','{ sanitize_sql(context.args[0]) if context.args else "*"}')
+                    OR (`command_name`,`command_arg`) = ('{cmd}','*')
+                )
+                ORDER BY `command_arg` DESC 
+                LIMIT 1;
+            """) as cursor: #type: aiosqlite.Cursor
 
-                        case MessageCommandContext(args=args), CommandData(command_arg=stored_arg) if stored_arg == args[0]:
-                            return data
+                # Quit if nothing has been found
+                if (row := await cursor.fetchone()) is None:
+                    return False
 
-                        case _,_:
-                            continue
+                match context, data := CommandData(**dict(row)):
+                    case MessageCommandContext(args=_), CommandData(command_arg=None|"*"):
+                        return data
+
+                    case MessageCommandContext(args=args), CommandData(command_arg=stored_arg) if stored_arg == args[0]:
+                        return data
+
         return False
 
 
