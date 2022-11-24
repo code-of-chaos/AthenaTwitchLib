@@ -21,31 +21,15 @@ from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 from AthenaTwitchLib.irc.data.enums import BotEvent
+from AthenaTwitchLib.irc.data.tables import TBL_LOGIC_COMMANDS
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
-SQL_CREATE_TABLES:list[str] = [
-f"""
-CREATE TABLE IF NOT EXISTS `commands`  (
-    `id` INTEGER PRIMARY KEY,                               -- internal id
-    `command_name` TEXT NOT NULL,                           -- ![command_name]
-    `command_arg` TEXT DEFAULT NULL,                        -- if this specific arg is present, execute this record
-    `command_type` TEXT NOT NULL,                           -- Type of command, means it has extra logic attached to it
-    `allow_user` INTEGER NOT NULL DEFAULT TRUE,
-    `allow_sub` INTEGER NOT NULL DEFAULT FALSE,
-    `allow_vip` INTEGER NOT NULL DEFAULT FALSE,
-    `allow_mod` INTEGER NOT NULL DEFAULT FALSE,
-    `allow_broadcaster` INTEGER NOT NULL DEFAULT FALSE,
-    `output_text` TEXT NOT NULL DEFAULT 'NO OUTPUT SET',    -- text to output in chat
-    `output_type` TEXT NOT NULL DEFAULT 'reply'             -- reply or write output
-);
-"""
-]
-
 @dataclass(slots=True, kw_only=True)
 class CommandData:
     id:int
+    channel:str
     command_name:str
     command_arg:str|None
     command_type:str|CommandTypes
@@ -133,8 +117,7 @@ class CommandLogicSqlite(BaseCommandLogic):
         them if they are already present.
         """
         async with self._db_connect() as db:
-            for sql in SQL_CREATE_TABLES:
-                await db.execute(sql)
+            await db.execute(TBL_LOGIC_COMMANDS)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Command execution -
@@ -178,12 +161,16 @@ class CommandLogicSqlite(BaseCommandLogic):
         """
         async with self._db_connect(auto_commit=False) as db:
 
-            async with db.execute(f"""# noinspection SqlType
+            channel = sanitize_sql(context.channel)
+            cmd = sanitize_sql(context.command)
+            arg = sanitize_sql(context.args[0]) if context.args else "*"
+
+            async with db.execute(f"""
                 SELECT * 
                 FROM commands 
                 WHERE (
-                    (`command_name`,`command_arg`) = ('{(cmd := sanitize_sql(context.command))}','{ sanitize_sql(context.args[0]) if context.args else "*"}')
-                    OR (`command_name`,`command_arg`) = ('{cmd}','*')
+                    (`channel`,`command_name`,`command_arg`) = ('{channel}', '{cmd}','{arg}')
+                    OR (`channel`,`command_name`,`command_arg`) = ('{channel}','{cmd}','*')
                 )
                 ORDER BY `command_arg` DESC 
                 LIMIT 1;
