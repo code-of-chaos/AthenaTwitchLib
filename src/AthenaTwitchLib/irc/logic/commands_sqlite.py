@@ -3,11 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import pathlib
-from typing import AsyncContextManager
-import contextlib
 import aiosqlite
-import enum
 import asyncio
 from dataclasses import dataclass, asdict
 import json
@@ -15,19 +11,24 @@ import json
 # Athena Packages
 from AthenaLib.constants.types import PATHLIKE
 from AthenaLib.general.sql import sanitize_sql
+from AthenaLib.database_connectors.async_sqlite import ConnectorAioSqlite
 
 # Local Imports
 from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
-from AthenaTwitchLib.logger import SectionIRC, IrcLogger
-from AthenaTwitchLib.irc.data.enums import BotEvent
-from AthenaTwitchLib.irc.data.tables import TBL_LOGIC_COMMANDS
+from AthenaTwitchLib.logger import IrcLogger, SectionIRC
+from AthenaTwitchLib.irc.data.enums import BotEvent, OutputTypes, CommandTypes
+from AthenaTwitchLib.irc.data.sql import TBL_LOGIC_COMMANDS
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, kw_only=True)
 class CommandData:
+    """
+    Dataclass to hold the command's parameters.
+    The data is gathered from the database.
+    """
     id:int
     channel:str
     command_name:str
@@ -54,28 +55,6 @@ class CommandData:
             section=SectionIRC.CMD_DATA,
             text=json.dumps(asdict(self))
         )
-
-
-class CommandTypes(enum.StrEnum):
-    """
-    The type of commands that are stored within the database, that then need to be parsed in a specific way
-    ---
-
-    - PLAIN : No argument parsing needs to be done within the output text
-    - EXIT : command triggers the exit of the bot
-    - RESTART : command triggers the restart of the bot
-    """
-
-    PLAIN = enum.auto()
-    FORMAT = enum.auto()
-    EXIT = enum.auto()
-    RESTART = enum.auto()
-
-class OutputTypes(enum.StrEnum):
-    WRITE = enum.auto()
-    REPLY = enum.auto()
-
-
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
@@ -84,40 +63,15 @@ class CommandLogicSqlite(BaseCommandLogic):
     Logic system for commands that are retrieved from a database.
     The database in this case, is an SQLite db file.
     """
-    db_path:pathlib.Path
+    _connector: ConnectorAioSqlite
 
-    def __new__(cls, *args, db_path:PATHLIKE, **kwargs):
+    def __new__(cls, *args,path:PATHLIKE, **kwargs):
         obj = super().__new__(cls, *args, *kwargs)
-        obj.db_path = pathlib.Path(db_path)
-
-        asyncio.get_running_loop().create_task(cls._db_create_tables(obj))
+        
+        obj._connector = ConnectorAioSqlite(path=path)
+        asyncio.get_running_loop().create_task(obj._connector.db_create(queries=TBL_LOGIC_COMMANDS))
 
         return obj
-
-    # ------------------------------------------------------------------------------------------------------------------
-    # - DB connection -
-    # ------------------------------------------------------------------------------------------------------------------
-    @contextlib.asynccontextmanager
-    async def _db_connect(self, auto_commit: bool = True) -> AsyncContextManager[aiosqlite.Connection]:
-        """
-        Async Context manager to easily connect to the database
-        Commits all changes to the db, before closing the connection
-        """
-        async with aiosqlite.connect(self.db_path) as db:
-            db.row_factory = aiosqlite.Row
-            yield db
-
-            if auto_commit:
-                await db.commit()
-
-    async def _db_create_tables(self):
-        """
-        Method which is run at the start of the bot.
-        Executes SQL lines, which need to ensure that the correct tables are present on the Database, without overriding
-        them if they are already present.
-        """
-        async with self._db_connect() as db:
-            await db.execute(TBL_LOGIC_COMMANDS)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Command execution -
@@ -152,6 +106,7 @@ class CommandLogicSqlite(BaseCommandLogic):
         elif data.output_type == OutputTypes.REPLY:
             await context.reply(msg_formatted)
         else:
+            IrcLogger.log_error()
             raise ValueError(data.output_type)
 
     async def get_command(self, context:MessageCommandContext) -> CommandData|False:
@@ -159,7 +114,7 @@ class CommandLogicSqlite(BaseCommandLogic):
         Method which retrieves the command from the database, if present.
         Otherwise, will  return False.
         """
-        async with self._db_connect(auto_commit=False) as db:
+        async with self._connector.connect(auto_commit=False) as db:
 
             channel = sanitize_sql(context.channel)
             cmd = sanitize_sql(context.command)
@@ -213,13 +168,25 @@ class CommandLogicSqlite(BaseCommandLogic):
         If a command has been found, parse it's args and text corresponding to the CommandType
         """
         match data:
-            case CommandData(command_type=CommandTypes.PLAIN):
+            case CommandData(command_type=CommandTypes.DEFAULT):
                 await self.output(context, data, data.output_text)
 
-            case CommandData(command_type=CommandTypes.FORMAT) if context.args:
+            case CommandData(command_type=CommandTypes.ARGS) if context.args:
                 await self.output( context, data, data.output_text, format_={f"args_{i}":a for i, a in enumerate(context.args)})
 
             case CommandData(command_type=CommandTypes.EXIT):
+                # restart has a deferred argument parsing
+                #   Meaning that the first argument can be interpreted as a delay integer, in seconds
+                if context.args:
+                    try:
+                        await asyncio.gather(
+                            self.output(context, data, data.output_text.format(delay=(delay:=int(context.args[0])))),
+                            asyncio.sleep(delay)
+                        )
+                    # delay couldn't be cast into a string
+                    except ValueError:
+                        pass
+
                 context.bot_event_future.set_result(BotEvent.EXIT)
 
             case CommandData(command_type=CommandTypes.RESTART):

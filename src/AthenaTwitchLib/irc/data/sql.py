@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS `commands`  (
     `allow_vip` INTEGER NOT NULL DEFAULT FALSE,
     `allow_mod` INTEGER NOT NULL DEFAULT FALSE,
     `allow_broadcaster` INTEGER NOT NULL DEFAULT FALSE,
-    `output_text` TEXT NOT NULL DEFAULT 'NO OUTPUT SET',    -- text to output in chat
-    `output_type` TEXT NOT NULL DEFAULT 'reply'             -- reply or write output
+    `output_text` TEXT DEFAULT NULL,                        -- text to output in chat
+    `output_type` TEXT NOT NULL DEFAULT 'write'             -- reply or write output
 );
 """

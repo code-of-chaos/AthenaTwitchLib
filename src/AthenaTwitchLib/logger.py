@@ -3,16 +3,21 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+import pathlib
 import enum
 
 # Athena Packages
+from AthenaLib.logging.logger_sqlite import AthenaSqliteLogger
 
 # Local Imports
 
 # ----------------------------------------------------------------------------------------------------------------------
-# - Code -
+# - Section Enums -
 # ----------------------------------------------------------------------------------------------------------------------
 class SectionIRC(enum.StrEnum):
+    """
+    Enum which holds all possible section types for the IrcLogger
+    """
     HANDLER_CALLED = enum.auto()
     HANDLER_UNKNOWN = enum.auto()
 
@@ -35,5 +40,21 @@ class SectionIRC(enum.StrEnum):
     CMD_UNKNOWN = enum.auto()
     CMD_NOT_PARSABLE = enum.auto()
 
+# ----------------------------------------------------------------------------------------------------------------------
 class SectionAPI(enum.StrEnum):
-    pass
+    """
+    Enum which holds all possible section types for the ApiLogger
+    """
+
+# ----------------------------------------------------------------------------------------------------------------------
+# - Loggers -
+# ----------------------------------------------------------------------------------------------------------------------
+IrcLogger = AthenaSqliteLogger(
+    sqlite_path=pathlib.Path("data/logger.sqlite"),
+    table_to_use="logger_twitch_irc"
+)
+
+ApiLogger = AthenaSqliteLogger(
+    sqlite_path=pathlib.Path("data/logger.sqlite"),
+    table_to_use="logger_twitch_api"
+)
