@@ -3,24 +3,24 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import asyncio
-import re
 from dataclasses import dataclass, field
-import functools
 from typing import Any, Callable
+import asyncio
+import functools
 import json
+import re
 
 # Athena Packages
 from AthenaColor import ForeNest as Fore
 from AthenaLib.general.json import GeneralCustomJsonEncoder
 
 # Local Imports
-from AthenaTwitchLib.irc.regex import RegexPatterns
+from AthenaTwitchLib.irc.bot import Bot
+from AthenaTwitchLib.irc.data.enums import BotEvent
+from AthenaTwitchLib.irc.message_context import MessageContext,MessageCommandContext
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG, TagsUSERSTATE, TagsUSERNOTICE
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
-from AthenaTwitchLib.irc.message_context import MessageContext,MessageCommandContext
-from AthenaTwitchLib.irc.data.enums import BotEvent
-from AthenaTwitchLib.irc.bot import Bot
+import AthenaTwitchLib.irc.data.regex as RegexPatterns
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -35,6 +35,9 @@ class _TransportBuffer:
 
     @classmethod
     def write(cls, data:bytes):
+        """
+        Stores data to the buffer
+        """
         cls.buffer.append(data)
 
 def log_handler(fnc:Callable) -> Any:
@@ -44,7 +47,9 @@ def log_handler(fnc:Callable) -> Any:
     @functools.wraps(fnc)
     async def wrapper(*args, **kwargs):
         IrcLogger.log_track(section=SectionIRC.HANDLER_CALLED, text=fnc.__name__),
-        IrcLogger.log_debug(section=SectionIRC.MSG, text=kwargs.get("line", None)),
+        if (line := kwargs.get("line", None)) is not None:
+            IrcLogger.log_debug(section=SectionIRC.MSG_ORIGINAL, text=line),
+
         return await fnc(*args, **kwargs)
 
     return wrapper

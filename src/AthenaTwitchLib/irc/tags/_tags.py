@@ -9,7 +9,6 @@ import enum
 
 # Athena Packages
 from AthenaColor import ForeNest as Fore
-from AthenaLib.logging import AthenaSqliteLogger
 
 # Local Imports
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger

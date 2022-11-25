@@ -4,8 +4,8 @@
 # General Packages
 from __future__ import annotations
 from dataclasses import dataclass
-import datetime
 from typing import Literal, ClassVar
+import datetime
 
 # Athena Packages
 

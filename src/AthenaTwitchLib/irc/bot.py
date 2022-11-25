@@ -10,8 +10,8 @@ import asyncio
 
 # Local Imports
 from AthenaTwitchLib.irc.logic import CommandLogic, TaskLogic
-from AthenaTwitchLib.string_formatting import twitch_irc_output_format
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
+from AthenaTwitchLib.string_formatting import twitch_irc_output_format
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -76,6 +76,9 @@ class Bot:
         IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, text="capability_membership set")
 
     async def _write_to_twitch(self, section:SectionIRC, txt:str):
+        """
+        Simple function that writes the text to the twitch chat
+        """
         self.transport.write(twitch_irc_output_format(txt))
         IrcLogger.log_debug(section=section, text=txt)
 

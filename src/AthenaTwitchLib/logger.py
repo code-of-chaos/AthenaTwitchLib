@@ -3,8 +3,8 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import pathlib
 import enum
+import pathlib
 
 # Athena Packages
 from AthenaLib.logging.logger_sqlite import AthenaSqliteLogger
@@ -21,7 +21,7 @@ class SectionIRC(enum.StrEnum):
     HANDLER_CALLED = enum.auto()
     HANDLER_UNKNOWN = enum.auto()
 
-    MSG = enum.auto()
+    MSG_ORIGINAL = enum.auto()
     MSG_CONTEXT = enum.auto()
     MSG_TAGS = enum.auto()
     MSG_TAGS_UNKNOWN = enum.auto()

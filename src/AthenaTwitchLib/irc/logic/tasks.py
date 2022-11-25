@@ -3,15 +3,15 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import asyncio
-import datetime
 from dataclasses import dataclass
 from typing import Callable
+import asyncio
+import datetime
 
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchLib.irc.logic._logic import BaseLogic, register_callback_as_logical_component
+from AthenaTwitchLib.irc.logic._logic import BaseHardCodedLogic, BaseTaskLogic, register_callback_as_logical_component
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -19,6 +19,10 @@ from AthenaTwitchLib.irc.logic._logic import BaseLogic, register_callback_as_log
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, kw_only=True)
 class TaskData:
+    """
+    Simple dataclass to hold basic information about the hard coded task.
+    Meant for the `TaskLogic` class to differentiate what to do when it needs to execute the tasks
+    """
     at:datetime.timedelta = None
     interval:datetime.timedelta = None
     channel:str = None
@@ -30,7 +34,10 @@ class TaskData:
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class TaskLogic(BaseLogic):
+class TaskLogic(BaseHardCodedLogic,BaseTaskLogic):
+    """
+    Logic system behind hard coded tasks.
+    """
     open_tasks:list[asyncio.Task]
     _tasks:list[tuple[Callable,TaskData]]
 
@@ -64,6 +71,11 @@ class TaskLogic(BaseLogic):
         self.open_tasks.clear()
 
     async def _create_task(self, transport:asyncio.Transport, coroutine:Callable, task_data:TaskData):
+        """
+        Main function of a task
+        Gets called by `TaskLogic.start_all_tasks` as it controls the actions of a task
+        """
+
         # it the time has been set to be at a certain part of the hour
         #   Wait until we get to that part of the hour
         if task_data.at is not None:

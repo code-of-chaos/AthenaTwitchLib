@@ -3,14 +3,14 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import json
 from dataclasses import dataclass, field, asdict
 from typing import Callable
+import json
 
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic,register_callback_as_logical_component
+from AthenaTwitchLib.irc.logic._logic import BaseHardCodedLogic, BaseCommandLogic,register_callback_as_logical_component
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
@@ -20,6 +20,19 @@ from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class CommandData:
+    """
+    Simple dataclass to hold basic information about the hard coded command.
+    Meant for the `CommandLogic` class to differentiate what to do when it receives a command from chat
+    ===
+
+    - cmd_names:             All possible command Names
+    - allow_user:            Boolean option to allow all users to use this command
+    - allow_sub:             Boolean option to allow subscribers to use this command
+    - allow_vip:             Boolean option to allow VIP's to use this command
+    - allow_mod:             Boolean option to allow moderators to use this command
+    - allow_broadcaster:     Boolean option to allow broadcasters to use this command
+
+    """
     cmd_names:list[str]|str
     allow_user:bool=field(kw_only=True, default=True)
     allow_sub:bool=field(kw_only=True, default=False)
@@ -33,16 +46,19 @@ class CommandData:
         elif not isinstance(self.cmd_names, list):
             raise ValueError
 
-        # # Log to db
-        # IrcLogger.log_debug(
-        #     section=SectionIRC.CMD_DATA,
-        #     text=json.dumps(asdict(self))
-        # )
+        # Log to db
+        IrcLogger.log_debug(
+            section=SectionIRC.CMD_DATA,
+            text=json.dumps(asdict(self))
+        )
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class CommandLogic(BaseCommandLogic):
+class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
+    """
+    Logic system behind hard coded commands.
+    """
     _commands: dict[str: Callable]
 
     def __new__(cls, *args, **kwargs):

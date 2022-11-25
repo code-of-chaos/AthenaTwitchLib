@@ -30,7 +30,10 @@ class MessageContext:
     bot_event_future:asyncio.Future
     original_line:str
 
-    def as_dict(self):
+    def as_dict(self) -> dict:
+        """
+        Casts the object to a dict that is usable in a JSON format
+        """
         return {
             "tags": asdict(self.tags),
             "user": self.user,
@@ -58,6 +61,10 @@ class MessageContext:
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True,kw_only=True, frozen=True)
 class MessageCommandContext(MessageContext):
+    """
+    Frozen Dataclass which holds the context that will be used by the LogicBot to handle an incoming message
+    The message in question should be a command
+    """
     command:str
     args:list[str]
 

@@ -3,19 +3,20 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import functools
-import socket
-import asyncio
 from dataclasses import dataclass, field
 from typing import Callable
+import asyncio
+import functools
+import socket
 
 # Athena Packages
 from AthenaLib.constants.text import NEW_LINE
+
 # Local Imports
+from AthenaTwitchLib.irc.bot import Bot
+from AthenaTwitchLib.irc.data.enums import BotEvent
 from AthenaTwitchLib.irc.irc_connection_protocol import IrcConnectionProtocol
 from AthenaTwitchLib.irc.regex import RegexPatterns
-from AthenaTwitchLib.irc.data.enums import BotEvent
-from AthenaTwitchLib.irc.bot import Bot
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -23,6 +24,11 @@ from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 # ----------------------------------------------------------------------------------------------------------------------
 @dataclass(slots=True, kw_only=True)
 class IrcConnection:
+    """
+    Class that constructs the IRC connection where the Bot will exist on
+    The line parsing is first handled by the protocol
+        to then be handed of to the bot if a command or other types of logic have been found
+    """
     bot_obj:Bot
 
     ssl_enabled: bool = True
