@@ -16,7 +16,6 @@ from AthenaLib.constants.text import NEW_LINE
 from AthenaTwitchLib.irc.bot import Bot
 from AthenaTwitchLib.irc.data.enums import BotEvent
 from AthenaTwitchLib.irc.irc_connection_protocol import IrcConnectionProtocol
-from AthenaTwitchLib.irc.regex import RegexPatterns
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -133,10 +132,6 @@ class IrcConnection:
         """
         return functools.partial(
             self.protocol_cls,
-
-            # Creates a new regex pattern
-            #   in the event that it's matches must change during a restart
-            regex_patterns=RegexPatterns(),
 
             # Assign the logic
             #   If this isn't defined, the protocol can't handle anything correctly

@@ -63,7 +63,6 @@ class IrcConnectionProtocol(asyncio.Protocol):
     Asyncio.Protocol child class,
     Holds all logic to convert the incoming Twitch IRC messages to useful calls/data
     """
-    regex_patterns: RegexPatterns
     bot_event_future: asyncio.Future
     bot_obj:Bot
 
@@ -120,9 +119,9 @@ class IrcConnectionProtocol(asyncio.Protocol):
             if not line:
                 continue
 
-            elif message := self.regex_patterns.message.match(line):
+            elif message := RegexPatterns.message.match(line):
                 if (
-                    (cmd_match := self.regex_patterns.message_command.match(message.groups()[-1]) )
+                    (cmd_match := RegexPatterns.message_command.match(message.groups()[-1]) )
                     and cmd_match.groups()[0] == self.bot_obj.prefix
                 ):
                     self.loop.create_task(self.handle_message_command(message, cmd_match, line=line))
@@ -133,33 +132,33 @@ class IrcConnectionProtocol(asyncio.Protocol):
                 self.loop.create_task(self.handle_ping(line=line))
 
             elif (
-                (server_message := self.regex_patterns.server_message.match(line))
+                (server_message := RegexPatterns.server_message.match(line))
                 and server_message.groups()[0] == self.bot_obj.name
             ):
                 self.loop.create_task(self.handle_server_message(server_message, line=line))
 
-            elif join := self.regex_patterns.join.match(line):
+            elif join := RegexPatterns.join.match(line):
                 self.loop.create_task(self.handle_join(join, line=line))
 
-            elif part := self.regex_patterns.part.match(line):
+            elif part := RegexPatterns.part.match(line):
                 self.loop.create_task(self.handle_part(part, line=line))
 
-            elif server_353 := self.regex_patterns.server_353.match(line):
+            elif server_353 := RegexPatterns.server_353.match(line):
                 self.loop.create_task(self.handle_server_353(server_353, line=line))
 
-            elif server_366 := self.regex_patterns.server_366.match(line):
+            elif server_366 := RegexPatterns.server_366.match(line):
                 self.loop.create_task(self.handle_server_366(server_366, line=line))
 
-            elif server_cap := self.regex_patterns.server_cap.match(line):
+            elif server_cap := RegexPatterns.server_cap.match(line):
                 self.loop.create_task(self.handle_server_cap(server_cap, line=line))
 
-            elif user_notice := self.regex_patterns.user_notice.match(line):
+            elif user_notice := RegexPatterns.user_notice.match(line):
                 self.loop.create_task(self.handle_user_notice(user_notice, line=line))
 
-            elif user_notice_raid := self.regex_patterns.user_notice_raid.match(line):
+            elif user_notice_raid := RegexPatterns.user_notice_raid.match(line):
                 self.loop.create_task(self.handle_user_notice_raid(user_notice_raid, line=line))
 
-            elif user_state := self.regex_patterns.user_state.match(line):
+            elif user_state := RegexPatterns.user_state.match(line):
                 self.loop.create_task(self.handle_user_state(user_state, line=line))
 
             else:
@@ -250,7 +249,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         message_context = MessageContext(
             tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
             user=user,
-            username=self.regex_patterns.username.findall(user)[0],
+            username=RegexPatterns.username.findall(user)[0],
             channel=channel,
             text=text,
             transport=self.transport,
@@ -281,7 +280,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         message_context = MessageCommandContext(
             tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
             user=user,
-            username=self.regex_patterns.username.findall(user)[0],
+            username=RegexPatterns.username.findall(user)[0],
             channel=channel,
             text=f"!{command}",
             transport=self.transport,
