@@ -18,28 +18,28 @@ def readme_handler() -> str:
 
 def version_handler() -> str:
     # ------------------------------------------------------------------------------------------------------------------
-    version = 0,8,1 # <-- DEFINE THE VERSION IN A TUPLE FORMAT HERE
+    version = 0,9,0 # <-- DEFINE THE VERSION IN A TUPLE FORMAT HERE
     # ------------------------------------------------------------------------------------------------------------------
     return ".".join(str(i) for i in version)
 
 setuptools.setup(
-    name="AthenaTwitchBot",
+    name="AthenaTwitchLib",
     version=version_handler(),
     author="Andreas Sas",
     author_email="",
-    description="A zero 3rd party dependency Twitch bot Connector",
+    description="A library to create Twitch Chat Bots and connect to the Twitch Helix API.",
     long_description=readme_handler(),
     long_description_content_type="text/markdown",
-    url="https://github.com/DirectiveAthena/AthenaTwitchBot",
+    url="https://github.com/Athena-Chaos-Driven-Code/AthenaTwitchLib",
     project_urls={
-        "Bug Tracker": "https://github.com/DirectiveAthena/AthenaTwitchBot/issues",
+        "Bug Tracker": "https://github.com/Athena-Chaos-Driven-Code/AthenaTwitchLib/issues",
     },
     license="GPLv3",
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
-    python_requires=">=3.10",
+    python_requires=">=3.11",
     install_requires=[
-        "AthenaLib>=1.1.0",
-        "AthenaColor>=6.0.1"
+        "AthenaLib>=2.3.0",
+        "AthenaColor>=7.0.1"
     ]
 )
