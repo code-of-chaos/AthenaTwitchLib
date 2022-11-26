@@ -1,5 +1,5 @@
 # - AthenaTwitchLib -
-[![pypi](https://img.shields.io/pypi/v/AthenaTwitchLib)](https://pypi.org/project/AthenaTwitchLib/) [![GitHub license](https://img.shields.io/github/license/DirectiveAthena/AthenaTwitchLib)](https://github.com/DirectiveAthena/VerSC-AthenaColor/blob/master/LICENSE) [![Discord](https://img.shields.io/discord/814599159926620160?color=maroon)](https://discord.gg/6JcDbhXkCH) [![Downloads](https://pepy.tech/badge/athenatwitchbot)](https://pepy.tech/project/athenatwitchbot)
+[![pypi](https://img.shields.io/pypi/v/AthenaTwitchLib)](https://pypi.org/project/AthenaTwitchLib/) [![GitHub license](https://img.shields.io/github/license/DirectiveAthena/AthenaTwitchLib)](https://github.com/DirectiveAthena/VerSC-AthenaColor/blob/master/LICENSE) [![Discord](https://img.shields.io/discord/814599159926620160?color=maroon)](https://discord.gg/6JcDbhXkCH) [![Downloads](https://pepy.tech/badge/AthenaTwitchLib)](https://pepy.tech/project/AthenaTwitchLib)
 
 --- 
 ## Package Details
