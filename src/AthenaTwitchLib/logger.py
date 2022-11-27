@@ -46,6 +46,10 @@ class SectionAPI(enum.StrEnum):
     Enum which holds all possible section types for the ApiLogger
     """
 
+    USER_DATA = enum.auto()
+    REQUEST_SEND = enum.auto()
+    REQUEST_RESULT = enum.auto()
+
 # ----------------------------------------------------------------------------------------------------------------------
 # - Loggers -
 # ----------------------------------------------------------------------------------------------------------------------

@@ -83,10 +83,8 @@ class IrcConnection:
                 case BotEvent.RESTART:
                     self.current_restart_attempt +=1
                     print(f"{NEW_LINE*25}{'-'*25}RESTART ATTEMPT {self.current_restart_attempt}{'-'*25}")
-                    IrcLogger.log_warning(
-                        section=SectionIRC.CONNECTION_RESTART,
-                        text=f"attempt={self.current_restart_attempt}"
-                    )
+                    IrcLogger.log_warning(section=SectionIRC.CONNECTION_RESTART,
+                                          data=f"attempt={self.current_restart_attempt}")
 
                     # Close the transport,
                     #   Else it will stay open forever
@@ -104,9 +102,7 @@ class IrcConnection:
                     continue
 
                 case BotEvent.EXIT | _:
-                    IrcLogger.log_warning(
-                        section=SectionIRC.CONNECTION_EXIT,
-                        text=f"called by BotEvent")
+                    IrcLogger.log_warning(section=SectionIRC.CONNECTION_EXIT, data=f"called by BotEvent")
                     self.bot_obj.task_logic.stop_all_tasks()
                     self.loop.stop()
                     break

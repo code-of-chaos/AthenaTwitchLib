@@ -52,10 +52,7 @@ class CommandData:
         self.output_type = OutputTypes(self.output_type)
 
         # Log to db
-        IrcLogger.log_debug(
-            section=SectionIRC.CMD_DATA,
-            text=json.dumps(asdict(self))
-        )
+        IrcLogger.log_debug(section=SectionIRC.CMD_DATA, data=json.dumps(asdict(self)))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -

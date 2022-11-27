@@ -7,14 +7,14 @@ import dataclasses
 from dataclasses import dataclass, field
 import aiohttp
 from typing import Callable, AsyncGenerator
-import contextlib
+import uuid
 
 # Athena Packages
 
 # Local Imports
 from AthenaTwitchLib.api.data.urls import TwitchApiUrl
 from AthenaTwitchLib.api.data.enums import DataFromConnection, HttpCommand
-from AthenaTwitchLib.logger import ApiLogger
+from AthenaTwitchLib.logger import ApiLogger, SectionAPI
 from AthenaTwitchLib.api._request_data import RequestData
 from AthenaTwitchLib.api._user_data import UserData
 
@@ -56,6 +56,7 @@ class ApiConnection:
                 http_command=HttpCommand.GET,
                 params={"login": self.username}
             ))
+            ApiLogger.log_debug(section=SectionAPI.USER_DATA, data=data)
             self.user = UserData(**data["data"][0])
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -71,16 +72,20 @@ class ApiConnection:
     # - Http commands -
     # ------------------------------------------------------------------------------------------------------------------
     async def _http_switch(self,request_data:RequestData) -> dict:
+        ApiLogger.log_debug(section=SectionAPI.REQUEST_SEND, data=request_data)
         match request_data:
 
             case RequestData(http_command=HttpCommand.GET):
-                return await self.get(request_data)
+                result = await self.get(request_data)
 
             case RequestData(http_command=HttpCommand.POST):
-                return await self.post(request_data)
+                result = await self.post(request_data)
 
             case _:
                 raise ValueError
+
+        ApiLogger.log_debug(section=SectionAPI.REQUEST_RESULT, data=result)
+        return result
 
     async def request(self,request_data:RequestData,*,limit:int=None) -> AsyncGenerator[dict, None]:
         """

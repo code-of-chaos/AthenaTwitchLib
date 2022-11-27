@@ -49,10 +49,7 @@ class CommandData:
             raise ValueError
 
         # Log to db
-        IrcLogger.log_debug(
-            section=SectionIRC.CMD_DATA,
-            text=json.dumps(asdict(self))
-        )
+        IrcLogger.log_debug(section=SectionIRC.CMD_DATA, data=json.dumps(asdict(self)))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -81,10 +78,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
         # Get the command from the stored bot's method.
         #   If it can't be found, skip the entire function
         if not (fnc := self._commands.get(context.command, False)):
-            IrcLogger.log_debug(
-                section=SectionIRC.CMD_UNKNOWN,
-                text=context.original_line
-            )
+            IrcLogger.log_debug(section=SectionIRC.CMD_UNKNOWN, data=context.original_line)
             return
 
         # When a callback is found
@@ -110,10 +104,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
             # in any other cases
             #   This should never happen
             case _,_:
-                IrcLogger.log_warning(
-                    section=SectionIRC.CMD_NOT_PARSABLE,
-                    text=context.original_line
-                )
+                IrcLogger.log_warning(section=SectionIRC.CMD_NOT_PARSABLE, data=context.original_line)
 
     @staticmethod
     def command(command_data:CommandData):

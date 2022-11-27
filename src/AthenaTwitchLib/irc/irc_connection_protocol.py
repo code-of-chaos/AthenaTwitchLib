@@ -46,9 +46,9 @@ def log_handler(fnc:Callable) -> Any:
     """
     @functools.wraps(fnc)
     async def wrapper(*args, **kwargs):
-        IrcLogger.log_track(section=SectionIRC.HANDLER_CALLED, text=fnc.__name__),
+        IrcLogger.log_track(section=SectionIRC.HANDLER_CALLED, data=fnc.__name__),
         if (line := kwargs.get("line", None)) is not None:
-            IrcLogger.log_debug(section=SectionIRC.MSG_ORIGINAL, text=line),
+            IrcLogger.log_debug(section=SectionIRC.MSG_ORIGINAL, data=line),
 
         return await fnc(*args, **kwargs)
 
@@ -256,10 +256,8 @@ class IrcConnectionProtocol(asyncio.Protocol):
             bot_event_future=self.bot_event_future,
             original_line=line
         )
-        IrcLogger.log_debug(
-            section=SectionIRC.MSG_CONTEXT,
-            text=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
-        )
+        IrcLogger.log_debug(section=SectionIRC.MSG_CONTEXT,
+                            data=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder))
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
@@ -290,10 +288,8 @@ class IrcConnectionProtocol(asyncio.Protocol):
             args=args.strip().split(" ")
         )
 
-        IrcLogger.log_debug(
-            section=SectionIRC.MSG_CONTEXT,
-            text=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
-        )
+        IrcLogger.log_debug(section=SectionIRC.MSG_CONTEXT,
+                            data=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder))
 
         await self.bot_obj.command_logic.execute_command(
             context=message_context
@@ -336,7 +332,4 @@ class IrcConnectionProtocol(asyncio.Protocol):
         Method is called when the protocol can't find an appropriate match for the given string
         """
         print(Fore.SlateGray(f"NOT CAUGHT | {line}"))
-        IrcLogger.log_warning(
-            section=SectionIRC.HANDLER_UNKNOWN,
-            text=line
-        )
+        IrcLogger.log_warning(section=SectionIRC.HANDLER_UNKNOWN, data=line)
