@@ -3,8 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-
-import dataclasses
+from typing import Self
 from dataclasses import dataclass, field
 
 # Athena Packages
@@ -26,22 +25,22 @@ class RequestData:
     params_from_connection:tuple[DataFromConnection] = field(default_factory=tuple)
     headers:dict = field(default_factory=dict)
 
-@dataclass(slots=True)
-class RequestData_GET(RequestData):
-    http_command:HttpCommand = HttpCommand.GET
+    @classmethod
+    def get(cls,*args, **kwargs) -> Self:
+        return cls(*args, http_command = HttpCommand.GET, **kwargs)
 
-@dataclass(slots=True)
-class RequestData_POST(RequestData):
-    http_command:HttpCommand = HttpCommand.POST
+    @classmethod
+    def post(cls,*args, **kwargs) -> Self:
+        return cls(*args, http_command = HttpCommand.POST, **kwargs)
 
-@dataclass(slots=True)
-class RequestData_PATCH(RequestData):
-    http_command:HttpCommand = HttpCommand.PATCH
+    @classmethod
+    def patch(cls,*args, **kwargs) -> Self:
+        return cls(*args, http_command = HttpCommand.PATCH, **kwargs)
 
-@dataclass(slots=True)
-class RequestData_PUT(RequestData):
-    http_command:HttpCommand = HttpCommand.PUT
+    @classmethod
+    def put(cls,*args, **kwargs) -> Self:
+        return cls(*args, http_command = HttpCommand.PUT, **kwargs)
 
-@dataclass(slots=True)
-class RequestData_DELETE(RequestData):
-    http_command:HttpCommand = HttpCommand.DELETE
+    @classmethod
+    def delete(cls,*args, **kwargs) -> Self:
+        return cls(*args, http_command = HttpCommand.DELETE, **kwargs)
