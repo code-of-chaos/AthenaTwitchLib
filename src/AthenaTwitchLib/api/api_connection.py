@@ -59,6 +59,8 @@ class ApiConnection:
             ApiLogger.log_debug(section=SectionAPI.USER_DATA, data=data)
             self.user = UserData(**data["data"][0])
 
+        return self
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
 
