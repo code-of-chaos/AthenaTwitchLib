@@ -3,16 +3,21 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import enum
 
 # Athena Packages
 
 # Local Imports
+from AthenaTwitchLib.api.data.urls import TwitchApiUrl
+from AthenaTwitchLib.api._request_data import RequestData
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class TwitchApiUrl(enum.StrEnum):
-    USERS = "https://api.twitch.tv/helix/users"
-
-    CHANNEL_COMMERCIAL = "https://api.twitch.tv/helix/channels/commercial"
+def start_commercial(broadcaster_id:int, length:int) -> RequestData:
+    return RequestData(
+        url=TwitchApiUrl.CHANNEL_COMMERCIAL,
+        data={
+            "broadcaster_id": broadcaster_id,
+            "length": length
+        }
+    )

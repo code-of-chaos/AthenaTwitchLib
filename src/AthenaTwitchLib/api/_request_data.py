@@ -3,16 +3,19 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import enum
+from dataclasses import dataclass, field
 
 # Athena Packages
 
 # Local Imports
+from AthenaTwitchLib.api.data.urls import TwitchApiUrl
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class TwitchApiUrl(enum.StrEnum):
-    USERS = "https://api.twitch.tv/helix/users"
-
-    CHANNEL_COMMERCIAL = "https://api.twitch.tv/helix/channels/commercial"
+@dataclass(slots=True, frozen=True)
+class RequestData:
+    url:TwitchApiUrl
+    data:dict = field(default_factory=dict)
+    params: dict[str:str] = field(default_factory=dict)
+    headers:dict = field(default_factory=dict)
