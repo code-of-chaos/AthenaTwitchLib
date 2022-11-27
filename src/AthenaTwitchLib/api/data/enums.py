@@ -12,9 +12,13 @@ import enum
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class TwitchApiUrl(enum.StrEnum):
-    USERS = "https://api.twitch.tv/helix/users"
+class HttpCommand(enum.Enum):
+    GET = enum.auto()
+    POST = enum.auto()
+    PUT = enum.auto()
+    PATCH = enum.auto()
+    DELETE = enum.auto()
 
-    CHAT_USERS = "https://api.twitch.tv/helix/chat/chatters"
-
-    CHANNEL_COMMERCIAL = "https://api.twitch.tv/helix/channels/commercial"
+class DataFromConnection(enum.StrEnum):
+    BROADCASTER_ID = enum.auto()
+    MODERATOR_ID = enum.auto()

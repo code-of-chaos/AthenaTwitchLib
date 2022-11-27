@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import enum
+from dataclasses import dataclass, field
 
 # Athena Packages
 
@@ -12,9 +12,16 @@ import enum
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class TwitchApiUrl(enum.StrEnum):
-    USERS = "https://api.twitch.tv/helix/users"
-
-    CHAT_USERS = "https://api.twitch.tv/helix/chat/chatters"
-
-    CHANNEL_COMMERCIAL = "https://api.twitch.tv/helix/channels/commercial"
+@dataclass(slots=True, frozen=True)
+class UserData:
+    id:str
+    login:str
+    display_name:str
+    type:str
+    broadcaster_type:str
+    description:str
+    profile_image_url:str
+    offline_image_url:str
+    view_count:str
+    email:str
+    created_at:str
