@@ -6,7 +6,7 @@ from __future__ import annotations
 import dataclasses
 from dataclasses import dataclass, field
 import aiohttp
-from typing import Callable, Generator
+from typing import Callable, AsyncGenerator
 import contextlib
 
 # Athena Packages
@@ -82,7 +82,7 @@ class ApiConnection:
             case _:
                 raise ValueError
 
-    async def request(self,request_data:RequestData,*,limit:int=None) -> Generator[dict, None, None]:
+    async def request(self,request_data:RequestData,*,limit:int=None) -> AsyncGenerator[dict, None]:
         """
         Creates a request to the Twitch API.
         Returns a Generator object that goes over all items in the "Data" key of the json response.

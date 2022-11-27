@@ -15,6 +15,8 @@ from AthenaTwitchLib.irc.message_context import MessageCommandContext
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 
+from AthenaTwitchLib.api.api_connection import ApiConnection
+
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
@@ -61,15 +63,16 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
     """
     _commands: dict[str: Callable]
 
-    def __new__(cls, *args, **kwargs):
-        obj = super().__new__(cls, *args, *kwargs)
-        obj._commands = {
+    def __init__(self, api_connection: ApiConnection):
+        # Run the init of BaseCommandLogic
+        super(CommandLogic, self).__init__(api_connection=api_connection)
+
+        # Gather all commands
+        self._commands = {
             name:fnc
-            for fnc in obj._logic_components
+            for fnc in self._logic_components
             for name in fnc._data.cmd_names
         }
-
-        return obj
 
     async def execute_command(self, context:MessageCommandContext):
         """

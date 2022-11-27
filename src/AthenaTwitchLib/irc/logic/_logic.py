@@ -12,6 +12,7 @@ import inspect
 
 # Local Imports
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
+from AthenaTwitchLib.api.api_connection import ApiConnection
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -51,6 +52,11 @@ class BaseCommandLogic(ABC):
     Logic system for commands that need to be executed.
     This is simply a base class and needs to be extended to fully work.
     """
+    api_connection: ApiConnection
+
+    def __init__(self,api_connection:ApiConnection):
+        self.api_connection = api_connection
+
     @abstractmethod
     async def execute_command(self, context: MessageCommandContext):
         """
