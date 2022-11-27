@@ -100,7 +100,9 @@ def get_channel_emotes(broadcaster_id:str=None) -> RequestData:
 
 
 def get_global_emotes() -> RequestData:
-    raise NotImplementedError
+    return RequestData.get(
+        url=TwitchApiUrl.CHAT_EMOTES_GLOBAL,
+    )
 
 def get_emote_sets() -> RequestData:
     raise NotImplementedError

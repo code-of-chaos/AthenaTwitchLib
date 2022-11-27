@@ -17,5 +17,6 @@ class TwitchApiUrl(enum.StrEnum):
 
     CHAT_USERS = "https://api.twitch.tv/helix/chat/chatters"
     CHAT_EMOTES = "https://api.twitch.tv/helix/chat/emotes"
+    CHAT_EMOTES_GLOBAL = "https://api.twitch.tv/helix/chat/emotes/global"
 
     CHANNEL_COMMERCIAL = "https://api.twitch.tv/helix/channels/commercial"
