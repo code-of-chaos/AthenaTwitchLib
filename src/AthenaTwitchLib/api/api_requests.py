@@ -8,14 +8,14 @@ from __future__ import annotations
 
 # Local Imports
 from AthenaTwitchLib.api.data.urls import TwitchApiUrl
-from AthenaTwitchLib.api._request_data import RequestData, RequestData_GET, RequestData_POST
+from AthenaTwitchLib.api._request_data import RequestData
 from AthenaTwitchLib.api.data.enums import DataFromConnection, HttpCommand
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 def start_commercial(length:int) -> RequestData:
-    return RequestData_POST(
+    return RequestData.post(
         url=TwitchApiUrl.CHANNEL_COMMERCIAL,
         data={"length": length},
         data_from_connection=(DataFromConnection.BROADCASTER_ID,)
@@ -80,14 +80,24 @@ def get_chatters(channel_id:str=None, *, first:int=None, after:str=None) -> Requ
         params["first"] = first
 
     # Return the completed object
-    return RequestData_GET(
+    return RequestData.get(
         url=TwitchApiUrl.CHAT_USERS,
         params=params,
         params_from_connection=(DataFromConnection.MODERATOR_ID,)
     )
 
-def get_channel_emotes() -> RequestData:
-    raise NotImplementedError
+def get_channel_emotes(broadcaster_id:str=None) -> RequestData:
+    if broadcaster_id is None:
+        return RequestData.get(
+            url=TwitchApiUrl.CHAT_EMOTES,
+            params_from_connection=(DataFromConnection.BROADCASTER_ID,)
+        )
+    else:
+        return RequestData.get(
+            url=TwitchApiUrl.CHAT_EMOTES,
+            params={"broadcaster_id": broadcaster_id}
+        )
+
 
 def get_global_emotes() -> RequestData:
     raise NotImplementedError
