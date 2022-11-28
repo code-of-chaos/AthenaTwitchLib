@@ -367,8 +367,20 @@ def get_channel_teams() -> RequestData:
 def get_teams() -> RequestData:
     raise NotImplementedError
 
-def get_users() -> RequestData:
-    raise NotImplementedError
+def get_users(client_id:str|list[str]=None, username:str|list[str]=None) -> RequestData:
+    """
+    https://dev.twitch.tv/docs/api/reference#get-users
+    """
+    params = {}
+    if client_id is not None:
+        params["id"] = client_id
+    elif username is not None:
+        params["login"] = username
+    else:
+        raise ValueError("At least one client id or username has to be given")
+
+    return RequestData.GET(url=TwitchApiUrl.USERS,params=params)
+
 
 def update_user() -> RequestData:
     raise NotImplementedError
