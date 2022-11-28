@@ -50,7 +50,9 @@ class TestApiReference(unittest.IsolatedAsyncioTestCase):
                 print(item)
 
     async def test_get_extension_transactions(self):
-        raise NotImplementedError
+        async with connection() as api_connection:
+            async for item in api_connection.request(ApiRequests.get_extension_transactions(extension_id="1234")):
+                print(item)
 
     async def test_get_channel_information(self):
         raise NotImplementedError

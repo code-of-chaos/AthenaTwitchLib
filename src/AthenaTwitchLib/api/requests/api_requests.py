@@ -92,8 +92,19 @@ def get_cheermotes(broadcaster_id:str=None) -> RequestData:
         params=_filter_none({"broadcaster_id":broadcaster_id})
     )
 
-def get_extension_transactions() -> RequestData:
-    raise NotImplementedError
+def get_extension_transactions(extension_id:str,*,id_:str=None, first:int=None, after:str=None) -> RequestData:
+    """
+    https://dev.twitch.tv/docs/api/reference#get-extension-transactions
+    """
+    return RequestData.GET(
+        url=TwitchApiUrl.EXTENSIONS_TRANSACTIONS,
+        params=_filter_none({
+            "extension_id":extension_id,
+            "id":id_,
+            "first":first,
+            "after":after
+        })
+    )
 
 def get_channel_information() -> RequestData:
     raise NotImplementedError

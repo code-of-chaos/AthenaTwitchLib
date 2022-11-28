@@ -3,9 +3,6 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-
-import dataclasses
-import json
 from dataclasses import dataclass, field
 import aiohttp
 from typing import Callable, AsyncGenerator
@@ -31,11 +28,11 @@ _mapping_data_from_connection: dict[DataFromConnection:Callable] = {
 
 # Create the simple Hash switch for the `ApiConnection._http_execute`
 _http_execute_switch = {
-    HttpMethod.GET:     lambda session,url,*,params,     **_:   session.get(url, params=params),
-    HttpMethod.POST:    lambda session,url,*,params,data,**_:   session.post(url, data=data, params=params),
-    HttpMethod.PUT:     lambda session,url,*,params,data,**_:   session.put(url, data=data, params=params),
-    HttpMethod.PATCH:   lambda session,url,*,params,data,**_:   session.patch(url, data=data, params=params),
-    HttpMethod.DELETE:  lambda session,url,*,params,data,**_:   session.delete(url, data=data, params=params),
+    HttpMethod.GET:     lambda *,session,url,params,     **_:   session.get(url, params=params),
+    HttpMethod.POST:    lambda *,session,url,params,data,**_:   session.post(url, data=data, params=params),
+    HttpMethod.PUT:     lambda *,session,url,params,data,**_:   session.put(url, data=data, params=params),
+    HttpMethod.PATCH:   lambda *,session,url,params,data,**_:   session.patch(url, data=data, params=params),
+    HttpMethod.DELETE:  lambda *,session,url,params,data,**_:   session.delete(url, data=data, params=params),
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -206,8 +203,8 @@ class ApiConnection:
         #   so it will be closed correctly
         async with aiohttp.ClientSession(headers=headers) as session:
             async with _http_execute_switch[request_data.http_method](
-                    session,
-                    request_data.url,
+                    session=session,
+                    url=request_data.url,
                     params=params,
                     data=data
             ) as response:

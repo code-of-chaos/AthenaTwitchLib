@@ -23,3 +23,4 @@ class TwitchApiUrl(enum.StrEnum):
     USERS = "https://api.twitch.tv/helix/users"
     BITS_LEADERBOARD = "https://api.twitch.tv/helix/bits/leaderboard"
     BITS_CHEERMOTES = "https://api.twitch.tv/helix/bits/cheermotes"
+    EXTENSIONS_TRANSACTIONS = "https://api.twitch.tv/helix/extensions/transactions"
