@@ -4,16 +4,13 @@
 # General Packages
 from __future__ import annotations
 import unittest
-import os
 
 # Athena Packages
-from AthenaTwitchLib.api.api_connection import ApiConnection
 from AthenaTwitchLib.api.requests import ApiRequests
 from AthenaTwitchLib.api.data.enums import TokenScope
 
-from AthenaLib.parsers.dot_env import AthenaDotEnv
-
 # Local Imports
+from tests._connection import connection
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -21,23 +18,10 @@ from AthenaLib.parsers.dot_env import AthenaDotEnv
 class TestApiReference(unittest.IsolatedAsyncioTestCase):
 
     # ------------------------------------------------------------------------------------------------------------------
-    # - Support Methods -
-    # ------------------------------------------------------------------------------------------------------------------
-    @staticmethod
-    def _connection() -> ApiConnection:
-        AthenaDotEnv(filepath="../.secrets/secrets.env", auto_run=True)
-
-        return ApiConnection(
-            username=os.getenv("TWITCH_BROADCASTER_NAME"),
-            oath_token=os.getenv("TWITCH_BROADCASTER_OATH"),
-            client_id=os.getenv("TWITCH_BROADCASTER_CLIENT_ID")
-        )
-
-    # ------------------------------------------------------------------------------------------------------------------
     # - Tests -
     # ------------------------------------------------------------------------------------------------------------------
     async def test_start_commercial(self):
-        async with self._connection() as api_connection:
+        async with connection() as api_connection:
             self.assertIn(TokenScope.CHANNEL_EDIT_COMMERCIAL,api_connection.token.scopes)
             async for item in api_connection.request(ApiRequests.start_commercial(length=30)):
                 print(item)

@@ -3,22 +3,24 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import unittest
-import os
+import pathlib
 
 # Athena Packages
+from AthenaLib.logging.logger_sqlite import AthenaSqliteLogger
 
 # Local Imports
-from tests._connection import connection
+from AthenaTwitchLib.logger._cast_to_str import api_cast_to_str
 
 # ----------------------------------------------------------------------------------------------------------------------
-# - Code -
+# - Loggers -
 # ----------------------------------------------------------------------------------------------------------------------
-class TestApiReference(unittest.IsolatedAsyncioTestCase):
-    # ------------------------------------------------------------------------------------------------------------------
-    # - Tests -
-    # ------------------------------------------------------------------------------------------------------------------
-    async def test_validate_token(self):
-        async with connection() as api_connection:
-            data = await api_connection.validate_token()
-            print(data)
+IrcLogger = AthenaSqliteLogger(
+    sqlite_path=pathlib.Path("data/logger.sqlite"),
+    table_to_use="logger_twitch_irc"
+)
+
+ApiLogger = AthenaSqliteLogger(
+    sqlite_path=pathlib.Path("data/logger.sqlite"),
+    table_to_use="logger_twitch_api",
+    cast_to_str=api_cast_to_str
+)

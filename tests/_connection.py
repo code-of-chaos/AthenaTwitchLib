@@ -3,22 +3,24 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import unittest
+import contextlib
 import os
+import pathlib
 
 # Athena Packages
+from AthenaLib.parsers import AthenaDotEnv
+from AthenaTwitchLib.api.api_connection import ApiConnection
+from AthenaTwitchLib.logger import ApiLogger
 
 # Local Imports
-from tests._connection import connection
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class TestApiReference(unittest.IsolatedAsyncioTestCase):
-    # ------------------------------------------------------------------------------------------------------------------
-    # - Tests -
-    # ------------------------------------------------------------------------------------------------------------------
-    async def test_validate_token(self):
-        async with connection() as api_connection:
-            data = await api_connection.validate_token()
-            print(data)
+@contextlib.asynccontextmanager
+async def connection() -> ApiConnection:
+    AthenaDotEnv(filepath="../.secrets/secrets.env", auto_run=True)
+    ApiLogger.sqlite_path = pathlib.Path(r"D:\directive_athena\applications\neptune\twitch_bot\data\logger.sqlite")
+    with ApiLogger:
+        async with ApiConnection(oath_token=os.getenv("TWITCH_BROADCASTER_OATH")) as api_connection:
+            yield api_connection
