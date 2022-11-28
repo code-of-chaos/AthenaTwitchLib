@@ -3,6 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+
 import setuptools
 
 # Custom Library
@@ -13,7 +14,7 @@ import setuptools
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 def readme_handler() -> str:
-    with open("README.md", "r") as readme_file:
+    with open("README.md") as readme_file:
         return readme_file.read()
 
 def version_handler() -> str:

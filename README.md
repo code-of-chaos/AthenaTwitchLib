@@ -1,9 +1,9 @@
 # - AthenaTwitchLib -
 [![pypi](https://img.shields.io/pypi/v/athenatwitchlib)](https://pypi.org/project/athenatwitchlib/) [![GitHub license](https://img.shields.io/github/license/Athena-Chaos-Driven-Code/AthenaTwitchLib)](https://github.com/Athena-Chaos-Driven-Code/AthenaTwitchLib/blob/master/LICENSE) [![Discord](https://img.shields.io/discord/814599159926620160?color=maroon)](https://discord.gg/6JcDbhXkCH) [![Downloads](https://pepy.tech/badge/athenatwitchlib)](https://pepy.tech/project/athenatwitchlib)
 
---- 
+---
 ## Package Details
-#### Details and features 
+#### Details and features
 - A library to create Twitch Chat Bots
   - hard coded commands
   - hard coded tasks
@@ -35,10 +35,10 @@ pip install AthenaTwitchLib --upgrade
 
 ---
 
-## Links 
-Project files can be found at:    
-- [GitHub Repo](https://github.com/DirectiveAthena/AthenaTwitchLib)     
-- [Pypi link](https://pypi.org/project/AthenaTwitchLib/)    
+## Links
+Project files can be found at:
+- [GitHub Repo](https://github.com/DirectiveAthena/AthenaTwitchLib)
+- [Pypi link](https://pypi.org/project/AthenaTwitchLib/)
 
 ---
 Made By Andreas Sas,` 2022`

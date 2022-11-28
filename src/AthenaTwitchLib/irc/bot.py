@@ -3,15 +3,18 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field
+
 import asyncio
+from dataclasses import dataclass
+from dataclasses import field
 
-# Athena Packages
-
-# Local Imports
-from AthenaTwitchLib.irc.logic import CommandLogic, TaskLogic
-from AthenaTwitchLib.logger import SectionIRC, IrcLogger
+from AthenaTwitchLib.irc.logic import CommandLogic
+from AthenaTwitchLib.irc.logic import TaskLogic
+from AthenaTwitchLib.logger import IrcLogger
+from AthenaTwitchLib.logger import SectionIRC
 from AthenaTwitchLib.string_formatting import twitch_irc_output_format
+# Athena Packages
+# Local Imports
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -24,24 +27,24 @@ class Bot:
     name:str
     oath_token:str
     join_channel:list[str] = field(default_factory=list)
-    join_message:str = None
+    join_message:str|None = None
     prefix:str = "!"
 
-    capability_tags:bool=True,
-    capability_commands:bool=False,
-    capability_membership:bool=False,
+    capability_tags:bool=True
+    capability_commands:bool=False
+    capability_membership:bool=False
 
     # KW only
     command_logic:CommandLogic = field(kw_only=True, default_factory=CommandLogic)
     task_logic:TaskLogic = field(kw_only=True, default_factory=TaskLogic)
 
     # non init
-    transport:asyncio.BaseTransport|asyncio.Transport = field(init=False)
+    transport:asyncio.Transport = field(init=False)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Login functions -
     # ------------------------------------------------------------------------------------------------------------------
-    async def _cap_tags(self):
+    async def _cap_tags(self) -> None:
         """
         Assigns the Twitch IRC chat capability of receiving tags
         This should always be requested, else answering to chat is impossible
@@ -53,7 +56,7 @@ class Bot:
         self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/tags"))
         IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, text="capability_tags set")
 
-    async def _cap_commands(self):
+    async def _cap_commands(self) -> None:
         """
         Assigns the Twitch IRC chat capability of sending twitch (`/`) commands in chat, by the bot
         """
@@ -64,7 +67,7 @@ class Bot:
         self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/commands"))
         IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, text="capability_commands set")
 
-    async def _cap_membership(self):
+    async def _cap_membership(self) -> None:
         """
         Assigns the Twitch IRC chat capability of receiving membership information
         """
@@ -75,14 +78,14 @@ class Bot:
         self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/membership"))
         IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, text="capability_membership set")
 
-    async def _write_to_twitch(self, section:SectionIRC, txt:str):
+    async def _write_to_twitch(self, section:SectionIRC, txt:str) -> None:
         """
         Simple function that writes the text to the twitch chat
         """
         self.transport.write(twitch_irc_output_format(txt))
         IrcLogger.log_debug(section=section, text=txt)
 
-    async def login(self):
+    async def login(self) -> None:
         """
         Steps that need to be taken for the Bot to be logged into the Twitch IRC chat
         """

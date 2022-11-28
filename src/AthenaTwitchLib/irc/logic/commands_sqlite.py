@@ -3,22 +3,31 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, asdict
-import aiosqlite
+
 import asyncio
 import json
+from collections.abc import Mapping
+from dataclasses import asdict
+from dataclasses import dataclass
+from typing import Any
+from typing import Literal
+from typing import LiteralString
+from typing import Self
 
-# Athena Packages
+import aiosqlite
 from AthenaLib.constants.types import PATHLIKE
 from AthenaLib.database_connectors.async_sqlite import ConnectorAioSqlite
 from AthenaLib.general.sql import sanitize_sql
-
-# Local Imports
-from AthenaTwitchLib.irc.data.enums import BotEvent, OutputTypes, CommandTypes
+from AthenaTwitchLib.irc.data.enums import BotEvent
+from AthenaTwitchLib.irc.data.enums import CommandTypes
+from AthenaTwitchLib.irc.data.enums import OutputTypes
 from AthenaTwitchLib.irc.data.sql import TBL_LOGIC_COMMANDS
 from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
-from AthenaTwitchLib.logger import IrcLogger, SectionIRC
+from AthenaTwitchLib.logger import IrcLogger
+from AthenaTwitchLib.logger import SectionIRC
+# Athena Packages
+# Local Imports
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -33,7 +42,7 @@ class CommandData:
     channel:str
     command_name:str
     command_arg:str|None
-    command_type:str|CommandTypes
+    command_type:CommandTypes
     allow_user:bool|int
     allow_sub:bool|int
     allow_vip:bool|int
@@ -42,7 +51,7 @@ class CommandData:
     output_text:str
     output_type:str|OutputTypes
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.command_type = CommandTypes(self.command_type)
         self.allow_user = bool(self.allow_user)
         self.allow_sub = bool(self.allow_sub)
@@ -65,12 +74,12 @@ class CommandLogicSqlite(BaseCommandLogic):
     The database in this case, is an SQLite db file.
     """
     _connector: ConnectorAioSqlite
-    _special_event_mapping:dict[CommandTypes:BotEvent] = {
+    _special_event_mapping:Mapping[CommandTypes, BotEvent] = {
         CommandTypes.EXIT : BotEvent.EXIT,
         CommandTypes.RESTART: BotEvent.RESTART
     }
 
-    def __new__(cls, *args,path:PATHLIKE, **kwargs):
+    def __new__(cls, *args: Any, path:PATHLIKE, **kwargs: Any) -> Self:  # type:ignore [valid-type,misc]
         obj = super().__new__(cls, *args, *kwargs)
 
         # Assemble the connector
@@ -83,7 +92,7 @@ class CommandLogicSqlite(BaseCommandLogic):
     # ------------------------------------------------------------------------------------------------------------------
     # - Helper Methods -
     # ------------------------------------------------------------------------------------------------------------------
-    async def first_arg_wait(self, context:MessageCommandContext, data:CommandData):
+    async def first_arg_wait(self, context:MessageCommandContext, data:CommandData) -> None:
         """
         Simple method that requires the first argument fo a command to be an integer
         Will wait this amount of seconds
@@ -106,7 +115,7 @@ class CommandLogicSqlite(BaseCommandLogic):
         Afterwards it executes the command, following the correct format
         """
         # stage 1: Retrieve command
-        if not (data := await self.get_command(context)): #type: CommandData
+        if not (data := await self.get_command(context)):
             return
 
         # stage 2: Validate command
@@ -118,7 +127,12 @@ class CommandLogicSqlite(BaseCommandLogic):
 
 
     @staticmethod
-    async def output(context: MessageCommandContext, data: CommandData, msg: str, format_:dict=None):
+    async def output(
+            context: MessageCommandContext,
+            data: CommandData,
+            msg: str,
+            format_: Mapping[str, LiteralString | object] = {}
+    ) -> None:
         """
         General output function for the Logic class to write to chat.
         """
@@ -127,7 +141,7 @@ class CommandLogicSqlite(BaseCommandLogic):
         msg_formatted = msg.format(
             username=context.username,
             channel=context.channel,
-            **format_ if format_ is not None else {}
+            **format_
         )
 
         if data.output_type == OutputTypes.WRITE:
@@ -138,7 +152,7 @@ class CommandLogicSqlite(BaseCommandLogic):
             IrcLogger.log_error()
             raise ValueError(data.output_type)
 
-    async def get_command(self, context:MessageCommandContext) -> CommandData|False:
+    async def get_command(self, context:MessageCommandContext) -> CommandData|Literal[False]:
         """
         Method which retrieves the command from the database, if present.
         Otherwise, will  return False.
@@ -152,15 +166,15 @@ class CommandLogicSqlite(BaseCommandLogic):
 
             # SQL query, might need some optimization
             async with db.execute(f"""
-                SELECT * 
-                FROM commands 
+                SELECT *
+                FROM commands
                 WHERE (
                     (`channel`,`command_name`,`command_arg`) = ('{channel}', '{cmd}','{arg}')
                     OR (`channel`,`command_name`,`command_arg`) = ('{channel}','{cmd}','*')
                 )
-                ORDER BY `command_arg` DESC 
+                ORDER BY `command_arg` DESC
                 LIMIT 1;
-            """) as cursor: #type: aiosqlite.Cursor
+            """) as cursor:
 
                 # Quit if nothing has been found
                 if (row := await cursor.fetchone()) is None:

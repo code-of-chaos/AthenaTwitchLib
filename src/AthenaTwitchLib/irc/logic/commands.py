@@ -3,17 +3,26 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict
-from typing import Callable
+
 import json
+from collections.abc import Callable
+from dataclasses import asdict
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Any
+from typing import Protocol
+from typing import Self
 
-# Athena Packages
-
-# Local Imports
-from AthenaTwitchLib.irc.logic._logic import BaseHardCodedLogic, BaseCommandLogic,register_callback_as_logical_component
+from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic
+from AthenaTwitchLib.irc.logic._logic import BaseHardCodedLogic
+from AthenaTwitchLib.irc.logic._logic import register_callback_as_logical_component
+from AthenaTwitchLib.irc.logic._logic import TBHCL
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG
-from AthenaTwitchLib.logger import SectionIRC, IrcLogger
+from AthenaTwitchLib.logger import IrcLogger
+from AthenaTwitchLib.logger import SectionIRC
+# Athena Packages
+# Local Imports
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -40,7 +49,7 @@ class CommandData:
     allow_mod:bool=field(kw_only=True, default=False)
     allow_broadcaster:bool=field(kw_only=True, default=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if isinstance(self.cmd_names, str):
             self.cmd_names = [self.cmd_names]
         elif not isinstance(self.cmd_names, list):
@@ -55,29 +64,41 @@ class CommandData:
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
+class CLCommand(TBHCL, Protocol):
+    @property
+    def _data(self) -> CommandData: ...
+
+    @_data.setter
+    def _data(self, __val: CommandData) -> None: ...
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+
+
 class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
     """
     Logic system behind hard coded commands.
     """
-    _commands: dict[str: Callable]
+    _commands: dict[str, CLCommand]
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:  # type: ignore [valid-type,misc]
         obj = super().__new__(cls, *args, *kwargs)
-        obj._commands = {
+        obj._commands = {  # type: ignore[attr-defined]
             name:fnc
-            for fnc in obj._logic_components
+            for fnc in obj._logic_components  # type: ignore [attr-defined]
             for name in fnc._data.cmd_names
         }
 
         return obj
 
-    async def execute_command(self, context:MessageCommandContext):
+    async def execute_command(self, context:MessageCommandContext) -> None:
         """
-        Main entry point from the Async Protocol, will try and find a corresponding command within the Bot.
+        Main entry point from the Async Protocol, will try and find a corr(esponding command within the Bot.
         """
         # Get the command from the stored bot's method.
         #   If it can't be found, skip the entire function
-        if not (fnc := self._commands.get(context.command, False)):
+        try:
+            fnc = self._commands[context.command]
+        except KeyError:
             IrcLogger.log_debug(
                 section=SectionIRC.CMD_UNKNOWN,
                 text=context.original_line
@@ -113,11 +134,11 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
                 )
 
     @staticmethod
-    def command(command_data:CommandData):
+    def command(command_data:CommandData) -> Callable[[CLCommand], CLCommand]:
         """
         Decorator to be used by the Bot, to assign a method as a command.
         """
-        def decorator(fnc):
+        def decorator(fnc: CLCommand) -> CLCommand:
             register_callback_as_logical_component(fnc)
             fnc._data = command_data
 
@@ -125,7 +146,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
         return decorator
 
     @staticmethod
-    def command_subscriber(command_data:CommandData):
+    def command_subscriber(command_data:CommandData) -> Callable[[CLCommand], CLCommand]:
         """
         Decorator to be used by the Bot, to assign a method as a command only to be used by a Subscriber.
         The command will also be able to be used by Mods and Broadcasters
@@ -136,7 +157,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
         command_data.allow_mod = True
         command_data.allow_broadcaster = True
 
-        def decorator(fnc):
+        def decorator(fnc: CLCommand) -> CLCommand:
             register_callback_as_logical_component(fnc)
             fnc._data = command_data
 
@@ -144,7 +165,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
         return decorator
 
     @staticmethod
-    def command_vip(command_data:CommandData):
+    def command_vip(command_data:CommandData) -> Callable[[CLCommand], CLCommand]:
         """
         Decorator to be used by the Bot, to assign a method as a command only to be used by a VIP.
         The command will also be able to be used by Mods and Broadcasters
@@ -155,7 +176,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
         command_data.allow_mod = True
         command_data.allow_broadcaster = True
 
-        def decorator(fnc):
+        def decorator(fnc: CLCommand) -> CLCommand:
             register_callback_as_logical_component(fnc)
             fnc._data = command_data
 
@@ -163,7 +184,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
         return decorator
 
     @staticmethod
-    def command_moderator(command_data:CommandData):
+    def command_moderator(command_data:CommandData) -> Callable[[CLCommand], CLCommand]:
         """
         Decorator to be used by the Bot, to assign a method as a command only to be used by a Moderator.
         The command will also be able to be used by Broadcasters
@@ -174,7 +195,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
         command_data.allow_mod = True
         command_data.allow_broadcaster = True
 
-        def decorator(fnc):
+        def decorator(fnc: CLCommand) -> CLCommand:
             register_callback_as_logical_component(fnc)
             fnc._data = command_data
 
@@ -182,7 +203,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
         return decorator
 
     @staticmethod
-    def command_broadcaster(command_data:CommandData):
+    def command_broadcaster(command_data:CommandData) -> Callable[[CLCommand], CLCommand]:
         """
         Decorator to be used by the Bot, to assign a method as a command only to be used by a Broadcasters.
         """
@@ -192,7 +213,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
         command_data.allow_mod = False
         command_data.allow_broadcaster = True
 
-        def decorator(fnc):
+        def decorator(fnc: CLCommand) -> CLCommand:
             register_callback_as_logical_component(fnc)
             fnc._data = command_data
 

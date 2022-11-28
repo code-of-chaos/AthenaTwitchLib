@@ -3,49 +3,65 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Any, Callable
+
 import asyncio
 import functools
 import json
 import re
+from collections.abc import Callable
+from collections.abc import Coroutine
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Any
+from typing import ParamSpec
 
-# Athena Packages
+import AthenaTwitchLib.irc.data.regex as RegexPatterns
 from AthenaColor import ForeNest as Fore
 from AthenaLib.general.json import GeneralCustomJsonEncoder
-
-# Local Imports
 from AthenaTwitchLib.irc.bot import Bot
 from AthenaTwitchLib.irc.data.enums import BotEvent
-from AthenaTwitchLib.irc.message_context import MessageContext,MessageCommandContext
-from AthenaTwitchLib.irc.tags import TagsPRIVMSG, TagsUSERSTATE, TagsUSERNOTICE
-from AthenaTwitchLib.logger import SectionIRC, IrcLogger
-import AthenaTwitchLib.irc.data.regex as RegexPatterns
+from AthenaTwitchLib.irc.message_context import MessageCommandContext
+from AthenaTwitchLib.irc.message_context import MessageContext
+from AthenaTwitchLib.irc.tags import TagsPRIVMSG
+from AthenaTwitchLib.irc.tags import TagsUSERNOTICE
+from AthenaTwitchLib.irc.tags import TagsUSERSTATE
+from AthenaTwitchLib.logger import IrcLogger
+from AthenaTwitchLib.logger import SectionIRC
+# Athena Packages
+# Local Imports
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class _TransportBuffer:
+P = ParamSpec("P")
+
+
+class _TransportBuffer(asyncio.Transport):
     """
     Simple class to be used by the `IrcConnectionProtocol`, before the transporter object is actually set.
     It keeps the to be sent message into a small buffer, for it to then be parsed and deleted once the
     actual transporter is present in the `IrcConnectionProtocol`
     """
-    buffer: list[bytes] = []
+    def __init__(self) -> None:
+        self.buffer: list[bytes] = []
 
-    @classmethod
-    def write(cls, data:bytes):
+    def write(self, data:bytes) -> None:
         """
         Stores data to the buffer
         """
-        cls.buffer.append(data)
+        self.buffer.append(data)
 
-def log_handler(fnc:Callable) -> Any:
+
+_transport_buffer = _TransportBuffer()  # Don't touch, singleton
+
+
+
+def log_handler(fnc: Callable[P, Coroutine[Any, Any, None]]) -> Callable[P, Coroutine[Any, Any, None]]:
     """
     Simple decorator to keep track of how many calls are made to handlers
     """
     @functools.wraps(fnc)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> None:
         IrcLogger.log_track(section=SectionIRC.HANDLER_CALLED, text=fnc.__name__),
         if (line := kwargs.get("line", None)) is not None:
             IrcLogger.log_debug(section=SectionIRC.MSG_ORIGINAL, text=line),
@@ -63,20 +79,20 @@ class IrcConnectionProtocol(asyncio.Protocol):
     Asyncio.Protocol child class,
     Holds all logic to convert the incoming Twitch IRC messages to useful calls/data
     """
-    bot_event_future: asyncio.Future
+    bot_event_future: asyncio.Future[BotEvent]
     bot_obj:Bot
 
-    _transport: asyncio.transports.Transport = None  # delayed as it has to be set after the connection has been made
+    _transport: asyncio.Transport | None = None  # delayed as it has to be set after the connection has been made
     loop :asyncio.AbstractEventLoop = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.loop = asyncio.get_running_loop()
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Properties -
     # ------------------------------------------------------------------------------------------------------------------
     @property
-    def transport(self):
+    def transport(self) -> asyncio.Transport:
         """
         Getter of the `transport` property
         This is necessary as transport is set later by the constructor than when the protocol is created
@@ -84,28 +100,27 @@ class IrcConnectionProtocol(asyncio.Protocol):
         This buffer will be removed after the setter of the `transport` property is called
         """
         if self._transport is None:
-            return _TransportBuffer
+            return _transport_buffer
 
         return self._transport
 
     @transport.setter
-    def transport(self, value:asyncio.transports.Transport):
+    def transport(self, value:asyncio.transports.Transport) -> None:
         """
         Setter of the `transport` property
         Executes any write calls in the buffer, and the deletes the buffer
         """
         self._transport = value
 
-        if _TransportBuffer.buffer:
-            for data in _TransportBuffer.buffer:
-                self._transport.write(data)
+        for data in _transport_buffer.buffer:
+            self._transport.write(data)
 
-            _TransportBuffer.buffer.clear()
+        _transport_buffer.buffer.clear()
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Protocol Calls (aka, calls made by asyncio.Protocol) -
     # ------------------------------------------------------------------------------------------------------------------
-    def data_received(self, data: bytearray) -> None:
+    def data_received(self, data: bytes) -> None:
         """
         First hit of the protocol when it receives data from Twitch IRC
         Because twitch sends in this data in bytes, and sometimes multiple different message,
@@ -175,7 +190,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
     # - Line handlers -
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_ping(self,*, line):
+    async def handle_ping(self,*, line:str) -> None:
         """
         Method is called when the Twitch server sends a keep alive PING message
         Needs to have the reply: `"PONG :tmi.twitch.tv` for the connection to remain alive
@@ -183,11 +198,11 @@ class IrcConnectionProtocol(asyncio.Protocol):
         print(f"{Fore.Peru('PONG')} | {line}")
 
         # Need to keep alive
-        self.transport.write("PONG :tmi.twitch.tv\r\n".encode())
+        self.transport.write(b"PONG :tmi.twitch.tv\r\n")
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_server_message(self, server_message:re.Match, *, line:str):
+    async def handle_server_message(self, server_message:re.Match[str], *, line:str) -> None:
         """
         Method is called when the Twitch server sends a message that isn't related to any user or room messages
         """
@@ -195,7 +210,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_server_353(self, server_353: re.Match, *, line: str):
+    async def handle_server_353(self, server_353: re.Match[str], *, line: str) -> None:
         """
         Method is called when twitch sends a 353 message
         """
@@ -203,7 +218,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_server_366(self, server_366: re.Match, *, line: str):
+    async def handle_server_366(self, server_366: re.Match[str], *, line: str) -> None:
         """
         Method is called when twitch sends a 353 message
         """
@@ -211,7 +226,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_server_cap(self, server_cap: re.Match, *, line: str):
+    async def handle_server_cap(self, server_cap: re.Match[str], *, line: str) -> None:
         """
         Method is called when twitch sends a CAP message
         """
@@ -219,7 +234,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_join(self, join:re.Match,*, line:str):
+    async def handle_join(self, join:re.Match[str],*, line:str) -> None:
         """
         Method is called when any user (irc or viewer) joins the channel
         """
@@ -227,7 +242,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_part(self, part:re.Match, *, line:str):
+    async def handle_part(self, part:re.Match[str], *, line:str) -> None:
         """
         Method is called when any user (irc or viewer) parts the channel
         """
@@ -235,7 +250,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_message(self, message:re.Match, *, line:str):
+    async def handle_message(self, message:re.Match[str], *, line:str) -> None:
         """
         Method is called when any user (irc or viewer) sends a regular message in the channel
         """
@@ -263,7 +278,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_message_command(self, message:re.Match, cmd_match:re.Match, *, line:str):
+    async def handle_message_command(self, message:re.Match[str], cmd_match:re.Match[str], *, line:str) -> None:
         """
         Method is called when any user (irc or viewer) sends a message in the channel,
         which is presumed to be an irc command
@@ -301,7 +316,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_user_notice(self, user_notice:re.Match, *, line:str):
+    async def handle_user_notice(self, user_notice:re.Match[str], *, line:str) -> None:
         """
         Method is called when twitch sends a USERNOTICE message
         """
@@ -311,7 +326,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_user_notice_raid(self, user_notice_raid:re.Match, *, line:str):
+    async def handle_user_notice_raid(self, user_notice_raid:re.Match[str], *, line:str) -> None:
         """
         Method is called when twitch sends a USERNOTICE message
         """
@@ -321,7 +336,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_user_state(self, user_state:re.Match, *, line:str):
+    async def handle_user_state(self, user_state:re.Match[str], *, line:str) -> None:
         """
         Method is called when twitch sends a USERSTATE message
         """
@@ -331,7 +346,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_UNKNOWN(self, line:str):
+    async def handle_UNKNOWN(self, line:str) -> None:
         """
         Method is called when the protocol can't find an appropriate match for the given string
         """

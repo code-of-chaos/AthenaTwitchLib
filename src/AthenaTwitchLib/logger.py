@@ -3,11 +3,12 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+
 import enum
 import pathlib
 
-# Athena Packages
 from AthenaLib.logging.logger_sqlite import AthenaSqliteLogger
+# Athena Packages
 
 # Local Imports
 

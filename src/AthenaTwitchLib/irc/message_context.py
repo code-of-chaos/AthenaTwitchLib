@@ -3,15 +3,18 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, asdict
+
 import asyncio
+from collections.abc import MutableMapping
+from dataclasses import asdict
+from dataclasses import dataclass
+from typing import Any
 
-# Athena Packages
-
-# Local Imports
+from AthenatwitchLib.irc.data.enums import BotEvent
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG
 from AthenaTwitchLib.string_formatting import twitch_irc_output_format
-
+# Athena Packages
+# Local Imports
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
@@ -27,10 +30,10 @@ class MessageContext:
     text:str
 
     transport:asyncio.Transport
-    bot_event_future:asyncio.Future
+    bot_event_future:asyncio.Future[BotEvent]
     original_line:str
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> MutableMapping[str, Any]:
         """
         Casts the object to a dict that is usable in a JSON format
         """
@@ -42,7 +45,7 @@ class MessageContext:
             "text": self.text
         }
 
-    async def reply(self, reply_msg:str):
+    async def reply(self, reply_msg:str) -> None:
         """
         Replies to the given message of the channel where it came from:
         """
@@ -50,7 +53,7 @@ class MessageContext:
             twitch_irc_output_format(f"@reply-parent-msg-id={self.tags.id} PRIVMSG #{self.channel} :{reply_msg}")
         )
 
-    async def write(self, write_msg:str):
+    async def write(self, write_msg:str) -> None:
         """
         Writes a message to the channel it came from:
         """
@@ -68,6 +71,6 @@ class MessageCommandContext(MessageContext):
     command:str
     args:list[str]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.args == ['']:
             self.args.clear()

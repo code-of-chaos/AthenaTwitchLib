@@ -3,20 +3,22 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Callable
+
 import asyncio
 import functools
 import socket
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Callable
 
-# Athena Packages
 from AthenaLib.constants.text import NEW_LINE
-
-# Local Imports
 from AthenaTwitchLib.irc.bot import Bot
 from AthenaTwitchLib.irc.data.enums import BotEvent
 from AthenaTwitchLib.irc.irc_connection_protocol import IrcConnectionProtocol
-from AthenaTwitchLib.logger import SectionIRC, IrcLogger
+from AthenaTwitchLib.logger import IrcLogger
+from AthenaTwitchLib.logger import SectionIRC
+# Athena Packages
+# Local Imports
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -41,9 +43,9 @@ class IrcConnection:
 
     # Non init
     loop: asyncio.AbstractEventLoop = field(init=False,default_factory=asyncio.get_running_loop)
-    bot_event_future: asyncio.Future = field(init=False)
+    bot_event_future: asyncio.Future[BotEvent] = field(init=False)
 
-    async def construct(self):
+    async def construct(self) -> None:
         """
         Constructor function for the Bot and all its logical systems like the asyncio.Protocol handler.
         It also logs the irc in onto the Twitch IRC server
@@ -52,9 +54,12 @@ class IrcConnection:
 
             # Assemble the asyncio.Protocol
             #   The custom protocol_type needs a constructor to known which patterns to use, settings, etc...
-            bot_event:asyncio.Future = self.loop.create_future()
+            bot_event = self.loop.create_future()
 
-            bot_transport, protocol_obj = await self.loop.create_connection( # type: asyncio.BaseTransport, object
+            bot_transport: asyncio.Transport
+            protocol_obj: IrcConnectionProtocol
+
+            bot_transport, protocol_obj = await self.loop.create_connection(  # type: ignore [assignment]
                 protocol_factory=self._protocol_constructor(bot_event),
                 server_hostname=self.irc_host,
                 ssl=self.ssl_enabled,
@@ -125,7 +130,7 @@ class IrcConnection:
         )
         return sock
 
-    def _protocol_constructor(self, bot_event:asyncio.Future) -> Callable:
+    def _protocol_constructor(self, bot_event:asyncio.Future[BotEvent]) -> functools.partial[IrcConnectionProtocol]:
         """
         Simple construction for the custom asyncio.Protocol class
         Seperated into its own function for better programming common sense

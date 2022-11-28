@@ -3,13 +3,17 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
+
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal, ClassVar
+from typing import ClassVar
+from typing import Literal
 
+from AthenaTwitchLib.irc.tags._tags import Conversion
+from AthenaTwitchLib.irc.tags._tags import TAG_TYPES
+from AthenaTwitchLib.irc.tags._tags import Tags
 # Athena Packages
-
 # Local Imports
-from AthenaTwitchLib.irc.tags._tags import Conversion, Tags, TAG_TYPES
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -19,19 +23,19 @@ class TagsUSERSTATE(Tags):
     """
     Class for Twitch IRC Tags, that are from the USERSTATE message
     """
-    badge_info:str=None
-    badges:str=None
-    color:str=None
-    display_name:str=None
-    emote_sets: str = None
-    id:str=None
-    mod:bool=None
-    subscriber:bool=None
-    turbo:bool=None
-    user_type:Literal["", "admin", "global_mod", "staff"]=None
+    badge_info:str|None=None
+    badges:str|None=None
+    color:str|None=None
+    display_name:str|None=None
+    emote_sets: str|None = None
+    id:str|None=None
+    mod:bool=False
+    subscriber:bool=False
+    turbo:bool=False
+    user_type:Literal["", "admin", "global_mod", "staff"] | None=None
 
     _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.USERSTATE
-    _CONVERSION_MAPPING:ClassVar[dict] = {
+    _CONVERSION_MAPPING:ClassVar[Mapping[str, Conversion]] = {
         "badge-info": Conversion("badge_info",str),
         "badges": Conversion("badges",lambda obj: obj.split(",")),
         "bits": Conversion("bits",str),

@@ -1,7 +1,8 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # - Package Imports -
 # ----------------------------------------------------------------------------------------------------------------------
-from AthenaTwitchLib.irc.tags._tags import Tags, TAG_TYPES
+from AthenaTwitchLib.irc.tags._tags import TAG_TYPES
+from AthenaTwitchLib.irc.tags._tags import Tags
 from AthenaTwitchLib.irc.tags.tags_clearchat import TagsCLEARCHAT
 from AthenaTwitchLib.irc.tags.tags_clearmsg import TagsCLEARMSG
 from AthenaTwitchLib.irc.tags.tags_globaluserstate import TagsGLOBALUSERSTATE

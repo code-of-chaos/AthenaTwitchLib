@@ -3,14 +3,18 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Literal, ClassVar
+
 import datetime
+from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import ClassVar
+from typing import Literal
 
+from AthenaTwitchLib.irc.tags._tags import Conversion
+from AthenaTwitchLib.irc.tags._tags import TAG_TYPES
+from AthenaTwitchLib.irc.tags._tags import Tags
 # Athena Packages
-
 # Local Imports
-from AthenaTwitchLib.irc.tags._tags import Conversion, Tags, TAG_TYPES
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -20,35 +24,35 @@ class TagsPRIVMSG(Tags):
     """
     Class for Twitch IRC Tags, that are from the PRIVMSG message
     """
-    badge_info:str=None
-    badges:str=None
-    bits:str=None
-    color:str=None
-    client_nonce:str=None
-    custom_reward_id:str=None
-    display_name:str=None
-    emotes:str=None
-    emote_only:bool=None
-    first_msg:bool=None,
-    flags:str=None
-    id:str=None
-    moderator:bool=None
-    returning_chatter:bool=None
-    reply_parent_msg_id:str=None
-    reply_parent_user_id:str=None
-    reply_parent_user_login:str=None
-    reply_parent_display_name:str=None
-    reply_parent_msg_body:str=None
-    room_id:str=None
-    subscriber:bool=None
-    tmi_sent_ts:datetime.datetime=None
-    turbo:bool=None
-    user_id:str=None
-    user_type:Literal["", "admin", "global_mod", "staff"]=None
-    vip:bool=None
+    badge_info:str|None=None
+    badges:str|None=None
+    bits:str|None=None
+    color:str|None=None
+    client_nonce:str|None=None
+    custom_reward_id:str|None=None
+    display_name:str|None=None
+    emotes:str|None=None
+    emote_only:bool=False
+    first_msg:bool=False
+    flags:str|None=None
+    id:str|None=None
+    moderator:bool=False
+    returning_chatter:bool=False
+    reply_parent_msg_id:str|None=None
+    reply_parent_user_id:str|None=None
+    reply_parent_user_login:str|None=None
+    reply_parent_display_name:str|None=None
+    reply_parent_msg_body:str|None=None
+    room_id:str|None=None
+    subscriber:bool=False
+    tmi_sent_ts:datetime.datetime|None=None
+    turbo:bool=False
+    user_id:str|None=None
+    user_type:Literal["", "admin", "global_mod", "staff"]|None=None
+    vip:bool=False
 
     _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.PRIVMSG
-    _CONVERSION_MAPPING:ClassVar[dict] = {
+    _CONVERSION_MAPPING:ClassVar[Mapping[str, Conversion]] = {
         "badge-info": Conversion("badge_info", str),
         "badges": Conversion("badges", lambda obj: obj.split(",")),
         "bits": Conversion("bits", str),
