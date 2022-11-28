@@ -79,8 +79,15 @@ def get_bits_leaderboard(count:int=None, period:str=None,started_at:str=None,use
         scopes={TokenScope.BITS_READ}
     )
 
-def get_cheermotes() -> RequestData:
-    raise NotImplementedError
+def get_cheermotes(broadcaster_id:str=None) -> RequestData:
+    """
+    https://dev.twitch.tv/docs/api/reference#get-cheermotes
+    """
+    params = {"broadcaster_id":broadcaster_id}
+    return RequestData.GET(
+        url=TwitchApiUrl.BITS_CHEERMOTES,
+        params={k:v for k,v in params.items() if v is not None}
+    )
 
 def get_extension_transactions() -> RequestData:
     raise NotImplementedError

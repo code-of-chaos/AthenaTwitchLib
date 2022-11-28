@@ -45,7 +45,9 @@ class TestApiReference(unittest.IsolatedAsyncioTestCase):
                 print(item)
 
     async def test_get_cheermotes(self):
-        raise NotImplementedError
+        async with connection() as api_connection:
+            async for item in api_connection.request(ApiRequests.get_cheermotes()):
+                print(item)
 
     async def test_get_extension_transactions(self):
         raise NotImplementedError
