@@ -27,7 +27,10 @@ class TestApiReference(unittest.IsolatedAsyncioTestCase):
                 print(item)
 
     async def test_get_extension_analytics(self):
-        raise NotImplementedError
+        async with connection() as api_connection:
+            self.assertIn(TokenScope.ANALYTICS_READ_EXTENSIONS, api_connection.token.scopes)
+            async for item in api_connection.request(ApiRequests.get_extension_analytics()):
+                print(item)
 
     async def test_get_game_analytics(self):
         raise NotImplementedError
@@ -75,18 +78,18 @@ class TestApiReference(unittest.IsolatedAsyncioTestCase):
         raise NotImplementedError
 
     async def test_get_chatters(self):
-        async with self._connection() as api_connection:
+        async with connection() as api_connection:
             self.assertIn(TokenScope.MODERATOR_READ_CHATTERS,api_connection.token.scopes)
             async for item in api_connection.request(ApiRequests.get_chatters()):
                 print(item)
 
     async def test_get_channel_emotes(self):
-        async with self._connection() as api_connection:
+        async with connection() as api_connection:
             async for item in api_connection.request(ApiRequests.get_channel_emotes()):
                 print(item)
 
     async def test_get_global_emotes(self):
-        async with self._connection() as api_connection:
+        async with connection() as api_connection:
             async for item in api_connection.request(ApiRequests.get_global_emotes()):
                 print(item)
 

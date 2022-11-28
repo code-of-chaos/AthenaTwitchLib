@@ -25,8 +25,24 @@ def start_commercial(length:int) -> RequestData:
         scopes={TokenScope.CHANNEL_EDIT_COMMERCIAL}
     )
 
-def get_extension_analytics() -> RequestData:
-    raise NotImplementedError
+def get_extension_analytics(extension_id:str=None, type_:str=None, started_at:str=None,ended_at:str=None, first:int=None, after:str=None) -> RequestData:
+    """
+    https://dev.twitch.tv/docs/api/reference#get-extension-analytics
+    """
+    params = {
+        "extension_id":extension_id,
+        "type":type_,
+        "started_at":started_at,
+        "ended_at":ended_at,
+        "first":first,
+        "after":after
+    }
+
+    return RequestData.GET(
+        url=TwitchApiUrl.ANALYTICS_EXTENSIONS,
+        params={k:v for k,v in params.items() if v is not None},
+        scopes={TokenScope.ANALYTICS_READ_EXTENSIONS}
+    )
 
 def get_game_analytics() -> RequestData:
     raise NotImplementedError
@@ -78,24 +94,23 @@ def get_chatters(broadcaster_id:str=None, *, first:int=None, after:str=None) -> 
     https://dev.twitch.tv/docs/api/reference#get-chatters
     """
     # Assemble optional parameters
-    params = {}
-    if after is not None:
-        params["after"] = after
-    if first is not None:
-        params["first"] = first
+    params = {
+        "after":after,
+        "first":first
+    }
 
     # Return the completed object
     if broadcaster_id is None:
         return RequestData.GET(
             url=TwitchApiUrl.CHAT_USERS,
-            params=params,
+            params={k:v for k,v in params.items() if v is not None},
             params_from_connection=(DataFromConnection.MODERATOR_ID,DataFromConnection.BROADCASTER_ID),
             scopes={TokenScope.MODERATOR_READ_CHATTERS}
         )
     else:
         return RequestData.GET(
             url=TwitchApiUrl.CHAT_USERS,
-            params={"broadcaster_id": broadcaster_id} | params,
+            params={"broadcaster_id": broadcaster_id} | {k:v for k,v in params.items() if v is not None},
             params_from_connection=(DataFromConnection.MODERATOR_ID,),
             scopes={TokenScope.MODERATOR_READ_CHATTERS}
         )
@@ -371,15 +386,16 @@ def get_users(client_id:str|list[str]=None, username:str|list[str]=None) -> Requ
     """
     https://dev.twitch.tv/docs/api/reference#get-users
     """
-    params = {}
-    if client_id is not None:
-        params["id"] = client_id
-    elif username is not None:
-        params["login"] = username
-    else:
+
+    if client_id is None and username is None:
         raise ValueError("At least one client id or username has to be given")
 
-    return RequestData.GET(url=TwitchApiUrl.USERS,params=params)
+    params = {
+        "id":client_id,
+        "login":username
+    }
+
+    return RequestData.GET(url=TwitchApiUrl.USERS,params={k:v for k,v in params.items() if v is not None})
 
 
 def update_user() -> RequestData:
