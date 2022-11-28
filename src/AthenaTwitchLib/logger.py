@@ -47,6 +47,7 @@ class SectionAPI(enum.StrEnum):
     """
 
     USER_DATA = enum.auto()
+    TOKEN_DATA = enum.auto()
     REQUEST_SEND = enum.auto()
     REQUEST_RESULT = enum.auto()
 

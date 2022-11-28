@@ -3,22 +3,26 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import enum
 
 # Athena Packages
 
 # Local Imports
+from AthenaTwitchLib.api.data.urls import TwitchApiUrl
+from AthenaTwitchLib.api._request_data import RequestData
+from AthenaTwitchLib.api.data.enums import DataFromConnection
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class TwitchApiUrl(enum.StrEnum):
-    USERS = "https://api.twitch.tv/helix/users"
+def get_user(username:str) -> RequestData:
+    return RequestData.GET(
+        url=TwitchApiUrl.USERS,
+        params={"login": username}
+    )
 
-    TOKEN_VALIDATE = "https://id.twitch.tv/oauth2/validate"
-
-    CHAT_USERS = "https://api.twitch.tv/helix/chat/chatters"
-    CHAT_EMOTES = "https://api.twitch.tv/helix/chat/emotes"
-    CHAT_EMOTES_GLOBAL = "https://api.twitch.tv/helix/chat/emotes/global"
-
-    CHANNEL_COMMERCIAL = "https://api.twitch.tv/helix/channels/commercial"
+def validate_token(oath_token:str) -> RequestData:
+    return RequestData.GET(
+        url=TwitchApiUrl.TOKEN_VALIDATE,
+        headers={"Authorization":f"OAuth {oath_token}"},
+        header_include_oath = False
+    )

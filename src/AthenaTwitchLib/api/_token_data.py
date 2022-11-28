@@ -3,22 +3,30 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import enum
+from dataclasses import dataclass, field, InitVar
 
 # Athena Packages
 
 # Local Imports
+from AthenaTwitchLib.api.data.enums import TokenScope
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class TwitchApiUrl(enum.StrEnum):
-    USERS = "https://api.twitch.tv/helix/users"
+@dataclass(slots=True, kw_only=True)
+class TokenData:
+    client_id:str
+    login:str
+    user_id:str
+    expires_in:int
+    scopes:InitVar[list[str]]
 
-    TOKEN_VALIDATE = "https://id.twitch.tv/oauth2/validate"
+    # non init
+    _scopes:set[TokenScope] = field(init=False, default_factory=set)
 
-    CHAT_USERS = "https://api.twitch.tv/helix/chat/chatters"
-    CHAT_EMOTES = "https://api.twitch.tv/helix/chat/emotes"
-    CHAT_EMOTES_GLOBAL = "https://api.twitch.tv/helix/chat/emotes/global"
+    @property
+    def scopes(self):
+        return self._scopes
 
-    CHANNEL_COMMERCIAL = "https://api.twitch.tv/helix/channels/commercial"
+    def __post_init__(self,scopes:list[str]):
+        self._scopes = {TokenScope(scope) for scope in scopes}

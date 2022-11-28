@@ -9,6 +9,7 @@ import aiohttp
 from typing import Callable, AsyncGenerator
 import uuid
 
+from AthenaTwitchLib.api._token_data import TokenData
 # Athena Packages
 
 # Local Imports
@@ -17,6 +18,7 @@ from AthenaTwitchLib.api.data.enums import DataFromConnection, HttpCommand
 from AthenaTwitchLib.logger import ApiLogger, SectionAPI
 from AthenaTwitchLib.api._request_data import RequestData
 from AthenaTwitchLib.api._user_data import UserData
+from AthenaTwitchLib.api.requests import ConnectionRequests
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -37,6 +39,7 @@ class ApiConnection:
     # init False
     _headers_auth:dict = field(init=False)
     user:UserData = field(init=False, default=None)
+    token:TokenData = field(init=False, default=None)
 
     def __post_init__(self):
         self._headers_auth = {
@@ -51,13 +54,10 @@ class ApiConnection:
         # make sure that the user has at least logged in once to the api
         #   to get correct information
         if self.user is None:
-            data = await self.get(RequestData(
-                url=TwitchApiUrl.USERS,
-                http_command=HttpCommand.GET,
-                params={"login": self.username}
-            ))
-            ApiLogger.log_debug(section=SectionAPI.USER_DATA, data=data)
-            self.user = UserData(**data["data"][0])
+            self.user = await self.get_user_data()
+
+        if self.token is None:
+            self.token = await self.validate_token()
 
         return self
 
@@ -69,6 +69,25 @@ class ApiConnection:
             str(d_enum): _mapping_data_from_connection.get(d_enum)(self)
             for d_enum in data_connection
         }
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Special Http commands -
+    # ------------------------------------------------------------------------------------------------------------------
+    async def validate_token(self) -> TokenData:
+        token_data = await self.get(
+            ConnectionRequests.validate_token(self.oath_token),
+            check_scope=False
+        )
+        ApiLogger.log_debug(section=SectionAPI.USER_DATA, data=token_data)
+        return TokenData(**token_data)
+
+    async def get_user_data(self) -> UserData:
+        user_data = await self.get(
+            ConnectionRequests.get_user(username=self.username),
+            check_scope=False
+        )
+        ApiLogger.log_debug(section=SectionAPI.USER_DATA, data=user_data)
+        return UserData(**user_data["data"][0])
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Http commands -
@@ -105,39 +124,67 @@ class ApiConnection:
         while pagination:
 
             # Get the result from the new request
-            #   Go over items
-            for item in (result := await self._http_switch(request_data))["data"]:
-                yield item
-                processed_items += 1
+            match (result := await self._http_switch(request_data)):
+                # Normal flow of data
+                case {"data": data,}:
+                    #   Go over items
+                    for item in data:
+                        yield item
+                        processed_items += 1
 
-                # If the limit has been reached
-                #   Quit out of the generator
-                if limit is not None and processed_items >= limit:
+                        # If the limit has been reached
+                        #   Quit out of the generator
+                        if limit is not None and processed_items >= limit:
+                            return
+
+                    # Assign pagination again
+                    #   Overwrites, so we can keep using the same variable name
+                    #   Ensures our while statement will quit out at some point
+                    pagination = result.get("pagination", False)
+
+                    # Update the request data with the new cursor as a parameters for the query
+                    #   The only thing that needs to be altered is the "after" parameter
+                    #   Keep all other values as is
+                    #   Only get the cursor if pagination still exists, else causes error
+                    if pagination and (cursor := pagination.get("cursor", False)):
+                        request_data.params["after"] = cursor
+
+
+                # Error thrown by the API
+                case {"error":_, "status":_, "message": _}:
+                    yield result
                     return
 
-            # Assign pagination again
-            #   Overwrites, so we can keep using the same variable name
-            #   Ensures our while statement will quit out at some point
-            pagination = result.get("pagination", False)
+                # Something unexpected came back
+                case _:
+                    raise ValueError(result)
 
-            # Update the request data with the new cursor as a parameters for the query
-            #   The only thing that needs to be altered is the "after" parameter
-            #   Keep all other values as is
-            #   Only get the cursor if pagination still exists, else causes error
-            if pagination and (cursor := pagination.get("cursor", False)):
-                request_data.params["after"] = cursor
+    async def get(self, request_data:RequestData, check_scope:bool=True) -> dict:
+        # Check if all scopes are present
+        if check_scope and not (token_scopes := self.token.scopes) >= (request_scopes := request_data.scopes):
+            raise PermissionError(
+                f"Token did not have required scopes:\nToken Scopes: {token_scopes}\nScopes required: {request_scopes}"
+            )
 
-    async def get(self, request_data:RequestData) -> dict:
         # make a union of both dictionaries
         #   Don't store them to the request_data, as this is a frozen dataclass
-        headers = request_data.headers | self._headers_auth
+        headers = request_data.headers
+        if request_data.header_include_oath:
+             headers |= self._headers_auth
+
         params = request_data.params | self.get_from_connection(request_data.params_from_connection)
 
         async with aiohttp.ClientSession(headers=headers) as session:
             async with session.get(request_data.url, params=params) as response:
                 return await response.json()
 
-    async def post(self, request_data:RequestData) -> dict:
+    async def post(self, request_data:RequestData, check_scope:bool=True) -> dict:
+        # Check if all scopes are present
+        if check_scope and not (token_scopes := self.token.scopes) >= (request_scopes := request_data.scopes):
+            raise PermissionError(
+                f"Token did not have required scopes:\nToken Scopes: {token_scopes}\nScopes required: {request_scopes}"
+            )
+
         # make a union of both dictionaries
         #   Don't store them to the request_data, as this is a frozen dataclass
         headers = request_data.headers | self._headers_auth

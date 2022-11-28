@@ -8,7 +8,8 @@ import os
 
 # Athena Packages
 from AthenaTwitchLib.api.api_connection import ApiConnection
-import AthenaTwitchLib.api.api_requests as ApiRequests
+from AthenaTwitchLib.api.requests import ApiRequests
+from AthenaTwitchLib.api.data.enums import TokenScope
 
 from AthenaLib.parsers.dot_env import AthenaDotEnv
 
@@ -19,9 +20,12 @@ from AthenaLib.parsers.dot_env import AthenaDotEnv
 # ----------------------------------------------------------------------------------------------------------------------
 class TestApiReference(unittest.IsolatedAsyncioTestCase):
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # - Support Methods -
+    # ------------------------------------------------------------------------------------------------------------------
     @staticmethod
     def _connection() -> ApiConnection:
-        AthenaDotEnv(filepath=".secrets/secrets.env", auto_run=True)
+        AthenaDotEnv(filepath="../.secrets/secrets.env", auto_run=True)
 
         return ApiConnection(
             username=os.getenv("TWITCH_BROADCASTER_NAME"),
@@ -34,6 +38,7 @@ class TestApiReference(unittest.IsolatedAsyncioTestCase):
     # ------------------------------------------------------------------------------------------------------------------
     async def test_start_commercial(self):
         async with self._connection() as api_connection:
+            self.assertIn(TokenScope.CHANNEL_EDIT_COMMERCIAL,api_connection.token.scopes)
             async for item in api_connection.request(ApiRequests.start_commercial(length=30)):
                 print(item)
 
@@ -86,7 +91,10 @@ class TestApiReference(unittest.IsolatedAsyncioTestCase):
         raise NotImplementedError
 
     async def test_get_chatters(self):
-        raise NotImplementedError
+        async with self._connection() as api_connection:
+            self.assertIn(TokenScope.MODERATOR_READ_CHATTERS,api_connection.token.scopes)
+            async for item in api_connection.request(ApiRequests.get_chatters()):
+                print(item)
 
     async def test_get_channel_emotes(self):
         async with self._connection() as api_connection:

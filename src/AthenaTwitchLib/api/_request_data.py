@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 # Local Imports
 from AthenaTwitchLib.api.data.urls import TwitchApiUrl
-from AthenaTwitchLib.api.data.enums import DataFromConnection, HttpCommand
+from AthenaTwitchLib.api.data.enums import DataFromConnection, HttpCommand, TokenScope
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -24,23 +24,25 @@ class RequestData:
     params: dict = field(default_factory=dict)
     params_from_connection:tuple[DataFromConnection] = field(default_factory=tuple)
     headers:dict = field(default_factory=dict)
+    header_include_oath:bool = True
+    scopes:set[TokenScope] = field(default_factory=set)
 
     @classmethod
-    def get(cls,*args, **kwargs) -> Self:
+    def GET(cls,*args, **kwargs) -> Self:
         return cls(*args, http_command = HttpCommand.GET, **kwargs)
 
     @classmethod
-    def post(cls,*args, **kwargs) -> Self:
+    def POST(cls,*args, **kwargs) -> Self:
         return cls(*args, http_command = HttpCommand.POST, **kwargs)
 
     @classmethod
-    def patch(cls,*args, **kwargs) -> Self:
+    def PATCH(cls,*args, **kwargs) -> Self:
         return cls(*args, http_command = HttpCommand.PATCH, **kwargs)
 
     @classmethod
-    def put(cls,*args, **kwargs) -> Self:
+    def PUT(cls,*args, **kwargs) -> Self:
         return cls(*args, http_command = HttpCommand.PUT, **kwargs)
 
     @classmethod
-    def delete(cls,*args, **kwargs) -> Self:
+    def DELETE(cls,*args, **kwargs) -> Self:
         return cls(*args, http_command = HttpCommand.DELETE, **kwargs)

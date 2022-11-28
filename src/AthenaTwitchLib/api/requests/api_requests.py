@@ -9,16 +9,20 @@ from __future__ import annotations
 # Local Imports
 from AthenaTwitchLib.api.data.urls import TwitchApiUrl
 from AthenaTwitchLib.api._request_data import RequestData
-from AthenaTwitchLib.api.data.enums import DataFromConnection, HttpCommand
+from AthenaTwitchLib.api.data.enums import DataFromConnection, TokenScope
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
 def start_commercial(length:int) -> RequestData:
-    return RequestData.post(
+    """
+    https://dev.twitch.tv/docs/api/reference#start-commercial
+    """
+    return RequestData.POST(
         url=TwitchApiUrl.CHANNEL_COMMERCIAL,
         data={"length": length},
-        data_from_connection=(DataFromConnection.BROADCASTER_ID,)
+        data_from_connection=(DataFromConnection.BROADCASTER_ID,),
+        scopes={TokenScope.CHANNEL_EDIT_COMMERCIAL}
     )
 
 def get_extension_analytics() -> RequestData:
@@ -69,39 +73,55 @@ def get_charity_campaign() -> RequestData:
 def get_charity_campaign_donations() -> RequestData:
     raise NotImplementedError
 
-def get_chatters(channel_id:str=None, *, first:int=None, after:str=None) -> RequestData:
-    # Assemble default parameters
-    params = {"broadcaster_id":channel_id,}
-
+def get_chatters(broadcaster_id:str=None, *, first:int=None, after:str=None) -> RequestData:
+    """
+    https://dev.twitch.tv/docs/api/reference#get-chatters
+    """
     # Assemble optional parameters
+    params = {}
     if after is not None:
         params["after"] = after
     if first is not None:
         params["first"] = first
 
     # Return the completed object
-    return RequestData.get(
-        url=TwitchApiUrl.CHAT_USERS,
-        params=params,
-        params_from_connection=(DataFromConnection.MODERATOR_ID,)
-    )
+    if broadcaster_id is None:
+        return RequestData.GET(
+            url=TwitchApiUrl.CHAT_USERS,
+            params=params,
+            params_from_connection=(DataFromConnection.MODERATOR_ID,DataFromConnection.BROADCASTER_ID),
+            scopes={TokenScope.MODERATOR_READ_CHATTERS}
+        )
+    else:
+        return RequestData.GET(
+            url=TwitchApiUrl.CHAT_USERS,
+            params={"broadcaster_id": broadcaster_id} | params,
+            params_from_connection=(DataFromConnection.MODERATOR_ID,),
+            scopes={TokenScope.MODERATOR_READ_CHATTERS}
+        )
 
 def get_channel_emotes(broadcaster_id:str=None) -> RequestData:
+    """
+    https://dev.twitch.tv/docs/api/reference#get-channel-emotes
+    """
     if broadcaster_id is None:
-        return RequestData.get(
+        return RequestData.GET(
             url=TwitchApiUrl.CHAT_EMOTES,
             params_from_connection=(DataFromConnection.BROADCASTER_ID,)
         )
     else:
-        return RequestData.get(
+        return RequestData.GET(
             url=TwitchApiUrl.CHAT_EMOTES,
             params={"broadcaster_id": broadcaster_id}
         )
 
 
 def get_global_emotes() -> RequestData:
-    return RequestData.get(
-        url=TwitchApiUrl.CHAT_EMOTES_GLOBAL,
+    """
+    https://dev.twitch.tv/docs/api/reference#get-global-emotes
+    """
+    return RequestData.GET(
+        url=TwitchApiUrl.CHAT_EMOTES_GLOBAL
     )
 
 def get_emote_sets() -> RequestData:
