@@ -126,6 +126,13 @@ class ApiConnection:
     # ------------------------------------------------------------------------------------------------------------------
     # - Http commands -
     # ------------------------------------------------------------------------------------------------------------------
+    async def request_simple(self,request_data:RequestData) -> dict:
+        """
+        Creates a request to the Twitch API.
+        Returns the result as is. Won't process pagination or go over the "data" items.
+        """
+        return await self._http_execute(request_data)
+
     async def request(self,request_data:RequestData,*,limit:int=None) -> AsyncGenerator[dict, None]:
         """
         Creates a request to the Twitch API.
