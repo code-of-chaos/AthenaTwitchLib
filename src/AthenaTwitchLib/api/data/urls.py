@@ -24,3 +24,4 @@ class TwitchApiUrl(enum.StrEnum):
     CHANNEL_COMMERCIAL = "https://api.twitch.tv/helix/channels/commercial"
 
     ANALYTICS_EXTENSIONS = "https://api.twitch.tv/helix/analytics/extensions"
+    ANALYTICS_GAMES = "https://api.twitch.tv/helix/analytics/games"

@@ -44,8 +44,24 @@ def get_extension_analytics(extension_id:str=None, type_:str=None, started_at:st
         scopes={TokenScope.ANALYTICS_READ_EXTENSIONS}
     )
 
-def get_game_analytics() -> RequestData:
-    raise NotImplementedError
+def get_game_analytics(game_id:str=None, type_:str=None, started_at:str=None,ended_at:str=None, first:int=None, after:str=None) -> RequestData:
+    """
+    https://dev.twitch.tv/docs/api/reference#get-game-analytics
+    """
+    params = {
+        "game_id":game_id,
+        "type":type_,
+        "started_at":started_at,
+        "ended_at":ended_at,
+        "first":first,
+        "after":after
+    }
+
+    return RequestData.GET(
+        url=TwitchApiUrl.ANALYTICS_GAMES,
+        params={k:v for k,v in params.items() if v is not None},
+        scopes={TokenScope.ANALYTICS_READ_GAMES}
+    )
 
 def get_bits_leaderboard() -> RequestData:
     raise NotImplementedError

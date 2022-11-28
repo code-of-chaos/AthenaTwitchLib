@@ -33,7 +33,10 @@ class TestApiReference(unittest.IsolatedAsyncioTestCase):
                 print(item)
 
     async def test_get_game_analytics(self):
-        raise NotImplementedError
+        async with connection() as api_connection:
+            self.assertIn(TokenScope.ANALYTICS_READ_GAMES, api_connection.token.scopes)
+            async for item in api_connection.request(ApiRequests.get_game_analytics()):
+                print(item)
 
     async def test_get_bits_leaderboard(self):
         raise NotImplementedError
