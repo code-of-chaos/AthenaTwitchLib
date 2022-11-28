@@ -39,7 +39,10 @@ class TestApiReference(unittest.IsolatedAsyncioTestCase):
                 print(item)
 
     async def test_get_bits_leaderboard(self):
-        raise NotImplementedError
+        async with connection() as api_connection:
+            self.assertIn(TokenScope.BITS_READ, api_connection.token.scopes)
+            async for item in api_connection.request(ApiRequests.get_bits_leaderboard()):
+                print(item)
 
     async def test_get_cheermotes(self):
         raise NotImplementedError

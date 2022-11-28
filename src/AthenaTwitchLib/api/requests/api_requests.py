@@ -63,8 +63,21 @@ def get_game_analytics(game_id:str=None, type_:str=None, started_at:str=None,end
         scopes={TokenScope.ANALYTICS_READ_GAMES}
     )
 
-def get_bits_leaderboard() -> RequestData:
-    raise NotImplementedError
+def get_bits_leaderboard(count:int=None, period:str=None,started_at:str=None,user_id:str=None) -> RequestData:
+    """
+    https://dev.twitch.tv/docs/api/reference#get-bits-leaderboard
+    """
+    params = {
+        "count":count,
+        "period":period,
+        "started_at":started_at,
+        "user_id":user_id
+    }
+    return RequestData.GET(
+        url=TwitchApiUrl.BITS_LEADERBOARD,
+        params={k:v for k,v in params.items() if v is not None},
+        scopes={TokenScope.BITS_READ}
+    )
 
 def get_cheermotes() -> RequestData:
     raise NotImplementedError
