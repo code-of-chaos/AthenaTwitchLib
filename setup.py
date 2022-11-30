@@ -22,6 +22,7 @@ def version_handler() -> str:
     # ------------------------------------------------------------------------------------------------------------------
     return ".".join(str(i) for i in version)
 
+
 setuptools.setup(
     name="AthenaTwitchLib",
     version=version_handler(),
@@ -40,6 +41,7 @@ setuptools.setup(
     python_requires=">=3.11",
     install_requires=[
         "AthenaLib>=2.3.0",
-        "AthenaColor>=7.0.1"
+        "AthenaColor>=7.0.1",
+        "aiosqlite>=0.17.0"
     ]
 )
