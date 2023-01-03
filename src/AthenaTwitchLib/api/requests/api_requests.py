@@ -106,8 +106,20 @@ def get_extension_transactions(extension_id:str,*,id_:str=None, first:int=None, 
         })
     )
 
-def get_channel_information() -> RequestData:
-    raise NotImplementedError
+def get_channel_information(broadcaster_id:str=None) -> RequestData:
+    """
+    https://dev.twitch.tv/docs/api/reference#get-channel-information
+    """
+    if broadcaster_id is None:
+        return RequestData.GET(
+            url=TwitchApiUrl.CHANNELS,
+            params_from_connection=(DataFromConnection.BROADCASTER_ID,),
+        )
+    else:
+        return RequestData.GET(
+            url=TwitchApiUrl.CHANNELS,
+            params={"broadcaster_id": broadcaster_id},
+        )
 
 def modify_channel_information() -> RequestData:
     raise NotImplementedError
