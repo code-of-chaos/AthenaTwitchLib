@@ -13,6 +13,7 @@ from AthenaLib.constants.types import PATHLIKE
 from AthenaLib.database_connectors.async_sqlite import ConnectorAioSqlite
 from AthenaLib.general.sql import sanitize_sql
 
+from AthenaTwitchLib.api.api_connection import ApiConnection
 # Local Imports
 from AthenaTwitchLib.irc.data.enums import BotEvent, OutputTypes, CommandTypes
 from AthenaTwitchLib.irc.data.sql import TBL_LOGIC_COMMANDS
@@ -51,10 +52,7 @@ class CommandData:
         self.output_type = OutputTypes(self.output_type)
 
         # Log to db
-        IrcLogger.log_debug(
-            section=SectionIRC.CMD_DATA,
-            text=json.dumps(asdict(self))
-        )
+        IrcLogger.log_debug(section=SectionIRC.CMD_DATA, data=json.dumps(asdict(self)))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -70,15 +68,15 @@ class CommandLogicSqlite(BaseCommandLogic):
         CommandTypes.RESTART: BotEvent.RESTART
     }
 
-    def __new__(cls, *args,path:PATHLIKE, **kwargs):
-        obj = super().__new__(cls, *args, *kwargs)
+    def __init__(self, path:PATHLIKE ,api_connection:ApiConnection):
+        # Run the init of BaseCommandLogic
+        super(CommandLogicSqlite, self).__init__(api_connection=api_connection)
 
         # Assemble the connector
         #   Create the database as soon as possible (async function)
-        obj._connector = ConnectorAioSqlite(path=path)
-        asyncio.get_running_loop().create_task(obj._connector.db_create(queries=TBL_LOGIC_COMMANDS))
+        self._connector = ConnectorAioSqlite(path=path)
+        asyncio.get_running_loop().create_task(self._connector.db_create(queries=TBL_LOGIC_COMMANDS))
 
-        return obj
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Helper Methods -

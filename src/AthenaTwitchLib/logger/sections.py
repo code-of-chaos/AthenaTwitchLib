@@ -4,10 +4,8 @@
 # General Packages
 from __future__ import annotations
 import enum
-import pathlib
 
 # Athena Packages
-from AthenaLib.logging.logger_sqlite import AthenaSqliteLogger
 
 # Local Imports
 
@@ -46,15 +44,8 @@ class SectionAPI(enum.StrEnum):
     Enum which holds all possible section types for the ApiLogger
     """
 
-# ----------------------------------------------------------------------------------------------------------------------
-# - Loggers -
-# ----------------------------------------------------------------------------------------------------------------------
-IrcLogger = AthenaSqliteLogger(
-    sqlite_path=pathlib.Path("data/logger.sqlite"),
-    table_to_use="logger_twitch_irc"
-)
-
-ApiLogger = AthenaSqliteLogger(
-    sqlite_path=pathlib.Path("data/logger.sqlite"),
-    table_to_use="logger_twitch_api"
-)
+    USER_DATA = enum.auto()
+    TOKEN_DATA = enum.auto()
+    TOKEN_INVALID = enum.auto()
+    REQUEST_SEND = enum.auto()
+    REQUEST_RESULT = enum.auto()

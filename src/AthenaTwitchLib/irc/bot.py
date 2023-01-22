@@ -9,7 +9,7 @@ import asyncio
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchLib.irc.logic import CommandLogic, TaskLogic
+from AthenaTwitchLib.irc.logic import CommandLogic, TaskLogic, BaseCommandLogic
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 from AthenaTwitchLib.string_formatting import twitch_irc_output_format
 
@@ -32,7 +32,7 @@ class Bot:
     capability_membership:bool=False,
 
     # KW only
-    command_logic:CommandLogic = field(kw_only=True, default_factory=CommandLogic)
+    command_logic:BaseCommandLogic = field(kw_only=True, default_factory=CommandLogic)
     task_logic:TaskLogic = field(kw_only=True, default_factory=TaskLogic)
 
     # non init
@@ -47,40 +47,40 @@ class Bot:
         This should always be requested, else answering to chat is impossible
         """
         if not self.capability_tags:
-            IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, text="capability_tags not enabled")
+            IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, data="capability_tags not enabled")
             return
 
         self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/tags"))
-        IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, text="capability_tags set")
+        IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, data="capability_tags set")
 
     async def _cap_commands(self):
         """
         Assigns the Twitch IRC chat capability of sending twitch (`/`) commands in chat, by the bot
         """
         if not self.capability_commands:
-            IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, text="capability_commands not enabled")
+            IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, data="capability_commands not enabled")
             return
 
         self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/commands"))
-        IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, text="capability_commands set")
+        IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, data="capability_commands set")
 
     async def _cap_membership(self):
         """
         Assigns the Twitch IRC chat capability of receiving membership information
         """
         if not self.capability_membership:
-            IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, text="capability_membership not enabled")
+            IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, data="capability_membership not enabled")
             return
 
         self.transport.write(twitch_irc_output_format(f"CAP REQ :twitch.tv/membership"))
-        IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, text="capability_membership set")
+        IrcLogger.log_debug(section=SectionIRC.LOGIN_CAPABILITY, data="capability_membership set")
 
     async def _write_to_twitch(self, section:SectionIRC, txt:str):
         """
         Simple function that writes the text to the twitch chat
         """
         self.transport.write(twitch_irc_output_format(txt))
-        IrcLogger.log_debug(section=section, text=txt)
+        IrcLogger.log_debug(section=section, data=txt)
 
     async def login(self):
         """
@@ -93,10 +93,8 @@ class Bot:
         self.transport.write(twitch_irc_output_format(f"NICK {self.name}"))
 
         # Log that we have logged in
-        IrcLogger.log_debug(
-            section=SectionIRC.LOGIN,
-            text=f"[{self.name=}, {self.join_channel=}, {self.join_message=}, {self.prefix=}]"
-        )
+        IrcLogger.log_debug(section=SectionIRC.LOGIN,
+                            data=f"[{self.name=}, {self.join_channel=}, {self.join_message=}, {self.prefix=}]")
 
         # Request correct capabilities
         await asyncio.gather(

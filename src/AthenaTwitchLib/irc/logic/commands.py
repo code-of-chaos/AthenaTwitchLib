@@ -15,6 +15,8 @@ from AthenaTwitchLib.irc.message_context import MessageCommandContext
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 
+from AthenaTwitchLib.api.api_connection import ApiConnection
+
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
@@ -47,10 +49,7 @@ class CommandData:
             raise ValueError
 
         # Log to db
-        IrcLogger.log_debug(
-            section=SectionIRC.CMD_DATA,
-            text=json.dumps(asdict(self))
-        )
+        IrcLogger.log_debug(section=SectionIRC.CMD_DATA, data=json.dumps(asdict(self)))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -61,15 +60,16 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
     """
     _commands: dict[str: Callable]
 
-    def __new__(cls, *args, **kwargs):
-        obj = super().__new__(cls, *args, *kwargs)
-        obj._commands = {
+    def __init__(self, api_connection: ApiConnection):
+        # Run the init of BaseCommandLogic
+        super(CommandLogic, self).__init__(api_connection=api_connection)
+
+        # Gather all commands
+        self._commands = {
             name:fnc
-            for fnc in obj._logic_components
+            for fnc in self._logic_components
             for name in fnc._data.cmd_names
         }
-
-        return obj
 
     async def execute_command(self, context:MessageCommandContext):
         """
@@ -78,10 +78,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
         # Get the command from the stored bot's method.
         #   If it can't be found, skip the entire function
         if not (fnc := self._commands.get(context.command, False)):
-            IrcLogger.log_debug(
-                section=SectionIRC.CMD_UNKNOWN,
-                text=context.original_line
-            )
+            IrcLogger.log_debug(section=SectionIRC.CMD_UNKNOWN, data=context.original_line)
             return
 
         # When a callback is found
@@ -107,10 +104,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
             # in any other cases
             #   This should never happen
             case _,_:
-                IrcLogger.log_warning(
-                    section=SectionIRC.CMD_NOT_PARSABLE,
-                    text=context.original_line
-                )
+                IrcLogger.log_warning(section=SectionIRC.CMD_NOT_PARSABLE, data=context.original_line)
 
     @staticmethod
     def command(command_data:CommandData):

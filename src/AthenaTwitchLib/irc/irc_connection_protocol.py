@@ -25,20 +25,20 @@ import AthenaTwitchLib.irc.data.regex as RegexPatterns
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
+@dataclass(slots=True)
 class _TransportBuffer:
     """
     Simple class to be used by the `IrcConnectionProtocol`, before the transporter object is actually set.
     It keeps the to be sent message into a small buffer, for it to then be parsed and deleted once the
     actual transporter is present in the `IrcConnectionProtocol`
     """
-    buffer: list[bytes] = []
+    buffer: list[bytes] = field(default_factory=list)
 
-    @classmethod
-    def write(cls, data:bytes):
+    def write(self, data:bytes):
         """
         Stores data to the buffer
         """
-        cls.buffer.append(data)
+        self.buffer.append(data)
 
 def log_handler(fnc:Callable) -> Any:
     """
@@ -46,13 +46,15 @@ def log_handler(fnc:Callable) -> Any:
     """
     @functools.wraps(fnc)
     async def wrapper(*args, **kwargs):
-        IrcLogger.log_track(section=SectionIRC.HANDLER_CALLED, text=fnc.__name__),
+        IrcLogger.log_track(section=SectionIRC.HANDLER_CALLED, data=fnc.__name__),
         if (line := kwargs.get("line", None)) is not None:
-            IrcLogger.log_debug(section=SectionIRC.MSG_ORIGINAL, text=line),
+            IrcLogger.log_debug(section=SectionIRC.MSG_ORIGINAL, data=line),
 
         return await fnc(*args, **kwargs)
 
     return wrapper
+
+TransportBuffer = _TransportBuffer()
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -67,10 +69,30 @@ class IrcConnectionProtocol(asyncio.Protocol):
     bot_obj:Bot
 
     _transport: asyncio.transports.Transport = None  # delayed as it has to be set after the connection has been made
+
+    # Non init
     loop :asyncio.AbstractEventLoop = field(init=False)
+    map_pattern_callbacks:list[tuple[re.Pattern, Callable]] = field(default_factory=list, init=False)
 
     def __post_init__(self):
         self.loop = asyncio.get_running_loop()
+
+        # Populate the map of matched to callback
+        #   with the proper combinations of regex to awaitable callback
+        self.map_pattern_callbacks.extend([
+            (re.compile(fr"^@([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :{self.bot_obj.prefix}([^ ]*)(.*)"), self.handle_message_command),
+            (RegexPatterns.message, self.handle_message),
+            (RegexPatterns.server_ping, self.handle_ping),
+            (RegexPatterns.server_message, self.handle_server_message),
+            (RegexPatterns.join, self.handle_join),
+            (RegexPatterns.part, self.handle_part),
+            (RegexPatterns.server_353, self.handle_server_353),
+            (RegexPatterns.server_366, self.handle_server_366),
+            (RegexPatterns.server_cap, self.handle_server_cap),
+            (RegexPatterns.user_notice, self.handle_user_notice),
+            (RegexPatterns.user_notice_raid, self.handle_user_notice_raid),
+            (RegexPatterns.user_state, self.handle_user_state),
+        ])
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Properties -
@@ -84,7 +106,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         This buffer will be removed after the setter of the `transport` property is called
         """
         if self._transport is None:
-            return _TransportBuffer
+            return TransportBuffer
 
         return self._transport
 
@@ -96,11 +118,12 @@ class IrcConnectionProtocol(asyncio.Protocol):
         """
         self._transport = value
 
-        if _TransportBuffer.buffer:
-            for data in _TransportBuffer.buffer:
+        #Todo remove this constant buffer check, because the buffer should only be cleared once and then forgotten
+        if TransportBuffer.buffer:
+            for data in TransportBuffer.buffer:
                 self._transport.write(data)
 
-            _TransportBuffer.buffer.clear()
+            TransportBuffer.buffer.clear()
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Protocol Calls (aka, calls made by asyncio.Protocol) -
@@ -112,57 +135,21 @@ class IrcConnectionProtocol(asyncio.Protocol):
         the function has to decode and split the data on every new line
         """
 
-        # TODO sort on most used messages
+        # Goes over all non-empty lines
+        for line in filter(None,data.decode().split("\r\n")):
+            # Uses filter to get the correct pattern matched group and callback to the corresponding async function
+            for callback,group in filter(None, (
+                (call,output) if (output := pattern.match(line)) else False
+                for pattern, call in self.map_pattern_callbacks
+            )):
+                self.loop.create_task(callback(group, line=line))
+                break # breaks from the second for loop, so it doesn't call the 'no break' else clause
 
-        for line in data.decode().split("\r\n"):
-            # An Empty line
-            if not line:
-                continue
-
-            elif message := RegexPatterns.message.match(line):
-                if (
-                    (cmd_match := RegexPatterns.message_command.match(message.groups()[-1]) )
-                    and cmd_match.groups()[0] == self.bot_obj.prefix
-                ):
-                    self.loop.create_task(self.handle_message_command(message, cmd_match, line=line))
-                else:
-                    self.loop.create_task(self.handle_message(message, line=line))
-
-            elif line == "PING :tmi.twitch.tv":
-                self.loop.create_task(self.handle_ping(line=line))
-
-            elif (
-                (server_message := RegexPatterns.server_message.match(line))
-                and server_message.groups()[0] == self.bot_obj.name
-            ):
-                self.loop.create_task(self.handle_server_message(server_message, line=line))
-
-            elif join := RegexPatterns.join.match(line):
-                self.loop.create_task(self.handle_join(join, line=line))
-
-            elif part := RegexPatterns.part.match(line):
-                self.loop.create_task(self.handle_part(part, line=line))
-
-            elif server_353 := RegexPatterns.server_353.match(line):
-                self.loop.create_task(self.handle_server_353(server_353, line=line))
-
-            elif server_366 := RegexPatterns.server_366.match(line):
-                self.loop.create_task(self.handle_server_366(server_366, line=line))
-
-            elif server_cap := RegexPatterns.server_cap.match(line):
-                self.loop.create_task(self.handle_server_cap(server_cap, line=line))
-
-            elif user_notice := RegexPatterns.user_notice.match(line):
-                self.loop.create_task(self.handle_user_notice(user_notice, line=line))
-
-            elif user_notice_raid := RegexPatterns.user_notice_raid.match(line):
-                self.loop.create_task(self.handle_user_notice_raid(user_notice_raid, line=line))
-
-            elif user_state := RegexPatterns.user_state.match(line):
-                self.loop.create_task(self.handle_user_state(user_state, line=line))
-
+            # No break was called,
+            #   meaning nothing could be mapped to a re pattern
             else:
-                self.loop.create_task(self.handle_UNKNOWN(line))
+                self.loop.create_task(self.handle_UNKNOWN(None, line))
+
 
     def connection_lost(self, exc: Exception | None) -> None:
         if exc is not None:
@@ -175,7 +162,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
     # - Line handlers -
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_ping(self,*, line):
+    async def handle_ping(self,_:re.Match, *, line):
         """
         Method is called when the Twitch server sends a keep alive PING message
         Needs to have the reply: `"PONG :tmi.twitch.tv` for the connection to remain alive
@@ -256,14 +243,12 @@ class IrcConnectionProtocol(asyncio.Protocol):
             bot_event_future=self.bot_event_future,
             original_line=line
         )
-        IrcLogger.log_debug(
-            section=SectionIRC.MSG_CONTEXT,
-            text=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
-        )
+        IrcLogger.log_debug(section=SectionIRC.MSG_CONTEXT,
+                            data=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder))
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_message_command(self, message:re.Match, cmd_match:re.Match, *, line:str):
+    async def handle_message_command(self, message:re.Match, *, line:str):
         """
         Method is called when any user (irc or viewer) sends a message in the channel,
         which is presumed to be an irc command
@@ -272,10 +257,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
         # Extract data from matched message
         #   Easily done due to regex groups
-        tags_group_str,user,channel,text = message.groups()
-
-        # prefix, command, args
-        _,command, args = cmd_match.groups()
+        tags_group_str,user,channel,command,args = message.groups()
 
         message_context = MessageCommandContext(
             tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
@@ -290,10 +272,8 @@ class IrcConnectionProtocol(asyncio.Protocol):
             args=args.strip().split(" ")
         )
 
-        IrcLogger.log_debug(
-            section=SectionIRC.MSG_CONTEXT,
-            text=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
-        )
+        IrcLogger.log_debug(section=SectionIRC.MSG_CONTEXT,
+                            data=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder))
 
         await self.bot_obj.command_logic.execute_command(
             context=message_context
@@ -331,12 +311,9 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
     # ------------------------------------------------------------------------------------------------------------------
     @log_handler
-    async def handle_UNKNOWN(self, line:str):
+    async def handle_UNKNOWN(self, _, line:str):
         """
         Method is called when the protocol can't find an appropriate match for the given string
         """
         print(Fore.SlateGray(f"NOT CAUGHT | {line}"))
-        IrcLogger.log_warning(
-            section=SectionIRC.HANDLER_UNKNOWN,
-            text=line
-        )
+        IrcLogger.log_warning(section=SectionIRC.HANDLER_UNKNOWN, data=line)
