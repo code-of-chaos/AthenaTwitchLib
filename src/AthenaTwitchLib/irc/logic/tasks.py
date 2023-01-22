@@ -51,7 +51,7 @@ class TaskLogic(BaseHardCodedLogic,BaseTaskLogic):
             obj._logic_components
         ]
 
-        # Extract data from the bot, and make sure that tasks adhere to this
+        # Extract data from the connection, and make sure that tasks adhere to this
 
         obj.open_tasks = []
         return obj
@@ -90,7 +90,7 @@ class TaskLogic(BaseHardCodedLogic,BaseTaskLogic):
                 await asyncio.sleep(task_data.interval.total_seconds())
 
         # If we don't have to set the task at a certain part of the hour
-        #   Start up the loop regularly
+        #   Start up the _loop regularly
         else:
             while True:
                 await asyncio.sleep(task_data.interval.total_seconds())
@@ -100,7 +100,7 @@ class TaskLogic(BaseHardCodedLogic,BaseTaskLogic):
     @staticmethod
     def task(task_data:TaskData):
         """
-        Decorator to be used by the Bot,
+        Decorator to be used by the BotData,
             to assign a method as a task that has to be run at a given interval
         """
         def decorator(fnc):

@@ -15,8 +15,9 @@ from AthenaColor import ForeNest as Fore
 from AthenaLib.general.json import GeneralCustomJsonEncoder
 
 # Local Imports
-from AthenaTwitchLib.irc.bot import Bot
-from AthenaTwitchLib.irc.data.enums import BotEvent
+from AthenaTwitchLib.irc.bot_data import BotData
+from AthenaTwitchLib.irc.data.enums import ConnectionEvent
+from AthenaTwitchLib.irc.logic import CommandLogic, TaskLogic, BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageContext,MessageCommandContext
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG, TagsUSERSTATE, TagsUSERNOTICE
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
@@ -65,22 +66,22 @@ class IrcConnectionProtocol(asyncio.Protocol):
     Asyncio.Protocol child class,
     Holds all logic to convert the incoming Twitch IRC messages to useful calls/data
     """
-    bot_event_future: asyncio.Future
-    bot_obj:Bot
-
-    _transport: asyncio.transports.Transport = None  # delayed as it has to be set after the connection has been made
+    bot_data:BotData = field(kw_only=True)
+    conn_event: asyncio.Future = field(kw_only=True)
+    logic_commands:BaseCommandLogic = field(kw_only=True)
 
     # Non init
-    loop :asyncio.AbstractEventLoop = field(init=False)
-    map_pattern_callbacks:list[tuple[re.Pattern, Callable]] = field(default_factory=list, init=False)
+    _transport: asyncio.transports.Transport = field(init=False,default=None)  # delayed as it has to be set after the connection has been made
+    _loop :asyncio.AbstractEventLoop = field(init=False)
+    _map_pattern_callbacks:list[tuple[re.Pattern, Callable]] = field(default_factory=list, init=False)
 
     def __post_init__(self):
-        self.loop = asyncio.get_running_loop()
+        self._loop = asyncio.get_running_loop()
 
         # Populate the map of matched to callback
         #   with the proper combinations of regex to awaitable callback
-        self.map_pattern_callbacks.extend([
-            (re.compile(fr"^@([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :{self.bot_obj.prefix}([^ ]*)(.*)"), self.handle_message_command),
+        self._map_pattern_callbacks.extend([
+            (re.compile(fr"^@([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :{self.bot_data.prefix}([^ ]*)(.*)"), self.handle_message_command),
             (RegexPatterns.message, self.handle_message),
             (RegexPatterns.server_ping, self.handle_ping),
             (RegexPatterns.server_message, self.handle_server_message),
@@ -140,23 +141,23 @@ class IrcConnectionProtocol(asyncio.Protocol):
             # Uses filter to get the correct pattern matched group and callback to the corresponding async function
             for callback,group in filter(None, (
                 (call,output) if (output := pattern.match(line)) else False
-                for pattern, call in self.map_pattern_callbacks
+                for pattern, call in self._map_pattern_callbacks
             )):
-                self.loop.create_task(callback(group, line=line))
-                break # breaks from the second for loop, so it doesn't call the 'no break' else clause
+                self._loop.create_task(callback(group, line=line))
+                break # breaks from the second for _loop, so it doesn't call the 'no break' else clause
 
             # No break was called,
             #   meaning nothing could be mapped to a re pattern
             else:
-                self.loop.create_task(self.handle_UNKNOWN(None, line))
+                self._loop.create_task(self.handle_UNKNOWN(None, line))
 
 
     def connection_lost(self, exc: Exception | None) -> None:
         if exc is not None:
             print(exc)
 
-        if not self.bot_event_future.done():
-            self.bot_event_future.set_result(BotEvent.RESTART)
+        if not self.conn_event.done():
+            self.conn_event.set_result(ConnectionEvent.RESTART)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Line handlers -
@@ -240,7 +241,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
             channel=channel,
             text=text,
             transport=self.transport,
-            bot_event_future=self.bot_event_future,
+            bot_event_future=self.conn_event,
             original_line=line
         )
         IrcLogger.log_debug(section=SectionIRC.MSG_CONTEXT,
@@ -266,7 +267,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
             channel=channel,
             text=f"!{command}",
             transport=self.transport,
-            bot_event_future=self.bot_event_future,
+            bot_event_future=self.conn_event,
             original_line=line,
             command=command,
             args=args.strip().split(" ")
@@ -275,7 +276,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
         IrcLogger.log_debug(section=SectionIRC.MSG_CONTEXT,
                             data=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder))
 
-        await self.bot_obj.command_logic.execute_command(
+        await self.logic_commands.execute_command(
             context=message_context
         )
 

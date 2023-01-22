@@ -73,9 +73,9 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
 
     async def execute_command(self, context:MessageCommandContext):
         """
-        Main entry point from the Async Protocol, will try and find a corresponding command within the Bot.
+        Main entry point from the Async Protocol, will try and find a corresponding command within the connection.
         """
-        # Get the command from the stored bot's method.
+        # Get the command from the stored connection's method.
         #   If it can't be found, skip the entire function
         if not (fnc := self._commands.get(context.command, False)):
             IrcLogger.log_debug(section=SectionIRC.CMD_UNKNOWN, data=context.original_line)
@@ -109,7 +109,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
     @staticmethod
     def command(command_data:CommandData):
         """
-        Decorator to be used by the Bot, to assign a method as a command.
+        Decorator to be used by the BotData, to assign a method as a command.
         """
         def decorator(fnc):
             register_callback_as_logical_component(fnc)
@@ -121,7 +121,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
     @staticmethod
     def command_subscriber(command_data:CommandData):
         """
-        Decorator to be used by the Bot, to assign a method as a command only to be used by a Subscriber.
+        Decorator to be used by the BotData, to assign a method as a command only to be used by a Subscriber.
         The command will also be able to be used by Mods and Broadcasters
         """
         command_data.allow_user = False
@@ -140,7 +140,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
     @staticmethod
     def command_vip(command_data:CommandData):
         """
-        Decorator to be used by the Bot, to assign a method as a command only to be used by a VIP.
+        Decorator to be used by the BotData, to assign a method as a command only to be used by a VIP.
         The command will also be able to be used by Mods and Broadcasters
         """
         command_data.allow_user = False
@@ -159,7 +159,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
     @staticmethod
     def command_moderator(command_data:CommandData):
         """
-        Decorator to be used by the Bot, to assign a method as a command only to be used by a Moderator.
+        Decorator to be used by the BotData, to assign a method as a command only to be used by a Moderator.
         The command will also be able to be used by Broadcasters
         """
         command_data.allow_user = False
@@ -178,7 +178,7 @@ class CommandLogic(BaseHardCodedLogic,BaseCommandLogic):
     @staticmethod
     def command_broadcaster(command_data:CommandData):
         """
-        Decorator to be used by the Bot, to assign a method as a command only to be used by a Broadcasters.
+        Decorator to be used by the BotData, to assign a method as a command only to be used by a Broadcasters.
         """
         command_data.allow_user = False
         command_data.allow_sub = False

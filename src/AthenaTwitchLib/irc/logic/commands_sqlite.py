@@ -15,7 +15,7 @@ from AthenaLib.general.sql import sanitize_sql
 
 from AthenaTwitchLib.api.api_connection import ApiConnection
 # Local Imports
-from AthenaTwitchLib.irc.data.enums import BotEvent, OutputTypes, CommandTypes
+from AthenaTwitchLib.irc.data.enums import ConnectionEvent, OutputTypes, CommandTypes
 from AthenaTwitchLib.irc.data.sql import TBL_LOGIC_COMMANDS
 from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
@@ -63,9 +63,9 @@ class CommandLogicSqlite(BaseCommandLogic):
     The database in this case, is an SQLite db file.
     """
     _connector: ConnectorAioSqlite
-    _special_event_mapping:dict[CommandTypes:BotEvent] = {
-        CommandTypes.EXIT : BotEvent.EXIT,
-        CommandTypes.RESTART: BotEvent.RESTART
+    _special_event_mapping: dict[CommandTypes:ConnectionEvent] = {
+        CommandTypes.EXIT : ConnectionEvent.EXIT,
+        CommandTypes.RESTART: ConnectionEvent.RESTART
     }
 
     def __init__(self, path:PATHLIKE ,api_connection:ApiConnection):

@@ -12,9 +12,9 @@ import enum
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class BotEvent(enum.Enum):
+class ConnectionEvent(enum.Enum):
     """
-    Types of Events that can be raised inside the Bot
+    Types of Events that can be raised inside the IRC Connection
     """
     RESTART = enum.auto()
     EXIT = enum.auto()
@@ -23,11 +23,11 @@ class BotEvent(enum.Enum):
 # ----------------------------------------------------------------------------------------------------------------------
 class OutputTypes(enum.StrEnum):
     """
-    Simple Enum for the Output Type of the Bot
+    Simple Enum for the Output Type of the IRC Connection Transport
     ===
 
-    - Write : Means the bot will simply write the message to chat
-    - Reply : Means the bot will write the message as a response to a previous message
+    - Write : Means the connection will simply write the message to chat
+    - Reply : Means the connection will write the message as a response to a previous message
     """
     WRITE = enum.auto()
     REPLY = enum.auto()
@@ -41,8 +41,8 @@ class CommandTypes(enum.StrEnum):
 
     - DEFAULT : No argument parsing needs to be done within the output text
     - ARGS : Special argument parsing needs to be handled
-    - EXIT : command triggers the exit of the bot
-    - RESTART : command triggers the restart of the bot
+    - EXIT : command triggers the exit of the connection
+    - RESTART : command triggers the restart of the connection
     """
 
     DEFAULT = enum.auto()

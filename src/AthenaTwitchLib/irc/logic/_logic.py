@@ -26,7 +26,7 @@ def register_callback_as_logical_component(fnc: Callable):
 # ----------------------------------------------------------------------------------------------------------------------
 class BaseHardCodedLogic(ABC):
     """
-    A class meant for hard coded tasks, commands and other logic systems handled by the bot
+    A class meant for hard coded tasks, commands and other logic systems handled by the connection
 
     Will store all functions marked as a `_logic_component` to the list of`_logic_components`
         This is useful for later parsing over these functions
