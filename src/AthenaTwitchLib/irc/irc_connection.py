@@ -16,7 +16,6 @@ from AthenaTwitchLib.irc.bot_data import BotData
 from AthenaTwitchLib.irc.data.enums import ConnectionEvent
 from AthenaTwitchLib.irc.irc_connection_protocol import IrcConnectionProtocol
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
-from AthenaTwitchLib.string_formatting import twitch_irc_output_format
 from AthenaTwitchLib.irc.logic import CommandLogic, TaskLogic, BaseCommandLogic
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -70,7 +69,7 @@ class IrcConnection:
     # ------------------------------------------------------------------------------------------------------------------
     # - Main Methods -
     # ------------------------------------------------------------------------------------------------------------------
-    async def connect(self):
+    async def connect(self) -> None:
         """
         Constructor function for the BotData and all its logical systems like the asyncio.Protocol handler.
         It also logs the irc in onto the Twitch IRC server
@@ -79,7 +78,7 @@ class IrcConnection:
 
             # Assemble the asyncio.Protocol
             #   The custom protocol_type needs a constructor to known which patterns to use, settings, etc...
-            transport, protocol_obj = await self._loop.create_connection( # type: asyncio.BaseTransport, object
+            transport, protocol_obj = await self._loop.create_connection(
                 protocol_factory=functools.partial(
                     self.conn_protocol,
 
@@ -94,20 +93,13 @@ class IrcConnection:
                 ),
                 server_hostname=self.host,
                 ssl=self.ssl_enabled,
-                sock=self._socket_factory()
+                sock=self._socket_factory(),
             )
             if transport is None:
                 IrcLogger.log_error(section=SectionIRC.CONNECTION_REFUSED)
                 raise ConnectionRefusedError
             else:
                 IrcLogger.log_debug(section=SectionIRC.CONNECTION_MADE)
-
-            # Give the protocol the transporter,
-            #   so it can easily create write calls to the connection
-            protocol_obj.transport = transport
-
-            # Log the irc in on the IRC server
-            self.login_bot(transport=transport)
 
             # noinspection PyTypeChecker
             self.logic_tasks.start_all_tasks(transport, self._loop)
@@ -141,42 +133,3 @@ class IrcConnection:
                     self.logic_tasks.stop_all_tasks()
                     self._loop.stop()
                     break
-
-    def login_bot(self, transport: asyncio.Transport|asyncio.BaseTransport):
-        """
-        Steps that need to be taken for the BotData to be logged into the Twitch IRC chat
-        """
-        # Login into the irc chat
-        #   Not handled by the protocol,
-        #   as it is a direct write only feature and doesn't need to respond to anything
-        transport.write(twitch_irc_output_format(f"PASS oauth:{self.bot_data.oath_token}"))
-        transport.write(twitch_irc_output_format(f"NICK {self.bot_data.name}"))
-
-        IrcLogger.log_debug(
-            section=SectionIRC.LOGIN,
-            data=f"[{self.bot_data.name=}, {self.bot_data.join_channel=}, {self.bot_data.join_message=}, {self.bot_data.prefix=}]"
-        )
-
-        # Join all channels and don't wait for the logger to finish
-        for channel in self.bot_data.join_channel:
-            transport.write(twitch_irc_output_format(f"JOIN #{channel}"))
-
-        # Request correct capabilities
-        if self.bot_data.capability_tags:
-            transport.write(twitch_irc_output_format("CAP REQ :twitch.tv/tags"))
-        if self.bot_data.capability_commands:
-            transport.write(twitch_irc_output_format("CAP REQ :twitch.tv/commands"))
-        if self.bot_data.capability_membership:
-            transport.write(twitch_irc_output_format("CAP REQ :twitch.tv/membership"))
-
-        IrcLogger.log_debug(
-            section=SectionIRC.LOGIN_CAPABILITY,
-            data=f"tags={self.bot_data.capability_tags};commands={self.bot_data.capability_commands};membership{self.bot_data.capability_membership}"
-        )
-
-        # will catch all those that are Truthy (not: "", None, False, ...)
-        if self.bot_data.join_message:
-            for channel in self.bot_data.join_channel:
-                transport.write(twitch_irc_output_format(f"PRIVMSG #{channel} :{self.bot_data.join_message}"))
-
-            IrcLogger.log_debug(section=SectionIRC.LOGIN_MSG, data=f"Sent Join Message : {self.bot_data.join_message}")

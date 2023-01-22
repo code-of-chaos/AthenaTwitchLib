@@ -17,30 +17,16 @@ from AthenaLib.general.json import GeneralCustomJsonEncoder
 # Local Imports
 from AthenaTwitchLib.irc.bot_data import BotData
 from AthenaTwitchLib.irc.data.enums import ConnectionEvent
-from AthenaTwitchLib.irc.logic import CommandLogic, TaskLogic, BaseCommandLogic
+from AthenaTwitchLib.irc.logic import BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageContext,MessageCommandContext
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG, TagsUSERSTATE, TagsUSERNOTICE
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 import AthenaTwitchLib.irc.data.regex as RegexPatterns
+from AthenaTwitchLib.string_formatting import twitch_irc_output_format
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
 # ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
-class _TransportBuffer:
-    """
-    Simple class to be used by the `IrcConnectionProtocol`, before the transporter object is actually set.
-    It keeps the to be sent message into a small buffer, for it to then be parsed and deleted once the
-    actual transporter is present in the `IrcConnectionProtocol`
-    """
-    buffer: list[bytes] = field(default_factory=list)
-
-    def write(self, data:bytes):
-        """
-        Stores data to the buffer
-        """
-        self.buffer.append(data)
-
 def log_handler(fnc:Callable) -> Any:
     """
     Simple decorator to keep track of how many calls are made to handlers
@@ -54,8 +40,6 @@ def log_handler(fnc:Callable) -> Any:
         return await fnc(*args, **kwargs)
 
     return wrapper
-
-TransportBuffer = _TransportBuffer()
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -71,7 +55,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
     logic_commands:BaseCommandLogic = field(kw_only=True)
 
     # Non init
-    _transport: asyncio.transports.Transport = field(init=False,default=None)  # delayed as it has to be set after the connection has been made
+    transport: asyncio.transports.Transport = field(init=False)  # delayed as it has to be set after the connection has been made
     _loop :asyncio.AbstractEventLoop = field(init=False)
     _map_pattern_callbacks:list[tuple[re.Pattern, Callable]] = field(default_factory=list, init=False)
 
@@ -96,39 +80,47 @@ class IrcConnectionProtocol(asyncio.Protocol):
         ])
 
     # ------------------------------------------------------------------------------------------------------------------
-    # - Properties -
-    # ------------------------------------------------------------------------------------------------------------------
-    @property
-    def transport(self):
-        """
-        Getter of the `transport` property
-        This is necessary as transport is set later by the constructor than when the protocol is created
-        When the transport isn't set yet, it will store write data to a temp buffer
-        This buffer will be removed after the setter of the `transport` property is called
-        """
-        if self._transport is None:
-            return TransportBuffer
-
-        return self._transport
-
-    @transport.setter
-    def transport(self, value:asyncio.transports.Transport):
-        """
-        Setter of the `transport` property
-        Executes any write calls in the buffer, and the deletes the buffer
-        """
-        self._transport = value
-
-        #Todo remove this constant buffer check, because the buffer should only be cleared once and then forgotten
-        if TransportBuffer.buffer:
-            for data in TransportBuffer.buffer:
-                self._transport.write(data)
-
-            TransportBuffer.buffer.clear()
-
-    # ------------------------------------------------------------------------------------------------------------------
     # - Protocol Calls (aka, calls made by asyncio.Protocol) -
     # ------------------------------------------------------------------------------------------------------------------
+    def connection_made(self, transport: asyncio.transports.Transport) -> None:
+        # store transport in self
+        self.transport = transport
+
+        # Login into the irc chat
+        #   Not handled by the protocol,
+        #   as it is a direct write only feature and doesn't need to respond to anything
+        self.transport.write(twitch_irc_output_format(f"PASS oauth:{self.bot_data.oath_token}"))
+        self.transport.write(twitch_irc_output_format(f"NICK {self.bot_data.name}"))
+
+        IrcLogger.log_debug(
+            section=SectionIRC.LOGIN,
+            data=f"[{self.bot_data.name=}, {self.bot_data.join_channel=}, {self.bot_data.join_message=}, {self.bot_data.prefix=}]"
+        )
+
+        # Join all channels and don't wait for the logger to finish
+        for channel in self.bot_data.join_channel:
+            self.transport.write(twitch_irc_output_format(f"JOIN #{channel}"))
+
+        # Request correct capabilities
+        if self.bot_data.capability_tags:
+            self.transport.write(twitch_irc_output_format("CAP REQ :twitch.tv/tags"))
+        if self.bot_data.capability_commands:
+            self.transport.write(twitch_irc_output_format("CAP REQ :twitch.tv/commands"))
+        if self.bot_data.capability_membership:
+            self.transport.write(twitch_irc_output_format("CAP REQ :twitch.tv/membership"))
+
+        IrcLogger.log_debug(
+            section=SectionIRC.LOGIN_CAPABILITY,
+            data=f"tags={self.bot_data.capability_tags};commands={self.bot_data.capability_commands};membership{self.bot_data.capability_membership}"
+        )
+
+        # will catch all those that are Truthy (not: "", None, False, ...)
+        if self.bot_data.join_message:
+            for channel in self.bot_data.join_channel:
+                self.transport.write(twitch_irc_output_format(f"PRIVMSG #{channel} :{self.bot_data.join_message}"))
+
+            IrcLogger.log_debug(section=SectionIRC.LOGIN_MSG, data=f"Sent Join Message : {self.bot_data.join_message}")
+
     def data_received(self, data: bytearray) -> None:
         """
         First hit of the protocol when it receives data from Twitch IRC
