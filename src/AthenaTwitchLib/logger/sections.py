@@ -24,10 +24,12 @@ class SectionIRC(enum.StrEnum):
     MSG_TAGS = enum.auto()
     MSG_TAGS_UNKNOWN = enum.auto()
 
+    CONNECTION_ATTEMPT = enum.auto()
     CONNECTION_REFUSED = enum.auto()
     CONNECTION_MADE = enum.auto()
     CONNECTION_RESTART = enum.auto()
     CONNECTION_EXIT = enum.auto()
+    CONNECTION_END = enum.auto()
 
     LOGIN = enum.auto()
     LOGIN_MSG = enum.auto()

@@ -17,6 +17,7 @@ from AthenaTwitchLib.irc.data.enums import ConnectionEvent
 from AthenaTwitchLib.irc.irc_connection_protocol import IrcConnectionProtocol
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 from AthenaTwitchLib.irc.logic import CommandLogic, TaskLogic, BaseCommandLogic
+from AthenaTwitchLib.irc.data.exceptions import ConnectionEventUnknown
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -41,46 +42,94 @@ class IrcConnection:
     logic_tasks:TaskLogic = field(default_factory=TaskLogic)
 
     # Non init
-    _current_restart_attempt:int=field(init=False, default=0)
+    _restartable:bool = True
     _loop: asyncio.AbstractEventLoop = field(init=False, default_factory=asyncio.get_running_loop)
+    _connection_attempts:int = field(init=False, default=0)
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Support methods -
     # ------------------------------------------------------------------------------------------------------------------
-    async def _create_connection(self, bot_data:BotData) -> tuple[asyncio.Future, asyncio.BaseTransport,IrcConnectionProtocol]:
-        # Creates the socket
-        sock:socket.socket = socket.socket()
-        sock.settimeout(5.)
-        sock.connect((
-            self.host,
-            self.port_ssl if self.ssl_enabled else self.port)
-        )
+    async def _connection_create(self, bot_data:BotData) -> tuple[asyncio.Future, asyncio.BaseTransport]:
+        """
+        Coroutine to attempt a connection to the Twitch IRC chat
+        """
 
-        # Creates the connection's event tied to the connection
-        conn_event = self._loop.create_future()
+        # Log and output to console
+        IrcLogger.log_debug(section=SectionIRC.CONNECTION_ATTEMPT, data=self._connection_attempts)
+        print(f"{'-' * 25}NEW CONNECTION ATTEMPT {self._connection_attempts} {'-' * 25}")
 
-        # Assemble the asyncio.Protocol
-        #   The custom protocol_type needs a constructor to known which patterns to use, settings, etc...
-        transport, protocol_obj = await self._loop.create_connection(
-            protocol_factory=functools.partial(
-                self.conn_protocol,
+        for _ in range(self.connect_attempts):
+            # Creates the socket
+            #   Need to do this every single time for an attempt
+            sock:socket.socket = socket.socket()
+            sock.settimeout(5.)
+            sock.connect((
+                self.host,
+                self.port_ssl if self.ssl_enabled else self.port)
+            )
 
-                # Assign the logic
-                #   If this isn't defined, the protocol can't handle anything correctly
-                bot_data=bot_data,
-                logic_commands=self.logic_commands,
+            # Creates the connection's event tied to the connection
+            conn_event = self._loop.create_future()
 
-                # For restarts, exits and other special events
-                #   The functions following out of this require the connection class for some things
-                conn_event=conn_event
-            ),
-            server_hostname=self.host,
-            ssl=self.ssl_enabled,
-            sock=sock,
-        )
+            # Assemble the asyncio.Protocol
+            #   The custom protocol_type needs a constructor to known which patterns to use, settings, etc...
+            transport, protocol_obj = await self._loop.create_connection(
+                protocol_factory=functools.partial(
+                    self.conn_protocol,
+
+                    # Assign the logic
+                    #   If this isn't defined, the protocol can't handle anything correctly
+                    bot_data=bot_data,
+                    logic_commands=self.logic_commands,
+
+                    # For restarts, exits and other special events
+                    #   The functions following out of this require the connection class for some things
+                    conn_event=conn_event
+                ),
+                server_hostname=self.host,
+                ssl=self.ssl_enabled,
+                sock=sock,
+            )
+
+            # Something went wrong in the setup that caused a restart
+            if transport is None:
+                continue
+
+            # Natural end of attempts
+            break
+
+        else:
+            # Break did not occur,
+            #   meaning no connection was established
+            IrcLogger.log_error(section=SectionIRC.CONNECTION_REFUSED)
+            raise ConnectionError
 
         # Once everything is established, we can return the result
-        return conn_event, transport, protocol_obj
+        IrcLogger.log_debug(section=SectionIRC.CONNECTION_MADE)
+        return conn_event, transport
+
+    async def _connection_event_handler(self, conn_event: asyncio.Future) -> None:
+        """
+        Coroutine to await the asyncio.Future which governs a connection break event.
+        Appropriately handles the event.
+        """
+        match await conn_event:
+            case ConnectionEvent.RESTART:
+                IrcLogger.log_warning(
+                    section=SectionIRC.CONNECTION_RESTART,
+                    data=f"called by ConnectionEvent with data: {str(conn_event)}"
+                )
+                self._restartable = True # makes sure we restart
+
+            case ConnectionEvent.EXIT :
+                IrcLogger.log_warning(
+                    section=SectionIRC.CONNECTION_EXIT,
+                    data=f"called by ConnectionEvent with data: {str(conn_event)}"
+                )
+                self._restartable = False # makes sure we exit
+
+            case _:
+                raise ConnectionEventUnknown
 
     # ------------------------------------------------------------------------------------------------------------------
     # - Main Methods -
@@ -90,45 +139,60 @@ class IrcConnection:
         Constructor function for the BotData and all its logical systems like the asyncio.Protocol handler.
         It also logs the irc in onto the Twitch IRC server
         """
-        while True:
-            for _ in range(self.connect_attempts):
-                conn_event, transport, protocol_obj = await self._create_connection(bot_data=bot_data)
-                if transport:
-                    IrcLogger.log_debug(section=SectionIRC.CONNECTION_MADE)
-                    break
+        conn_event:asyncio.Future|None = None
+        transport:asyncio.Transport|None = None
 
-            # Break did not occur,
-            #   meaning no connection was established
-            else:
-                IrcLogger.log_error(section=SectionIRC.CONNECTION_REFUSED)
-                raise ConnectionError
+        # -*- Main body of connection loop -*-
+        try:
+            # As long as we can restart,
+            #   The following while loop should keep running in the same way
+            while self._restartable:
+                # Sets up the connection and creates the protocol
+                conn_event, transport = await self._connection_create(bot_data=bot_data)
 
-            # noinspection PyTypeChecker
-            self.logic_tasks.start_all_tasks(transport, self._loop)
+                # Launch all repeating tasks
+                #   noinspection PyTypeChecker
+                self.logic_tasks.start_all_tasks(transport, self._loop)
 
-            # Waiting portion of the IrcConnection,
-            #   This regulates the irc starting back up and restarting
-            match await conn_event:
-                case ConnectionEvent.RESTART:
-                    print(f"{NEW_LINE*25}{'-'*25}RESTART ATTEMPT {self._current_restart_attempt}{'-'*25}")
-                    IrcLogger.log_warning(section=SectionIRC.CONNECTION_RESTART,
-                                          data=f"attempt={self._current_restart_attempt}")
+                # Waiting portion of the IrcConnection,
+                #   This regulates the irc starting back up and restarting
+                await self._connection_event_handler(conn_event=conn_event)
+
+                # If the connection can be reset
+                #   Restart
+                if self._restartable:
+                    # Clear previous tasks
+                    self.logic_tasks.stop_all_tasks()
 
                     # Close the transport,
                     #   Else it will stay open forever
                     transport.close()
 
-                    # just wait a set interval,
-                    #   to make sure we aren't seen as a ddos
-                    await asyncio.sleep(0.5)
-
-                    # Clear previous tasks
-                    self.logic_tasks.stop_all_tasks()
-
-                    # restarts it all
+                    self._connection_attempts += 1
+                    print(f"{NEW_LINE * 25}")
                     continue
 
-                case ConnectionEvent.EXIT | _:
-                    IrcLogger.log_warning(section=SectionIRC.CONNECTION_EXIT, data=f"called by ConnectionEvent")
-                    self.logic_tasks.stop_all_tasks()
-                    break
+        # -*- Exception handlers -*-
+        except TimeoutError:
+            raise
+
+        except ConnectionRefusedError:
+            raise
+
+        except ConnectionError:
+            raise
+
+        except ConnectionEventUnknown:
+            raise
+
+        # -*- Natural end -*-
+        finally:
+            IrcLogger.log_warning(
+                section=SectionIRC.CONNECTION_END,
+                data=f"Connection came to its natural end"
+            )
+
+            # Some cleanup
+            if transport is not None and not transport.is_closing():
+                transport.close()
+            self.logic_tasks.stop_all_tasks()
