@@ -3,56 +3,22 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass, asdict
 import aiosqlite
 import asyncio
-import json
 
 # Athena Packages
 from AthenaLib.constants.types import PATHLIKE
 from AthenaLib.database_connectors.async_sqlite import ConnectorAioSqlite
 from AthenaLib.general.sql import sanitize_sql
 
-from AthenaTwitchLib.api.api_connection import ApiConnection
 # Local Imports
+from AthenaTwitchLib.api.api_connection import ApiConnection
 from AthenaTwitchLib.irc.data.enums import ConnectionEvent, OutputTypes, CommandTypes
 from AthenaTwitchLib.irc.data.sql import TBL_LOGIC_COMMANDS
-from AthenaTwitchLib.irc.logic._logic import BaseCommandLogic
+from AthenaTwitchLib.irc.logic.types import BaseCommandLogic
 from AthenaTwitchLib.irc.message_context import MessageCommandContext
-from AthenaTwitchLib.logger import IrcLogger, SectionIRC
-
-# ----------------------------------------------------------------------------------------------------------------------
-# - Support Code -
-# ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True, kw_only=True)
-class CommandData:
-    """
-    Dataclass to hold the command's parameters.
-    The data is gathered from the database.
-    """
-    id:int
-    channel:str
-    command_name:str
-    command_arg:str|None
-    command_type:str|CommandTypes
-    allow_user:bool|int
-    allow_sub:bool|int
-    allow_vip:bool|int
-    allow_mod:bool|int
-    allow_broadcaster:bool
-    output_text:str
-    output_type:str|OutputTypes
-
-    def __post_init__(self):
-        self.command_type = CommandTypes(self.command_type)
-        self.allow_user = bool(self.allow_user)
-        self.allow_sub = bool(self.allow_sub)
-        self.allow_vip = bool(self.allow_vip)
-        self.allow_mod = bool(self.allow_mod)
-        self.output_type = OutputTypes(self.output_type)
-
-        # Log to db
-        IrcLogger.log_debug(section=SectionIRC.CMD_DATA, data=json.dumps(asdict(self)))
+from AthenaTwitchLib.logger import IrcLogger
+from AthenaTwitchLib.irc_ext.commands_sqlite.command_data import CommandSqliteData
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -81,7 +47,7 @@ class CommandLogicSqlite(BaseCommandLogic):
     # ------------------------------------------------------------------------------------------------------------------
     # - Helper Methods -
     # ------------------------------------------------------------------------------------------------------------------
-    async def first_arg_wait(self, context:MessageCommandContext, data:CommandData):
+    async def first_arg_wait(self, context:MessageCommandContext, data:CommandSqliteData):
         """
         Simple method that requires the first argument fo a command to be an integer
         Will wait this amount of seconds
@@ -104,7 +70,7 @@ class CommandLogicSqlite(BaseCommandLogic):
         Afterwards it executes the command, following the correct format
         """
         # stage 1: Retrieve command
-        if not (data := await self.get_command(context)): #type: CommandData
+        if not (data := await self.get_command(context)): #type: CommandSqliteData
             return
 
         # stage 2: Validate command
@@ -116,7 +82,7 @@ class CommandLogicSqlite(BaseCommandLogic):
 
 
     @staticmethod
-    async def output(context: MessageCommandContext, data: CommandData, msg: str, format_:dict=None):
+    async def output(context: MessageCommandContext, data: CommandSqliteData, msg: str, format_:dict=None):
         """
         General output function for the Logic class to write to chat.
         """
@@ -136,7 +102,7 @@ class CommandLogicSqlite(BaseCommandLogic):
             IrcLogger.log_error()
             raise ValueError(data.output_type)
 
-    async def get_command(self, context:MessageCommandContext) -> CommandData|False:
+    async def get_command(self, context:MessageCommandContext) -> CommandSqliteData | False:
         """
         Method which retrieves the command from the database, if present.
         Otherwise, will  return False.
@@ -170,18 +136,18 @@ class CommandLogicSqlite(BaseCommandLogic):
                 #       - a strict arg was found and will be applied
                 #   If all fails,
                 #       it'll eventually return the function as false and not execute any further
-                match context, data := CommandData(**dict(row)):
-                    case MessageCommandContext(args=_), CommandData(command_arg=None|"*"):
+                match context, data := CommandSqliteData(**dict(row)):
+                    case MessageCommandContext(args=_), CommandSqliteData(command_arg=None | "*"):
                         return data
 
-                    case MessageCommandContext(args=args), CommandData(command_arg=stored_arg) if stored_arg == args[0]:
+                    case MessageCommandContext(args=args), CommandSqliteData(command_arg=stored_arg) if stored_arg == args[0]:
                         return data
 
         # Nothing matched
         return False
 
     @staticmethod
-    def validate_user(context:MessageCommandContext, data:CommandData) -> bool:
+    def validate_user(context:MessageCommandContext, data:CommandSqliteData) -> bool:
         """
         Method checks if the user can use the command
         """
@@ -195,20 +161,20 @@ class CommandLogicSqlite(BaseCommandLogic):
             data.allow_vip and context.tags.vip,
         ))
 
-    async def parse_command_type(self, context:MessageCommandContext, data:CommandData) -> None:
+    async def parse_command_type(self, context:MessageCommandContext, data:CommandSqliteData) -> None:
         """
         If a command has been found, parse it's args and text corresponding to the CommandType
         """
         match data:
-            case CommandData(command_type=CommandTypes.DEFAULT):
+            case CommandSqliteData(command_type=CommandTypes.DEFAULT):
                 await self.output(context, data, data.output_text)
 
-            case CommandData(command_type=CommandTypes.ARGS) if context.args:
+            case CommandSqliteData(command_type=CommandTypes.ARGS) if context.args:
                 await self.output( context, data, data.output_text, format_={f"args_{i}":a for i, a in enumerate(context.args)})
 
             # Special type of command
             #   Like the exit or restart commands
-            case CommandData(command_type=cmd_type) if cmd_type in (CommandTypes.EXIT,CommandTypes.RESTART):
+            case CommandSqliteData(command_type=cmd_type) if cmd_type in (CommandTypes.EXIT, CommandTypes.RESTART):
                 if context.args:
                     await self.first_arg_wait(context=context,data=data)
 

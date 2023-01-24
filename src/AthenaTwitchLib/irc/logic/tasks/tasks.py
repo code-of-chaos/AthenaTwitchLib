@@ -3,58 +3,29 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Callable
+from typing import Callable,ClassVar
 import asyncio
 import datetime
+import inspect
 
 # Athena Packages
 
 # Local Imports
-from AthenaTwitchLib.irc.logic._logic import BaseHardCodedLogic, BaseTaskLogic, register_callback_as_logical_component
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# - Code -
-# ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True, kw_only=True)
-class TaskData:
-    """
-    Simple dataclass to hold basic information about the hard coded task.
-    Meant for the `TaskLogic` class to differentiate what to do when it needs to execute the tasks
-    """
-    at:datetime.timedelta = None
-    interval:datetime.timedelta = None
-    channel:str = None
-
-    def __post_init__(self):
-        if self.at is not None:
-            self.interval = self.at
+from AthenaTwitchLib.irc.logic.types import BaseTaskLogic
+from AthenaTwitchLib.irc.logic.tasks.task_data import TaskData
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
 # ----------------------------------------------------------------------------------------------------------------------
-class TaskLogic(BaseHardCodedLogic,BaseTaskLogic):
+class TaskLogic(BaseTaskLogic):
     """
     Logic system behind hard coded tasks.
     """
     open_tasks:list[asyncio.Task]
-    _tasks:list[tuple[Callable,TaskData]]
+    _logic_components: ClassVar[list[tuple[Callable,TaskData]]] = []
 
-    def __new__(cls, *args, **kwargs):
-        obj = super().__new__(cls, *args, *kwargs)
-
-        # retrieve all tasks
-        obj._tasks = [
-            (coroutine, coroutine._data)
-            for coroutine in
-            obj._logic_components
-        ]
-
-        # Extract data from the connection, and make sure that tasks adhere to this
-
-        obj.open_tasks = []
-        return obj
+    def __init__(self):
+        self.open_tasks = []
 
     def start_all_tasks(self, transport:asyncio.Transport, loop:asyncio.AbstractEventLoop):
         if self.open_tasks:
@@ -62,7 +33,7 @@ class TaskLogic(BaseHardCodedLogic,BaseTaskLogic):
 
         self.open_tasks = [
             loop.create_task(self._create_task(transport, coroutine, task_data))
-            for coroutine, task_data in self._tasks
+            for coroutine, task_data in self._logic_components
         ]
 
     def stop_all_tasks(self):
@@ -72,10 +43,9 @@ class TaskLogic(BaseHardCodedLogic,BaseTaskLogic):
 
     async def _create_task(self, transport:asyncio.Transport, coroutine:Callable, task_data:TaskData):
         """
-        Main function of a task
+        Main function to create a task in the correct format
         Gets called by `TaskLogic.start_all_tasks` as it controls the actions of a task
         """
-
         # it the time has been set to be at a certain part of the hour
         #   Wait until we get to that part of the hour
         if task_data.at is not None:
@@ -86,7 +56,7 @@ class TaskLogic(BaseHardCodedLogic,BaseTaskLogic):
             ).seconds)
 
             while True:
-                await coroutine(transport)
+                await coroutine(self,transport)
                 await asyncio.sleep(task_data.interval.total_seconds())
 
         # If we don't have to set the task at a certain part of the hour
@@ -94,7 +64,7 @@ class TaskLogic(BaseHardCodedLogic,BaseTaskLogic):
         else:
             while True:
                 await asyncio.sleep(task_data.interval.total_seconds())
-                await coroutine(transport)
+                await coroutine(self,transport)
 
 
     @staticmethod
@@ -104,7 +74,7 @@ class TaskLogic(BaseHardCodedLogic,BaseTaskLogic):
             to assign a method as a task that has to be run at a given interval
         """
         def decorator(fnc):
-            register_callback_as_logical_component(fnc)
-            fnc._data = task_data
+            assert inspect.iscoroutinefunction(fnc), f"{fnc} was not a asyncio coroutine"
+            TaskLogic._logic_components.append((fnc, task_data))
             return fnc
         return decorator

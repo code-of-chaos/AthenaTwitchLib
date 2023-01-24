@@ -4,9 +4,7 @@
 # General Packages
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Coroutine, Callable
 import asyncio
-import inspect
 
 # Athena Packages
 
@@ -15,37 +13,7 @@ from AthenaTwitchLib.irc.message_context import MessageCommandContext
 from AthenaTwitchLib.api.api_connection import ApiConnection
 
 # ----------------------------------------------------------------------------------------------------------------------
-# - Support Code -
-# ----------------------------------------------------------------------------------------------------------------------
-def register_callback_as_logical_component(fnc: Callable):
-    assert inspect.iscoroutinefunction(fnc), f"{fnc} was not a asyncio coroutine"
-    fnc._logic_component = True
-
-# ----------------------------------------------------------------------------------------------------------------------
 # - Code -
-# ----------------------------------------------------------------------------------------------------------------------
-class BaseHardCodedLogic(ABC):
-    """
-    A class meant for hard coded tasks, commands and other logic systems handled by the connection
-
-    Will store all functions marked as a `_logic_component` to the list of`_logic_components`
-        This is useful for later parsing over these functions
-    """
-    _logic_components: list[Coroutine]
-
-    def __new__(cls, *args, **kwargs):
-        obj = super().__new__(cls)
-
-        # Retrieve all items that are marked as a '_logic_component'
-        obj._logic_components = list(
-            filter(
-                lambda i: hasattr(i, "_logic_component"),
-                (getattr(obj, i) for i in obj.__dir__())
-            )
-        )
-
-        return obj
-
 # ----------------------------------------------------------------------------------------------------------------------
 class BaseCommandLogic(ABC):
     """
