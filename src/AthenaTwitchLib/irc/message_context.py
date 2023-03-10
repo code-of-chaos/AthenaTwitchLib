@@ -24,10 +24,9 @@ class MessageContext:
     user:str
     username:str
     channel:str
-    text:str
+    possible_command:str
+    possible_args:str|None
 
-    transport:asyncio.Transport
-    bot_event_future:asyncio.Future
     original_line:str
 
     def as_dict(self) -> dict:
@@ -39,7 +38,10 @@ class MessageContext:
             "user": self.user,
             "username": self.username,
             "channel": self.channel,
-            "text": self.text
+            "text": {
+                "possible_command": self.possible_command,
+                "possible_args": self.possible_args
+            }
         }
 
     async def reply(self, reply_msg:str):
@@ -57,17 +59,3 @@ class MessageContext:
         self.transport.write(
             twitch_irc_output_format(f"PRIVMSG #{self.channel} :{write_msg}")
         )
-
-# ----------------------------------------------------------------------------------------------------------------------
-@dataclass(slots=True,kw_only=True, frozen=True)
-class MessageCommandContext(MessageContext):
-    """
-    Frozen Dataclass which holds the context that will be used by the LogicBot to handle an incoming message
-    The message in question should be a command
-    """
-    command:str
-    args:list[str]
-
-    def __post_init__(self):
-        if self.args == ['']:
-            self.args.clear()

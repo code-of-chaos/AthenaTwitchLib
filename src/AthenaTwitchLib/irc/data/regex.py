@@ -22,9 +22,8 @@ server_cap = re.compile(r":tmi\.twitch\.tv CAP \* ACK :.*")
 join = re.compile(r"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv JOIN (#.*)")
 part = re.compile(r"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv PART (#.*)")
 
-message = re.compile(r"^@([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :(.*)")
+message = re.compile(r"^@([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :([^ ]*)(.*)")
 
 user_notice = re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE #([^:]*) :(.*)")
-user_notice_raid = re.compile(r"^([^ ]*msg-id=raid[^ ]*) :tmi.twitch.tv USERNOTICE #([^ ]*)$")
 user_state = re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")
 username = re.compile(r":([^!]*)!\1@\1\.tmi\.twitch\.tv")
