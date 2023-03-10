@@ -44,9 +44,14 @@ class LineHandler_Message(IrcLineHandler):
         #   Easily done due to regex groups
         tags_group_str, user, channel, possible_command, possible_args = matched_content.groups()
 
+        _, tags = await asyncio.gather(
+            self._output_console(f"{user.split('!')[0]} | {possible_command} {possible_args}"),
+            TagsPRIVMSG.import_from_group_as_str(tags_group_str)
+        )
+
         # Create the context and run more checks
         message_context = MessageContext(
-            tags=await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
+            tags=tags,
             user=user,
             username=RegexPatterns.username.findall(user)[0],
             channel=channel,

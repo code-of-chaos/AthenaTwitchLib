@@ -32,7 +32,7 @@ class LineHandler_Ping(IrcLineHandler):
     async def handle_line(self, conn_event:asyncio.Future, transport: asyncio.Transport, matched_content: re.Match,
                           original_line: str):
         # Executes the default output and log when the data is first given.
-        await super().handle_line(conn_event, transport, matched_content, original_line)
+        await super(LineHandler_Ping, self).handle_line(conn_event, transport, matched_content, original_line)
 
         # Need this to keep connection alive
         transport.write("PONG :tmi.twitch.tv\r\n".encode())
