@@ -7,21 +7,18 @@ from dataclasses import dataclass, field
 import asyncio
 import functools
 import socket
-import re
 
 # Athena Packages
 from AthenaLib.constants.text import NEW_LINE
 
 # Local Imports
 from AthenaTwitchLib.irc.bot_data import BotData
-from AthenaTwitchLib.irc.data.enums import ConnectionEvent, LineHandlers
+from AthenaTwitchLib.irc.data.enums import ConnectionEvent
 from AthenaTwitchLib.irc.irc_connection_protocol import IrcConnectionProtocol
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 from AthenaTwitchLib.irc.logic import TaskLogic
 from AthenaTwitchLib.irc.data.exceptions import ConnectionEventUnknown
-import AthenaTwitchLib.irc.data.regex as RegexPatterns
-import AthenaTwitchLib.irc.line_handlers as lh
-from AthenaTwitchLib.irc.irc_line_handler import IrcLineHandler
+from AthenaTwitchLib.irc.irc_line_handler_sequence import IrcLineHandlerSequence
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -44,7 +41,7 @@ class IrcConnection:
     connect_attempts:int=5
 
     conn_protocol: type[IrcConnectionProtocol] = IrcConnectionProtocol
-    line_handler_overrides : dict[LineHandlers, IrcLineHandler] = field(default_factory=dict)
+    line_handler_sequence : IrcLineHandlerSequence = field(default_factory=lambda : IrcLineHandlerSequence())
 
     logic_tasks:TaskLogic = field(default_factory=TaskLogic)
 
@@ -56,81 +53,6 @@ class IrcConnection:
     # ------------------------------------------------------------------------------------------------------------------
     # - Support methods -
     # ------------------------------------------------------------------------------------------------------------------
-    def _generate_line_handlers(self, conn_event:asyncio.Future) -> list[IrcLineHandler]:
-        return [
-            self.line_handler_overrides.get(
-                LineHandlers.MESSAGE,
-                # If the line handler has no override, use the default setting
-                lh.LineHandler_Message(
-                    regex_pattern=RegexPatterns.message,
-                    conn_event=conn_event,
-                    bot_data=self.bot_data
-                )
-            ),
-            self.line_handler_overrides.get(
-                LineHandlers.PING,
-                lh.LineHandler_Ping(
-                    regex_pattern=RegexPatterns.server_ping
-                )
-            ),
-            self.line_handler_overrides.get(
-                LineHandlers.SERVERMESSAGE,
-                lh.LineHandler_ServerMessage(
-                    regex_pattern=RegexPatterns.server_message
-                )
-            ),
-            self.line_handler_overrides.get(
-                LineHandlers.JOIN,
-                lh.LineHandler_Join(
-                    regex_pattern=RegexPatterns.join
-                )
-            ),
-            self.line_handler_overrides.get(
-                LineHandlers.PART,
-                lh.LineHandler_Part(
-                    regex_pattern=RegexPatterns.part
-                )
-            ),
-            self.line_handler_overrides.get(
-                LineHandlers.SERVER353,
-                lh.LineHandler_Server353(
-                    regex_pattern=RegexPatterns.server_353
-                )
-            ),
-            self.line_handler_overrides.get(
-                LineHandlers.SERVER366,
-                lh.LineHandler_Server366(
-                    regex_pattern=RegexPatterns.server_366
-                )
-            ),
-            self.line_handler_overrides.get(
-                LineHandlers.SERVERCAP,
-                lh.LineHandler_ServerCap(
-                    regex_pattern=RegexPatterns.server_cap
-                )
-            ),
-            self.line_handler_overrides.get(
-                LineHandlers.USERNOTICE,
-                lh.LineHandler_UserNotice(
-                    regex_pattern=RegexPatterns.user_notice
-                )
-            ),
-            self.line_handler_overrides.get(
-                LineHandlers.USERSTATE,
-                lh.LineHandler_UserState(
-                    regex_pattern=RegexPatterns.user_state
-                )
-            ),
-
-            # Last one has to be Unknown
-            self.line_handler_overrides.get(
-                LineHandlers.UNKNOWN,
-                lh.LineHandler_Unknown(
-                    regex_pattern=None
-                )
-            )
-        ]
-
     async def _connection_create(self) -> tuple[asyncio.Future, asyncio.BaseTransport]:
         """
         Coroutine to attempt a connection to the Twitch IRC chat
@@ -160,7 +82,7 @@ class IrcConnection:
                     self.conn_protocol,
 
                     # create the mapping for each pattern to the correct callback
-                    line_handlers=self._generate_line_handlers(conn_event=conn_event),
+                    line_handler_sequence=self.line_handler_sequence,
                     # Assign the logic
                     #   If this isn't defined, the protocol can't handle anything correctly
                     bot_data=self.bot_data,

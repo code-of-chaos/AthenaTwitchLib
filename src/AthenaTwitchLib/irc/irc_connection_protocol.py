@@ -11,6 +11,7 @@ import asyncio
 # Local Imports
 from AthenaTwitchLib.irc.bot_data import BotData
 from AthenaTwitchLib.irc.data.enums import ConnectionEvent
+from AthenaTwitchLib.irc.irc_line_handler_sequence import IrcLineHandlerSequence
 from AthenaTwitchLib.logger import SectionIRC, IrcLogger
 from AthenaTwitchLib.string_formatting import twitch_irc_output_format
 from AthenaTwitchLib.irc.irc_line_handler import IrcLineHandler
@@ -26,7 +27,7 @@ class IrcConnectionProtocol(asyncio.Protocol):
     """
     bot_data:BotData = field(kw_only=True)
     conn_event: asyncio.Future = field(kw_only=True)
-    line_handlers: list[IrcLineHandler]
+    line_handler_sequence: IrcLineHandlerSequence
 
     # Non init
     transport: asyncio.transports.Transport = field(init=False)  # delayed as it has to be set after the connection has been made
@@ -87,29 +88,31 @@ class IrcConnectionProtocol(asyncio.Protocol):
 
         # Goes over all non-empty lines
         for line in filter(None,data.decode().split("\r\n")):
-            for line_handler in self.line_handlers: #type: IrcLineHandler
-                if line_handler.regex_pattern is None:
-                    # the last line handler should be the "Unknown" Line handler
-                    #   Meaning we don't have to match the line against a regex
-                    self._loop.create_task(
-                        line_handler(
-                            transport=self.transport,
-                            matched_content=None,
-                            original_line=line
-                        )
+            for line_handler in self.line_handler_sequence: #type: IrcLineHandler
+                if not(matched_content := line_handler.regex_pattern.match(line)):
+                    continue
+                # A valid match was found
+                self._loop.create_task(
+                    line_handler.handle_line(
+                        conn_event=self.conn_event,
+                        transport=self.transport,
+                        matched_content=matched_content,
+                        original_line=line
                     )
-                    break
+                )
+                break
 
-                elif matched_content := line_handler.regex_pattern.match(line):
-                    # A valid match was found
-                    self._loop.create_task(
-                        line_handler(
-                            transport=self.transport,
-                            matched_content=matched_content,
-                            original_line=line
-                        )
+            # if the For loop wasn't broken, meaning no valid regex patterns were validated
+            #   Can be done because "line_handler_unknown" is not included in the iter of self.line_handler_sequence
+            else:
+                self._loop.create_task(
+                    self.line_handler_sequence.line_handler_unknown.handle_line(
+                        conn_event=self.conn_event,
+                        transport=self.transport,
+                        matched_content=None,
+                        original_line=line
                     )
-                    break
+                )
 
     def connection_lost(self, exc: Exception | None) -> None:
         if exc is not None:

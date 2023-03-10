@@ -25,5 +25,5 @@ part = re.compile(r"^:([^ ]*)!\1@\1\.tmi\.twitch\.tv PART (#.*)")
 message = re.compile(r"^@([^ ]*) ([^ ]*) PRIVMSG #([^:]*) :([^ ]*)(.*)")
 
 user_notice = re.compile(r"^([^ ]*) ([^ ]*) USERNOTICE #([^:]*) :(.*)")
-user_state = re.compile(r"^@([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")
+user_state = re.compile(r"^([^ ]*) :tmi\.twitch\.tv USERSTATE #([^:]*)")
 username = re.compile(r":([^!]*)!\1@\1\.tmi\.twitch\.tv")

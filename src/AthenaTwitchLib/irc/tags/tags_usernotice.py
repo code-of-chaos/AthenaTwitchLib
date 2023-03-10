@@ -24,12 +24,15 @@ class TagsUSERNOTICE(Tags):
     color:str=None
     display_name:str=None
     emotes:str=None
+    flags:str=None
     id:str=None
     login:str=None
     mod:bool=None
     msg_id:str=None
     room_id:str=None
+    subscriber:bool=None
     system_msg:str=None
+    tmi_sent_ts:int=None
     turbo:bool=None
     user_id:str=None
     user_type:Literal["", "admin", "global_mod", "staff"]=None
@@ -53,22 +56,28 @@ class TagsUSERNOTICE(Tags):
     msg_param_ritual_name:str=None
     msg_param_threshold:str=None
     msg_param_gift_months:str=None
+    msg_param_multimonth_duration:int=None
+    msg_param_multimonth_tenure:bool=None
+    msg_param_was_gifted:bool=None
 
 
     _tag_type:ClassVar[TAG_TYPES] = TAG_TYPES.USERNOTICE
     _CONVERSION_MAPPING:ClassVar[dict] = {
-        "badge-info": Conversion("badge_info",str),
+        "@badge-info": Conversion("badge_info",str),
         "badges": Conversion("badges",lambda obj: obj.split(",")),
         "bits": Conversion("bits",str),
         "color": Conversion("color",str),
         "display-name": Conversion("display_name",str),
         "emotes": Conversion("emotes",str),
+        "flags": Conversion("flags", str),
         "id": Conversion("id",str),
         "login": Conversion("login",str),
         "mod": Conversion("mod",lambda obj: bool(int(obj))),
         "msg-id": Conversion("msg_id",str),
         "room-id": Conversion("room_id",str),
+        "subscriber": Conversion("subscriber", lambda obj: bool(int(obj))),
         "system-msg": Conversion("system_msg",str),
+        "tmi-sent-ts": Conversion("tmi_sent_ts", int),
         "turbo": Conversion("turbo",lambda obj: bool(int(obj))),
         "user-id": Conversion("user_id",str),
         "user-type": Conversion("user_type",str),
@@ -92,4 +101,7 @@ class TagsUSERNOTICE(Tags):
         "msg-param-ritual-name":Conversion("msg_param_ritual_name",str),
         "msg-param-threshold":Conversion("msg_param_threshold",str),
         "msg-param-gift-months":Conversion("msg_param_gift_months",str),
+        "msg-param-multimonth-duration":Conversion("msg_param_multimonth_duration",int),
+        "msg-param-multimonth-tenure":Conversion("msg_param_multimonth_tenure",int),
+        "msg-param-was-gifted":Conversion("msg_param_was_gifted",lambda obj: bool(int(obj))),
     }

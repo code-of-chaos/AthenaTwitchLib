@@ -3,9 +3,8 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # General Packages
 from __future__ import annotations
-import asyncio
-import re
 import dataclasses
+from typing import Callable
 
 # Athena Packages
 from AthenaColor import ForeNest as Fore
@@ -21,12 +20,8 @@ class LineHandler_ServerMessage(IrcLineHandler):
     """
     Class is called when the Twitch server sends a message that isn't related to any user or room messages
     """
+    _console_color:Callable = Fore.Blue
+    _console_section:str = 'SERVER_MESSAGE'
 
-    async def _output_on_ingest_console(self, matched_content: re.Match, original_line: str):
-        print(f"{Fore.Blue('SERVER_MESSAGE')} | {original_line}")
-
-    async def _output_on_ingest_logger(self, matched_content: re.Match, original_line: str):
-        ...
-
-    async def _handle_line(self, transport:asyncio.Transport, matched_content: re.Match, original_line: str):
+    async def _output_logger(self, *args, **kwargs):
         ...

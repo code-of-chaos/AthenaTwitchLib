@@ -6,6 +6,7 @@ from __future__ import annotations
 import asyncio
 import re
 import dataclasses
+from typing import Callable
 
 # Athena Packages
 from AthenaColor import ForeNest as Fore
@@ -23,12 +24,16 @@ class LineHandler_UserState(IrcLineHandler):
     """
     Class is called when any user (irc or viewer) sends a regular message in the channel
     """
-    async def _output_on_ingest_console(self, matched_content: re.Match, original_line: str):
-        print(f"{Fore.Plum('USERSTATE')} | {original_line}")
+    _console_color:Callable = Fore.Plum
+    _console_section:str = 'USERSTATE'
 
-    async def _output_on_ingest_logger(self, matched_content: re.Match, original_line: str):
+    async def _output_logger(self, *args, **kwargs):
         ...
 
-    async def _handle_line(self, transport:asyncio.Transport, matched_content: re.Match, original_line: str):
+    async def handle_line(self, conn_event:asyncio.Future, transport: asyncio.Transport, matched_content: re.Match,
+                          original_line: str):
+        # Executes the default output and log when the data is first given.
+        await super().handle_line(conn_event, transport, matched_content, original_line)
+
         tags_group_str, channel = matched_content.groups()
         tags = await TagsUSERSTATE.import_from_group_as_str(tags_group_str)
