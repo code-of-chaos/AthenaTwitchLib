@@ -7,10 +7,8 @@ from dataclasses import dataclass
 import asyncio
 import re
 import json
-from typing import Callable
 
 # Athena Packages
-from AthenaColor import ForeNest as Fore
 from AthenaLib.general.json import GeneralCustomJsonEncoder
 
 # Local Imports
@@ -18,7 +16,7 @@ from AthenaTwitchLib.irc.irc_line_handler import IrcLineHandler
 import AthenaTwitchLib.irc.data.regex as RegexPatterns
 from AthenaTwitchLib.irc.message_context import MessageContext
 from AthenaTwitchLib.irc.tags import TagsPRIVMSG
-from AthenaTwitchLib.logger import SectionIRC, IrcLogger
+from AthenaTwitchLib.logger import IrcSections, IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -28,11 +26,7 @@ class LineHandler_Message(IrcLineHandler):
     """
     Class is called when any user (irc or viewer) sends a regular message in the channel
     """
-    _console_color:Callable = Fore.Orchid
-    _console_section:str = 'MESSAGE'
-
-    async def _output_logger(self, *args, **kwargs):
-        ...
+    _section:str = IrcSections.PRIVMSG
 
     async def handle_line(self, conn_event:asyncio.Future, transport: asyncio.Transport, matched_content: re.Match,
                           original_line: str):
@@ -44,14 +38,9 @@ class LineHandler_Message(IrcLineHandler):
         #   Easily done due to regex groups
         tags_group_str, user, channel, possible_command, possible_args = matched_content.groups()
 
-        _, tags = await asyncio.gather(
-            self._output_console(f"{user.split('!')[0]} | {possible_command} {possible_args}"),
-            TagsPRIVMSG.import_from_group_as_str(tags_group_str)
-        )
-
         # Create the context and run more checks
         message_context = MessageContext(
-            tags=tags,
+            tags= await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
             user=user,
             username=RegexPatterns.username.findall(user)[0],
             channel=channel,
@@ -59,6 +48,7 @@ class LineHandler_Message(IrcLineHandler):
             possible_args=possible_args,
             original_line=original_line
         )
-        IrcLogger.log_debug(
-            section=SectionIRC.MSG_CONTEXT,
-            data=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder))
+        await IrcLogger.debug(
+            section=IrcSections.MSG_CONTEXT,
+            msg=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
+        )

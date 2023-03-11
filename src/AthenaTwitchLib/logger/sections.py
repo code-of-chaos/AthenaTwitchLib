@@ -4,50 +4,88 @@
 # General Packages
 from __future__ import annotations
 import enum
+from typing import Callable
 
 # Athena Packages
+from AthenaColor import ForeNest
 
 # Local Imports
 
 # ----------------------------------------------------------------------------------------------------------------------
-# - Section Enums -
+# - Section for Twitch IRC -
 # ----------------------------------------------------------------------------------------------------------------------
-class SectionIRC(enum.StrEnum):
+class IrcSections(enum.Enum):
     """
-    Enum which holds all possible section types for the IrcLogger
+    An Enum where the section is tied to the color which it will be printed as
     """
-    HANDLER_CALLED = enum.auto()
-    HANDLER_UNKNOWN = enum.auto()
+    BACKEND = "BACKEND", ForeNest.White
+    CLEARCHAT = "CLEARCHAT", ForeNest.White
+    CLEARMSG = "CLEARMSG", ForeNest.White
+    FRONTEND = "FRONTEND", ForeNest.White
+    GLOBALUSERSTATE = "GLOBALUSERSTATE", ForeNest.White
+    JOIN = "JOIN", ForeNest.White
+    NOTICE = "NOTICE", ForeNest.White
+    PART = "PART", ForeNest.White
+    PING = "PING", ForeNest.White
+    PRIVMSG = "PRIVMSG", ForeNest.White
+    ROOMSTATE = "ROOMSTATE", ForeNest.White
+    SERVER_353 = "SERVER_353", ForeNest.White
+    SERVER_366 = "SERVER_366", ForeNest.White
+    SERVER_CAP = "SERVER_CAP", ForeNest.White
+    SERVER_MESSAGE = "SERVER_MESSAGE", ForeNest.White
+    USERNOTICE = "USERNOTICE", ForeNest.White
+    USERSTATE = "USERSTATE", ForeNest.White
+    WHISPER = "WHISPER", ForeNest.White
 
-    MSG_ORIGINAL = enum.auto()
-    MSG_CONTEXT = enum.auto()
-    MSG_TAGS = enum.auto()
-    MSG_TAGS_UNKNOWN = enum.auto()
+    HANDLER_CALLED = "HANDLER_CALLED", ForeNest.White
+    HANDLER_UNKNOWN = "HANDLER_UNKNOWN", ForeNest.White
+    MSG_ORIGINAL = "MSG_ORIGINAL", ForeNest.White
+    MSG_CONTEXT = "MSG_CONTEXT", ForeNest.White
+    MSG_TAGS = "MSG_TAGS", ForeNest.White
+    MSG_TAGS_UNKNOWN = "MSG_TAGS_UNKNOWN", ForeNest.White
+    CONNECTION_ATTEMPT = "CONNECTION_ATTEMPT", ForeNest.White
+    CONNECTION_REFUSED = "CONNECTION_REFUSED", ForeNest.White
+    CONNECTION_MADE = "CONNECTION_MADE", ForeNest.White
+    CONNECTION_RESTART = "CONNECTION_RESTART", ForeNest.White
+    CONNECTION_EXIT = "CONNECTION_EXIT", ForeNest.White
+    CONNECTION_END = "CONNECTION_END", ForeNest.White
+    LOGIN = "LOGIN", ForeNest.White
+    LOGIN_MSG = "LOGIN_MSG", ForeNest.White
+    LOGIN_CAPABILITY = "LOGIN_CAPABILITY", ForeNest.White
+    CMD_DATA = "CMD_DATA", ForeNest.White
+    CMD_UNKNOWN = "CMD_UNKNOWN", ForeNest.White
+    CMD_NOT_PARSABLE = "CMD_NOT_PARSABLE", ForeNest.White
 
-    CONNECTION_ATTEMPT = enum.auto()
-    CONNECTION_REFUSED = enum.auto()
-    CONNECTION_MADE = enum.auto()
-    CONNECTION_RESTART = enum.auto()
-    CONNECTION_EXIT = enum.auto()
-    CONNECTION_END = enum.auto()
+    # ------------------------------------------------------------------------------------------------------------------
+    UNKNOWN = "UNKNOWN", ForeNest.White
+    def __str__(self) -> str:
+        return self.value[0]
 
-    LOGIN = enum.auto()
-    LOGIN_MSG = enum.auto()
-    LOGIN_CAPABILITY = enum.auto()
+    @property
+    def color(self) -> Callable:
+        return self.value[1]
 
-    JOIN = enum.auto()
-    CMD_DATA = enum.auto()
-    CMD_UNKNOWN = enum.auto()
-    CMD_NOT_PARSABLE = enum.auto()
 
 # ----------------------------------------------------------------------------------------------------------------------
-class SectionAPI(enum.StrEnum):
+# - Section for Twitch API -
+# ----------------------------------------------------------------------------------------------------------------------
+class APISections(enum.Enum):
     """
     Enum which holds all possible section types for the ApiLogger
     """
 
-    USER_DATA = enum.auto()
-    TOKEN_DATA = enum.auto()
-    TOKEN_INVALID = enum.auto()
-    REQUEST_SEND = enum.auto()
-    REQUEST_RESULT = enum.auto()
+    USER_DATA = "USER_DATA", ForeNest.White
+    TOKEN_DATA = "TOKEN_DATA", ForeNest.White
+    TOKEN_INVALID = "TOKEN_INVALID", ForeNest.White
+    REQUEST_SEND = "REQUEST_SEND", ForeNest.White
+    REQUEST_RESULT = "REQUEST_RESULT", ForeNest.White
+
+    # ------------------------------------------------------------------------------------------------------------------
+    UNKNOWN = "UNKNOWN", ForeNest.White
+    def __str__(self) -> str:
+        return self.value[0]
+
+    @property
+    def color(self) -> Callable:
+        return self.value[1]
+

@@ -4,13 +4,13 @@
 # General Packages
 from __future__ import annotations
 import dataclasses
-from typing import Callable
 
 # Athena Packages
-from AthenaColor import ForeNest as Fore
 
 # Local Imports
 from AthenaTwitchLib.irc.irc_line_handler import IrcLineHandler
+from AthenaTwitchLib.logger import IrcSections
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -20,8 +20,4 @@ class LineHandler_Server366(IrcLineHandler):
     """
     Class is called when twitch sends a 353 message
     """
-    _console_color:Callable = Fore.Ivory
-    _console_section:str = 'SERVER_366'
-
-    async def _output_logger(self, *args, **kwargs):
-        ...
+    _section:IrcSections = IrcSections.SERVER_366

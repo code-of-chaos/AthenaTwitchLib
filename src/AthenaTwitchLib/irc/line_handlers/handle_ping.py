@@ -6,13 +6,13 @@ from __future__ import annotations
 import asyncio
 import re
 import dataclasses
-from typing import Callable
 
 # Athena Packages
-from AthenaColor import ForeNest as Fore
 
 # Local Imports
 from AthenaTwitchLib.irc.irc_line_handler import IrcLineHandler
+from AthenaTwitchLib.logger import IrcSections
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Code -
@@ -23,11 +23,7 @@ class LineHandler_Ping(IrcLineHandler):
     Class is called when the Twitch server sends a keep alive PING message
     Needs to have the reply: `"PONG :tmi.twitch.tv` for the connection to remain alive
     """
-    _console_color:Callable = Fore.Peru
-    _console_section:str = 'PING'
-
-    async def _output_logger(self, *args, **kwargs):
-        ...
+    _section:IrcSections = IrcSections.PING
 
     async def handle_line(self, conn_event:asyncio.Future, transport: asyncio.Transport, matched_content: re.Match,
                           original_line: str):

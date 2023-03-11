@@ -11,7 +11,7 @@ import enum
 from AthenaColor import ForeNest as Fore
 
 # Local Imports
-from AthenaTwitchLib.logger import SectionIRC, IrcLogger
+from AthenaTwitchLib.logger import IrcSections, IrcLogger
 
 # ----------------------------------------------------------------------------------------------------------------------
 # - Support Code -
@@ -68,7 +68,7 @@ class Tags:
             if not (conversion := cls._CONVERSION_MAPPING.get(attr_name, False)):
                 # If it fails, log and continue to the next one
                 print(Fore.Maroon(f"TAG NAME '{attr_name}={value}' NOT FOUND IN {cls.__name__}"))
-                IrcLogger.log_warning(section=SectionIRC.MSG_TAGS_UNKNOWN, data=f"{attr_name, value}")
+                IrcLogger.warning(section=IrcSections.UNKNOWN, data=f"{attr_name, value}")
                 continue
 
             # When everything goes as normal

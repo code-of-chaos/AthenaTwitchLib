@@ -6,14 +6,13 @@ from __future__ import annotations
 import asyncio
 import re
 import dataclasses
-from typing import Callable
 
 # Athena Packages
-from AthenaColor import ForeNest as Fore
 
 # Local Imports
 from AthenaTwitchLib.irc.irc_line_handler import IrcLineHandler
 from AthenaTwitchLib.irc.tags import TagsUSERSTATE
+from AthenaTwitchLib.logger import IrcSections
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -24,11 +23,7 @@ class LineHandler_UserState(IrcLineHandler):
     """
     Class is called when any user (irc or viewer) sends a regular message in the channel
     """
-    _console_color:Callable = Fore.Plum
-    _console_section:str = 'USERSTATE'
-
-    async def _output_logger(self, *args, **kwargs):
-        ...
+    _section:IrcSections = IrcSections.USERSTATE
 
     async def handle_line(self, conn_event:asyncio.Future, transport: asyncio.Transport, matched_content: re.Match,
                           original_line: str):

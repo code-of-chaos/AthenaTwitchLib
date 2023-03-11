@@ -12,7 +12,7 @@ from AthenaTwitchLib.api._token_data import TokenData
 
 # Local Imports
 from AthenaTwitchLib.api.data.enums import DataFromConnection, HttpMethod
-from AthenaTwitchLib.logger import ApiLogger, SectionAPI
+from AthenaTwitchLib.logger import ApiLogger, APISections
 from AthenaTwitchLib.api._request_data import RequestData
 from AthenaTwitchLib.api._user_data import UserData
 from AthenaTwitchLib.api.requests import ConnectionRequests, ApiRequests
@@ -80,7 +80,7 @@ class ApiConnection:
 
         if self.user is None:
             user_data = await self._http_execute(ApiRequests.get_users(client_id=self.token.user_id))
-            ApiLogger.log_debug(section=SectionAPI.USER_DATA, data=user_data)
+            ApiLogger.debug(section=APISections.USER_DATA, data=user_data)
             self.user = UserData(**user_data["data"][0])
 
         return self
@@ -108,7 +108,7 @@ class ApiConnection:
         match token_data:
             # Normal flow of data
             case {"client_id":client_id,"login": login,"scopes": scopes, "user_id": user_id, "expires_in": expires_in}:
-                ApiLogger.log_debug(section=SectionAPI.TOKEN_DATA, data=token_data)
+                ApiLogger.debug(section=APISections.TOKEN_DATA, data=token_data)
                 return TokenData(
                     client_id=client_id,
                     login=login, scopes=scopes,
@@ -182,13 +182,13 @@ class ApiConnection:
                     raise ValueError(result)
 
     async def _http_execute(self,request_data:RequestData, check_scopes:bool=True) -> dict:
-        ApiLogger.log_debug(section=SectionAPI.REQUEST_SEND, data=request_data)
+        ApiLogger.debug(section=APISections.REQUEST_SEND, data=request_data)
 
         # Check if all scopes are present on the Oath Token
         #   This shouldn't be skipped, except for the original request of token validation
         #   Checks if all `request_scopes` is in `token_scopes`
         if check_scopes and not (token_scopes := self.token.scopes) >= (request_scopes := request_data.scopes):
-            ApiLogger.log_warning(section=SectionAPI.TOKEN_INVALID, data=token_scopes)
+            ApiLogger.warning(section=APISections.TOKEN_INVALID, data=token_scopes)
             raise PermissionError(
                 f"Token did not have required scopes:\nToken Scopes: {token_scopes}\nScopes required: {request_scopes}"
             )
@@ -211,5 +211,5 @@ class ApiConnection:
                 result = await response.json()
 
         # Log output
-        ApiLogger.log_debug(section=SectionAPI.REQUEST_RESULT, data=result)
+        ApiLogger.debug(section=APISections.REQUEST_RESULT, data=result)
         return result

@@ -15,7 +15,7 @@ from AthenaLib.constants.text import NEW_LINE
 from AthenaTwitchLib.irc.bot_data import BotData
 from AthenaTwitchLib.irc.data.enums import ConnectionEvent
 from AthenaTwitchLib.irc.irc_connection_protocol import IrcConnectionProtocol
-from AthenaTwitchLib.logger import SectionIRC, IrcLogger
+from AthenaTwitchLib.logger import IrcSections, IrcLogger
 from AthenaTwitchLib.irc.logic import TaskLogic
 from AthenaTwitchLib.irc.data.exceptions import ConnectionEventUnknown
 from AthenaTwitchLib.irc.irc_line_handler_sequence import IrcLineHandlerSequence
@@ -59,8 +59,10 @@ class IrcConnection:
         """
 
         # Log and output to console
-        IrcLogger.log_debug(section=SectionIRC.CONNECTION_ATTEMPT, data=self._connection_attempts)
-        print(f"{'-' * 25}NEW CONNECTION ATTEMPT {self._connection_attempts} {'-' * 25}")
+        await IrcLogger.info(
+            section=IrcSections.CONNECTION_ATTEMPT,
+            msg=f"NEW CONNECTION ATTEMPT {self._connection_attempts} {'-' * 64}"
+        )
 
         for _ in range(self.connect_attempts):
             # Creates the socket
@@ -107,11 +109,11 @@ class IrcConnection:
         else:
             # Break did not occur,
             #   meaning no connection was established
-            IrcLogger.log_error(section=SectionIRC.CONNECTION_REFUSED)
+            await IrcLogger.log_error(section=IrcSections.CONNECTION_REFUSED, msg=None)
             raise ConnectionError
 
         # Once everything is established, we can return the result
-        IrcLogger.log_debug(section=SectionIRC.CONNECTION_MADE)
+        await IrcLogger.debug(section=IrcSections.CONNECTION_MADE, msg=None)
         return conn_event, transport
 
     async def _connection_event_handler(self, conn_event: asyncio.Future) -> None:
@@ -121,16 +123,16 @@ class IrcConnection:
         """
         match await conn_event:
             case ConnectionEvent.RESTART:
-                IrcLogger.log_warning(
-                    section=SectionIRC.CONNECTION_RESTART,
-                    data=f"called by ConnectionEvent with data: {str(conn_event)}"
+                await IrcLogger.warning(
+                    section=IrcSections.CONNECTION_RESTART,
+                    msg=f"called by ConnectionEvent with data: {str(conn_event)}"
                 )
                 self._restartable = True # makes sure we restart
 
             case ConnectionEvent.EXIT :
-                IrcLogger.log_warning(
-                    section=SectionIRC.CONNECTION_EXIT,
-                    data=f"called by ConnectionEvent with data: {str(conn_event)}"
+                await IrcLogger.warning(
+                    section=IrcSections.CONNECTION_EXIT,
+                    msg=f"called by ConnectionEvent with data: {str(conn_event)}"
                 )
                 self._restartable = False # makes sure we exit
 
@@ -175,7 +177,6 @@ class IrcConnection:
                     transport.close()
 
                     self._connection_attempts += 1
-                    print(f"{NEW_LINE * 25}")
                     continue
 
         # -*- Exception handlers -*-
@@ -193,9 +194,9 @@ class IrcConnection:
 
         # -*- Natural end -*-
         finally:
-            IrcLogger.log_warning(
-                section=SectionIRC.CONNECTION_END,
-                data=f"Connection came to its natural end"
+            IrcLogger.warning(
+                section=IrcSections.CONNECTION_END,
+                msg=f"Connection came to its natural end"
             )
 
             # Some cleanup
