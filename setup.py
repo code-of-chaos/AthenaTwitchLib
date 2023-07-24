@@ -42,6 +42,6 @@ setuptools.setup(
     install_requires=[
         "AthenaLib>=2.3.0",
         "AthenaColor>=7.0.1",
-        "aiosqlite>=0.17.0"
+        "aiosqlite>=0.17.0",
     ]
 )

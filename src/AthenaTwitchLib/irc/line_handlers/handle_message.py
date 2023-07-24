@@ -40,7 +40,7 @@ class LineHandler_Message(IrcLineHandler):
 
         # Create the context and run more checks
         message_context = MessageContext(
-            tags= await TagsPRIVMSG.import_from_group_as_str(tags_group_str),
+            tags=TagsPRIVMSG.import_from_group_as_str(tags_group_str),
             user=user,
             username=RegexPatterns.username.findall(user)[0],
             channel=channel,
@@ -48,7 +48,7 @@ class LineHandler_Message(IrcLineHandler):
             possible_args=possible_args,
             original_line=original_line
         )
-        await IrcLogger.debug(
+        IrcLogger.debug(
             section=IrcSections.MSG_CONTEXT,
             msg=json.dumps(message_context.as_dict(), cls=GeneralCustomJsonEncoder)
         )

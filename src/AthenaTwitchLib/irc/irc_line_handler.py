@@ -29,4 +29,4 @@ class IrcLineHandler(ABC):
         matched_content: re.Match|None,
         original_line: str
     ):
-        await IrcLogger.debug(msg=original_line, section=self._section)
+        IrcLogger.debug(msg=original_line, section=self._section)

@@ -50,10 +50,10 @@ class IrcConnectionProtocol(asyncio.Protocol):
         self.transport.write(twitch_irc_output_format(f"PASS oauth:{self.bot_data.oath_token}"))
         self.transport.write(twitch_irc_output_format(f"NICK {self.bot_data.name}"))
 
-        self._loop.create_task(IrcLogger.debug(
+        IrcLogger.debug(
             section=IrcSections.LOGIN,
             msg=f"[{self.bot_data.name=}, {self.bot_data.join_channel=}, {self.bot_data.join_message=}, {self.bot_data.prefix=}]"
-        ))
+        )
 
         # Join all channels and don't wait for the logger to finish
         for channel in self.bot_data.join_channel:
@@ -67,20 +67,20 @@ class IrcConnectionProtocol(asyncio.Protocol):
         if self.bot_data.capability_membership:
             self.transport.write(twitch_irc_output_format("CAP REQ :twitch.tv/membership"))
 
-        self._loop.create_task(IrcLogger.debug(
+        IrcLogger.debug(
             section=IrcSections.LOGIN_CAPABILITY,
             msg=f"tags={self.bot_data.capability_tags};commands={self.bot_data.capability_commands};membership{self.bot_data.capability_membership}"
-        ))
+        )
 
         # will catch all those that are Truthy (not: "", None, False, ...)
         if self.bot_data.join_message:
             for channel in self.bot_data.join_channel:
                 self.transport.write(twitch_irc_output_format(f"PRIVMSG #{channel} :{self.bot_data.join_message}"))
 
-            self._loop.create_task(IrcLogger.debug(
+            IrcLogger.debug(
                 section=IrcSections.LOGIN_MSG,
                 msg=f"Sent Join Message : {self.bot_data.join_message}"
-            ))
+            )
 
     def data_received(self, data: bytearray) -> None:
         """

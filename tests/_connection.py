@@ -19,8 +19,9 @@ from AthenaTwitchLib.logger import ApiLogger
 # ----------------------------------------------------------------------------------------------------------------------
 @contextlib.asynccontextmanager
 async def connection() -> ApiConnection:
-    AthenaDotEnv(filepath="../.secrets/secrets.env", auto_run=True)
-    ApiLogger.sqlite_path = pathlib.Path(r"D:\directive_athena\applications\neptune\twitch_bot\data\logger.sqlite")
-    with ApiLogger:
-        async with ApiConnection(oath_token=os.getenv("TWITCH_BROADCASTER_OATH")) as api_connection:
-            yield api_connection
+    AthenaDotEnv(filepath=".secrets/secrets.env", auto_run=True)
+    # ApiLogger.sqlite_path = pathlib.Path(r"D:\directive_athena\applications\neptune\twitch_bot\data\logger.sqlite")
+    # with ApiLogger:
+    async with ApiConnection(oath_token="xs749y7if7d4dxyui9dmgtkdt00dvt") as api_connection:
+    # async with ApiConnection(oath_token=os.getenv("TWITCH_ACCESS_TOKEN")) as api_connection:
+        yield api_connection

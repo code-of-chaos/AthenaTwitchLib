@@ -31,4 +31,4 @@ class LineHandler_UserState(IrcLineHandler):
         await super(LineHandler_UserState, self).handle_line(conn_event, transport, matched_content, original_line)
 
         tags_group_str, channel = matched_content.groups()
-        tags = await TagsUSERSTATE.import_from_group_as_str(tags_group_str)
+        tags = TagsUSERSTATE.import_from_group_as_str(tags_group_str)

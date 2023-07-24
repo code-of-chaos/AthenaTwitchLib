@@ -41,22 +41,22 @@ class CustomLogger:
             file_handler.setFormatter(self.log_format)
             self.logger.addHandler(file_handler)
 
-    async def debug(self, msg:str, **kwargs):
-        await self.log(level=logging.DEBUG, msg=msg, **kwargs)
+    def debug(self, msg:str, **kwargs):
+        self.log(level=logging.DEBUG, msg=msg, **kwargs)
 
-    async def info(self, msg:str, **kwargs):
-        await self.log(level=logging.INFO, msg=msg, **kwargs)
+    def info(self, msg:str, **kwargs):
+        self.log(level=logging.INFO, msg=msg, **kwargs)
 
-    async def warning(self, msg:str, **kwargs):
-        await self.log(level=logging.WARNING, msg=msg, **kwargs)
+    def warning(self, msg:str, **kwargs):
+        self.log(level=logging.WARNING, msg=msg, **kwargs)
 
-    async def error(self, msg:str, **kwargs):
-        await self.log(level=logging.ERROR, msg=msg, **kwargs)
+    def error(self, msg:str, **kwargs):
+        self.log(level=logging.ERROR, msg=msg, **kwargs)
 
-    async def critical(self, msg:str, **kwargs):
-        await self.log(level=logging.CRITICAL, msg=msg, **kwargs)
+    def critical(self, msg:str, **kwargs):
+        self.log(level=logging.CRITICAL, msg=msg, **kwargs)
 
-    async def log(self,*, level:int, msg:str, section:IrcSections|APISections, **_):
+    def log(self,*, level:int, msg:str, section:IrcSections|APISections, **_):
         """
         Log a message with a custom section and level.
         Made into an async method, because eventually this will need to be remade into a logger that also connects to

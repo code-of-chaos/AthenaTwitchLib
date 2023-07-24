@@ -31,4 +31,4 @@ class LineHandler_UserNotice(IrcLineHandler):
         await super(LineHandler_UserNotice, self).handle_line(conn_event, transport, matched_content, original_line)
 
         tags_group_str, user, channel, text = matched_content.groups()
-        tags = await TagsUSERNOTICE.import_from_group_as_str(tags_group_str)
+        tags = TagsUSERNOTICE.import_from_group_as_str(tags_group_str)

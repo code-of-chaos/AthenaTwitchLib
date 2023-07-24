@@ -9,7 +9,6 @@ import functools
 import socket
 
 # Athena Packages
-from AthenaLib.constants.text import NEW_LINE
 
 # Local Imports
 from AthenaTwitchLib.irc.bot_data import BotData
@@ -59,7 +58,7 @@ class IrcConnection:
         """
 
         # Log and output to console
-        await IrcLogger.info(
+        IrcLogger.info(
             section=IrcSections.CONNECTION_ATTEMPT,
             msg=f"NEW CONNECTION ATTEMPT {self._connection_attempts} {'-' * 64}"
         )
@@ -109,11 +108,11 @@ class IrcConnection:
         else:
             # Break did not occur,
             #   meaning no connection was established
-            await IrcLogger.log_error(section=IrcSections.CONNECTION_REFUSED, msg=None)
+            IrcLogger.log_error(section=IrcSections.CONNECTION_REFUSED, msg=None)
             raise ConnectionError
 
         # Once everything is established, we can return the result
-        await IrcLogger.debug(section=IrcSections.CONNECTION_MADE, msg=None)
+        IrcLogger.debug(section=IrcSections.CONNECTION_MADE, msg=None)
         return conn_event, transport
 
     async def _connection_event_handler(self, conn_event: asyncio.Future) -> None:
@@ -123,14 +122,14 @@ class IrcConnection:
         """
         match await conn_event:
             case ConnectionEvent.RESTART:
-                await IrcLogger.warning(
+                IrcLogger.warning(
                     section=IrcSections.CONNECTION_RESTART,
                     msg=f"called by ConnectionEvent with data: {str(conn_event)}"
                 )
                 self._restartable = True # makes sure we restart
 
             case ConnectionEvent.EXIT :
-                await IrcLogger.warning(
+                IrcLogger.warning(
                     section=IrcSections.CONNECTION_EXIT,
                     msg=f"called by ConnectionEvent with data: {str(conn_event)}"
                 )

@@ -55,7 +55,7 @@ class Tags:
     _CONVERSION_MAPPING:ClassVar[dict[str:Conversion]] = {}
 
     @classmethod
-    async def import_from_group_as_str(cls, tags:str) -> Tags:
+    def import_from_group_as_str(cls, tags:str) -> Tags:
         """
         Splits up a given tags string (eg: `badge-info=;badges=premium/1;color=#00AAAA`) into its separate tags.
         It will then cast the tags into the correct type, provided by the `cls._CONVERSION_MAPPING`
